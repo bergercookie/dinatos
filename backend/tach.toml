@@ -1,0 +1,44 @@
+# Module boundaries for the backend. One-way flow:
+#   config/models -> schemas -> db -> services -> api -> dinatos_backend (app)
+# If an edit needs a new arrow here, it probably needs a rethink instead.
+source_roots = ["src"]
+exclude = ["tests", ".venv", "dist"]
+
+[[modules]]
+path = "dinatos_backend"
+depends_on = ["dinatos_backend.config", "dinatos_backend.api"]
+
+[[modules]]
+path = "dinatos_backend.config"
+depends_on = []
+
+[[modules]]
+path = "dinatos_backend.models"
+depends_on = []
+
+[[modules]]
+path = "dinatos_backend.schemas"
+depends_on = ["dinatos_backend.models"]
+
+[[modules]]
+path = "dinatos_backend.db"
+depends_on = ["dinatos_backend.config"]
+
+[[modules]]
+path = "dinatos_backend.services"
+depends_on = [
+    "dinatos_backend.config",
+    "dinatos_backend.models",
+    "dinatos_backend.schemas",
+    "dinatos_backend.db",
+]
+
+[[modules]]
+path = "dinatos_backend.api"
+depends_on = [
+    "dinatos_backend.config",
+    "dinatos_backend.db",
+    "dinatos_backend.models",
+    "dinatos_backend.schemas",
+    "dinatos_backend.services",
+]

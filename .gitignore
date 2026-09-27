@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.tach/
+dist/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Sphinx build output
+docs/_build/
+
+# Local secrets
+.env
+
+# Claude Code's own local state
+.claude/

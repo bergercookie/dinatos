@@ -1,0 +1,58 @@
+# The backend: a FastAPI service, backed by Postgres via async SQLAlchemy.
+#
+# Self-sufficient: `cd backend && just <recipe>` works on its own. Imported by
+# the root justfile as the `backend` module, so `just backend <recipe>` works
+# from anywhere in the repo too.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Create/refresh the backend virtualenv.
+install:
+    uv sync
+
+# Run the test suite. Coverage is on by default (see addopts in pyproject.toml).
+test *args:
+    uv run pytest {{args}}
+
+# The suite plus a browsable HTML report.
+coverage *args:
+    uv run pytest --cov-report=html {{args}}
+    @echo "HTML report: backend/htmlcov/index.html"
+
+# Every pre-commit hook over the whole tree: ruff, mypy, tach, file hygiene.
+lint:
+    uvx pre-commit run --all-files
+
+# Apply the formatter and the safe lint fixes.
+fmt:
+    uv run ruff format .
+    uv run ruff check --fix .
+
+# Fail if uv.lock has drifted from pyproject.toml.
+check-lockfile:
+    uv lock --check
+
+# Everything CI runs for the backend.
+check: lint check-lockfile test
+
+# Serve the API locally with auto-reload (needs a reachable Postgres -- DINATOS_DATABASE_URL, or config.py's default).
+run:
+    uv run dinatos-backend
+
+# Apply migrations up to the latest. Needs a reachable Postgres.
+migrate:
+    uv run alembic upgrade head
+
+# Generate a migration from model changes not yet in alembic/versions/ (needs a reachable Postgres).
+revision message:
+    uv run alembic revision --autogenerate -m "{{message}}"
+
+# Fail if the models and alembic/versions/ have diverged (needs a reachable Postgres, so not part of `check`).
+check-migrations:
+    uv run alembic check
+
+# Upgrade/downgrade every migration individually against a throwaway Postgres (needs Docker; slow, so not part of `check`).
+test-migrations:
+    uv run pytest tests_migrations --no-cov

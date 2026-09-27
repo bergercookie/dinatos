@@ -1,0 +1,41 @@
+# The frontend: a Flutter app (web today; the same codebase targets Android),
+# talking to the backend's REST API.
+#
+# Self-sufficient: `cd frontend && just test` works on its own. Imported by
+# the root justfile as the `frontend` module, so `just frontend <recipe>`
+# works from anywhere in the repo too.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Fetch/refresh packages.
+install:
+    flutter pub get
+
+# Run the test suite (widget + unit tests, headless -- no browser or device needed, see AGENTS.md).
+test *args:
+    flutter test {{args}}
+
+# Static analysis (the Dart analyzer, configured by analysis_options.yaml).
+analyze:
+    flutter analyze
+
+# Apply the formatter.
+fmt:
+    dart format --line-length 100 lib test
+
+# Fail if the formatter would change anything, without writing.
+check-format:
+    dart format --line-length 100 --set-exit-if-changed lib test
+
+# Everything CI runs for the frontend.
+check: check-format analyze test
+
+# Serve the web app locally with hot reload, against a locally running backend (`just backend run` or `just docker up`).
+run:
+    flutter run -d web-server --web-port 8081
+
+# Production web build, output in build/web/.
+build-web:
+    flutter build web --release

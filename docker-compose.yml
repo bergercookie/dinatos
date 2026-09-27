@@ -1,0 +1,48 @@
+# Dinatos — copy this next to your other self-hosted services.
+#
+# Binds to localhost only; point your existing reverse proxy at it for
+# anything reachable outside this host.
+#
+#   cp .env.example .env   # then edit it
+#   just docker up
+#
+# See docs/getting-started.md.
+
+name: dinatos
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dinatos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dinatos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set this in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-dinatos}
+    volumes:
+      - dinatos-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dinatos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  backend:
+    build: ./backend
+    image: dinatos-backend:local
+    container_name: dinatos-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DINATOS_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dinatos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dinatos}
+      DINATOS_ADMIN_EMAIL: ${DINATOS_ADMIN_EMAIL:-}
+      DINATOS_ADMIN_PASSWORD: ${DINATOS_ADMIN_PASSWORD:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  dinatos-postgres-data:

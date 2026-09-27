@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dinatos
+Comment=Self-hosted workout tracker
+Exec=dinatos
+Icon=dinatos
+Categories=Utility;
+Terminal=false

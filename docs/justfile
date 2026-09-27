@@ -1,0 +1,17 @@
+# The documentation site: Markdown source, rendered with Sphinx + MyST.
+#
+# Self-sufficient: `cd docs && just docs` works on its own. Imported by the
+# root justfile as the `docs` module.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Build the documentation site. Warnings are errors.
+docs:
+    uv run --project ../backend --group docs sphinx-build -W --keep-going -b html . _build/html
+    @echo "Open docs/_build/html/index.html"
+
+# Rebuild and serve on http://127.0.0.1:8000 while you edit.
+docs-serve: docs
+    python3 -m http.server 8000 --directory _build/html
