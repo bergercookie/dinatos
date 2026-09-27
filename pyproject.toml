@@ -1,0 +1,30 @@
+# Python tooling configuration that spans more than one directory.
+#
+# ruff resolves configuration by walking up from each file to the nearest
+# pyproject.toml that actually contains a [tool.ruff] table. backend/pyproject.toml
+# has none, so this one governs every Python file in the repo.
+#
+# There is deliberately no [project] table here: this is not a package.
+
+[tool.ruff]
+line-length = 100
+src = ["backend/src", "backend/tests", "backend/tests_migrations"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "ANN", "PTH", "ARG", "S"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+# `assert` is how pytest reports a failing check, not a stripped-in-prod
+# runtime guard; S104 fires on `monkeypatch.setenv(..., "0.0.0.0")`, a test
+# value that never binds anything; S105/S106 fire on test-only passwords/
+# hashes that are never real secrets.
+"backend/tests/*" = ["S101", "S104", "S105", "S106"]
+# S106: a throwaway testcontainers Postgres credential, not a real secret.
+"backend/tests_migrations/*" = ["S106"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency injection is `Depends(...)` as an argument default by
+# design -- that's the API, not a bug B008 should flag.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]

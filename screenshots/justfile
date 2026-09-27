@@ -1,0 +1,27 @@
+# Generates the screenshots this README embeds, against a real, throwaway
+# backend (a disposable Postgres via testcontainers) and a real frontend
+# build -- not mocked data, not a hand-maintained fixture.
+#
+# Self-sufficient: `cd screenshots && just check` works on its own. Imported
+# by the root justfile as the `screenshots` module.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Fetch/refresh the Python side (playwright + testcontainers) and the browser Playwright drives.
+install:
+    uv sync --project ../backend --group screenshots
+    uv run --project ../backend --group screenshots playwright install --with-deps chromium
+
+# mypy --strict on generate.py (needs this package's own group; ruff already covers it via the shared hook).
+lint:
+    uv run --project ../backend --group screenshots mypy --strict generate.py
+
+# Regenerate and compare against what's committed; fail if anything's stale, without writing (what CI runs).
+check:
+    uv run --project ../backend --group screenshots python generate.py --check
+
+# Regenerate and overwrite the committed PNGs/README embed for whichever changed -- review the diff, then commit.
+update:
+    uv run --project ../backend --group screenshots python generate.py --update

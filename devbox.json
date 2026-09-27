@@ -1,0 +1,26 @@
+{
+  "lockfile": "devbox.lock",
+  "packages": [
+    "cmake@latest",
+    "dart@latest",
+    "flutter@latest",
+    "git@latest",
+    "just@latest",
+    "python@3.12",
+    "uv@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Dinatos development environment loaded.'",
+      "echo 'Run `just --list` to see available tasks.'",
+      "echo 'See DEVBOX.md for devbox-specific guidance.'"
+    ],
+    "scripts": {
+      "install": "just install",
+      "check": "just check",
+      "test": "just backend test",
+      "run": "just backend run",
+      "fmt": "just backend fmt"
+    }
+  }
+}

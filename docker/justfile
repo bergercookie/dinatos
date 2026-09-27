@@ -1,0 +1,34 @@
+# Runs the backend + Postgres via docker-compose.yml at the repo root.
+#
+# Self-sufficient: `cd docker && just <recipe>` works on its own. Imported
+# by the root justfile as the `docker` module, so `just docker <recipe>`
+# works from anywhere in the repo too.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# Not `justfile_directory()`: see packaging/justfile's own comment on why
+# that resolves inconsistently for a module run as `just docker <recipe>`
+# from the repo root vs. run directly -- `--show-toplevel` doesn't.
+repo_root := `git rev-parse --show-toplevel`
+
+default:
+    @just --list
+
+# Build the container image(s) locally.
+build:
+    cd "{{repo_root}}" && docker compose build
+
+# Start the stack in the background -- needs .env; see .env.example.
+up:
+    cd "{{repo_root}}" && docker compose up -d
+
+# Follow the backend's logs.
+logs:
+    cd "{{repo_root}}" && docker compose logs -f backend
+
+# Stop the stack; data volumes are kept.
+down:
+    cd "{{repo_root}}" && docker compose down
+
+# Attach a network-troubleshooting shell (ping, dig, tcpdump, curl, ...) to the running backend container.
+debug:
+    docker run --rm -it --network container:dinatos-backend nicolaka/netshoot

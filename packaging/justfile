@@ -1,0 +1,46 @@
+# Release packages for the Flutter client.
+#
+# Self-sufficient: `cd packaging && just <recipe>` works on its own. Imported
+# by the root justfile as the `packaging` module, so
+# `just packaging <recipe>` works from anywhere in the repo too. Output paths
+# are relative to the repository root in either form.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# Not `justfile_directory() + "/.."`: that function resolves to the
+# *invoking* justfile's directory, not this one's, when this module is run
+# as `just packaging <recipe>` from the repo root -- one directory too high
+# there (`justfile_directory()` is the repo root already in that case),
+# while `cd packaging && just <recipe>` (this file run directly) needs
+# exactly that `+ "/.."`. Asking git directly sidesteps the inconsistency:
+# `--show-toplevel` gives the same answer from any directory inside the
+# repo, so it doesn't matter which of the two ways this was invoked.
+repo_root := `git rev-parse --show-toplevel`
+frontend_dir := repo_root + "/frontend"
+
+default:
+    @just --list
+
+# Build the release Android APK (BUILD_NUMBER must increase between app-store uploads).
+build-apk version build_number="1":
+    cd "{{frontend_dir}}" && flutter pub get
+    cd "{{frontend_dir}}" && flutter build apk --release --build-name="{{version}}" --build-number="{{build_number}}"
+
+# Build the Flutter Linux bundle shared by both Linux package formats.
+[private]
+_build-linux:
+    flutter config --enable-linux-desktop
+    cd "{{frontend_dir}}" && flutter pub get
+    cd "{{frontend_dir}}" && flutter build linux --release
+
+# Build a Debian package in OUTPUT_DIR.
+build-deb version output_dir="dist": _build-linux
+    ./linux/build-deb.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
+
+# Build an AppImage in OUTPUT_DIR.
+build-appimage version output_dir="dist": _build-linux
+    ./linux/build-appimage.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
+
+# Build both Linux packages from one shared Flutter build.
+build-linux-artifacts version output_dir="dist": _build-linux
+    ./linux/build-deb.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
+    ./linux/build-appimage.sh "{{version}}" "{{repo_root}}/{{output_dir}}"

@@ -1,0 +1,64 @@
+# `just hooks` installs these; `just lint` and CI run them over the whole tree.
+#
+# ruff, mypy and tach all run from the backend's own locked virtualenv rather
+# than a pinned mirror repo, so there is exactly one version of each tool in
+# the project and a hook can never disagree with `uv run`.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        # The vendored free-exercise-db dataset (~1MB of exercise metadata,
+        # see backend/src/dinatos_backend/data/NOTICE.md) is legitimate,
+        # deliberate, and the only thing over the default 500KB -- excluded
+        # by path rather than raising the limit for everything else.
+        exclude: ^backend/src/dinatos_backend/data/free_exercise_db\.json$
+
+  # hadolint isn't a Python tool, so unlike ruff/mypy/tach below it can't run
+  # from the backend's own uv-managed venv -- this pulls the prebuilt hadolint
+  # binary via a pinned wheel instead, the same way pre-commit-hooks above is
+  # pinned rather than local.
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.15.1
+    hooks:
+      - id: hadolint
+
+  - repo: local
+    hooks:
+      # ruff runs from the repo root against the root pyproject.toml, so it
+      # covers everything under backend/ and screenshots/ alike -- ruff
+      # itself needs no runtime dependencies, unlike mypy below, so it isn't
+      # limited by screenshots/ using its own uv dependency group. Markdown
+      # is in the trigger because ruff formats the Python blocks inside docs
+      # too.
+      - id: ruff-check
+        name: ruff (lint + pyupgrade)
+        entry: uv run --project backend ruff check --fix .
+        language: system
+        files: ^(backend|screenshots)/.*\.py$
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff (format)
+        entry: uv run --project backend ruff format .
+        language: system
+        files: (^(backend|screenshots)/.*\.py$|\.md$)
+        pass_filenames: false
+      - id: mypy
+        name: mypy (strict)
+        entry: bash -c 'cd backend && uv run mypy'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+      - id: tach
+        name: tach (module boundaries)
+        entry: bash -c 'cd backend && uv run tach check'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false

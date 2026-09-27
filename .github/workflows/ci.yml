@@ -1,0 +1,91 @@
+name: CI
+
+# Pull requests cover feature branches; pushes cover main. Triggering on both
+# for every branch would run the whole suite twice per push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      # Before `just install`, which would re-lock and hide the drift.
+      - run: just backend::check-lockfile
+      - name: Install dependencies
+        # The ruff/mypy/tach hooks run through `uv run`, so the backend's
+        # virtualenv has to exist before the hooks start.
+        run: just install
+      - run: just check
+
+  migrations:
+    # Separate from `check`: this needs Docker (for testcontainers) and its
+    # own real seconds, which is exactly why it isn't part of `just check`
+    # locally either -- see AGENTS.md.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@v4
+      - run: just install
+      - run: just backend::test-migrations
+
+  frontend:
+    # Also separate from `check`: the Flutter SDK is a much heavier, non-uv
+    # dependency, and `just check`/`just install` at the repo root are
+    # documented (AGENTS.md) as needing nothing but Python, uv and just --
+    # adding it there would break that for anyone working on the backend
+    # alone.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: extractions/setup-just@v4
+      - run: just frontend::install
+      - run: just frontend::check
+
+  screenshots:
+    # The heaviest combination of the lot: the Flutter SDK (to build the
+    # frontend), Docker (testcontainers' disposable Postgres), and Playwright's
+    # own browser download -- so, like `migrations` and `frontend`, its own
+    # job rather than part of `just check`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: extractions/setup-just@v4
+      - run: just screenshots::install
+      - run: just screenshots::lint
+      - run: just screenshots::check
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-debug
+          path: /tmp/dinatos-screenshot-debug.png
+          if-no-files-found: ignore

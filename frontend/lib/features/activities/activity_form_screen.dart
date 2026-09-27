@@ -1,0 +1,440 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import '../../core/api_exception.dart';
+import '../../core/async_value_view.dart';
+import '../../models/activity.dart';
+import '../../models/exercise.dart';
+import '../../models/set_type.dart';
+import '../../models/workout.dart';
+import '../exercises/exercises_providers.dart';
+import '../workouts/workouts_providers.dart';
+import 'activities_providers.dart';
+import 'activities_repository.dart';
+
+/// Create when [activityId] is null, otherwise edit (and `PUT`-replace) that
+/// activity's exercises and sets as a whole -- the same full-replace shape
+/// `workouts` uses.
+///
+/// Weight/reps/set-type are the only per-set fields this form edits;
+/// distance/duration/RPE stay whatever they already were (null for a new
+/// set) -- a deliberately smaller v1 surface, not an oversight.
+class ActivityFormScreen extends ConsumerStatefulWidget {
+  const ActivityFormScreen({super.key, this.activityId});
+
+  final int? activityId;
+
+  @override
+  ConsumerState<ActivityFormScreen> createState() => _ActivityFormScreenState();
+}
+
+class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  DateTime _startedAt = DateTime.now();
+  DateTime? _endedAt;
+  int? _workoutId;
+  List<ActivityExercise> _exercises = [];
+  bool _submitting = false;
+  String? _error;
+  bool _loadedInitialValues = false;
+
+  bool get _isEditing => widget.activityId != null;
+
+  void _loadFrom(Activity activity) {
+    if (_loadedInitialValues) return;
+    _loadedInitialValues = true;
+    _titleController.text = activity.title;
+    _descriptionController.text = activity.description ?? '';
+    _startedAt = activity.startedAt.toLocal();
+    _endedAt = activity.endedAt?.toLocal();
+    _workoutId = activity.workoutId;
+    _exercises = List.of(activity.exercises);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _startFromWorkout(Workout workout) {
+    setState(() {
+      _titleController.text = workout.name;
+      _workoutId = workout.id;
+      _exercises = workout.exercises
+          .map(
+            (we) => ActivityExercise(
+              exerciseId: we.exerciseId,
+              notes: we.notes,
+              sets: we.sets
+                  .map(
+                    (s) => ActivitySet(
+                      setType: s.setType,
+                      weightKg: s.targetWeightKg,
+                      reps: s.targetReps,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+          .toList();
+    });
+  }
+
+  Future<void> _pickStartedAt() async {
+    final picked = await _pickDateTime(context, _startedAt);
+    if (picked != null) setState(() => _startedAt = picked);
+  }
+
+  Future<void> _pickEndedAt() async {
+    final picked = await _pickDateTime(context, _endedAt ?? _startedAt);
+    if (picked != null) setState(() => _endedAt = picked);
+  }
+
+  void _addExercise(Exercise exercise) {
+    setState(() => _exercises = [..._exercises, ActivityExercise(exerciseId: exercise.id!)]);
+  }
+
+  void _removeExerciseAt(int index) {
+    setState(() => _exercises = List.of(_exercises)..removeAt(index));
+  }
+
+  void _updateExerciseAt(int index, ActivityExercise updated) {
+    setState(() => _exercises = List.of(_exercises)..[index] = updated);
+  }
+
+  Future<void> _submit() async {
+    if (_titleController.text.trim().isEmpty) {
+      setState(() => _error = 'Title is required');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final activity = Activity(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      startedAt: _startedAt,
+      endedAt: _endedAt,
+      workoutId: _workoutId,
+      exercises: _exercises,
+    );
+    final repository = ref.read(activitiesRepositoryProvider);
+    try {
+      if (_isEditing) {
+        await repository.replace(widget.activityId!, activity);
+      } else {
+        await repository.create(activity);
+      }
+      ref.invalidate(activityListProvider);
+      if (mounted) context.pop();
+    } on ApiException catch (error) {
+      setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    setState(() => _submitting = true);
+    try {
+      await ref.read(activitiesRepositoryProvider).delete(widget.activityId!);
+      ref.invalidate(activityListProvider);
+      if (mounted) context.pop();
+    } on ApiException catch (error) {
+      setState(() {
+        _error = error.message;
+        _submitting = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = _isEditing ? 'Edit activity' : 'New activity';
+    if (!_isEditing) {
+      return Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: _buildForm(context),
+      );
+    }
+    final activityAsync = ref.watch(activityProvider(widget.activityId!));
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          IconButton(
+            tooltip: 'Delete activity',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: _submitting ? null : _delete,
+          ),
+        ],
+      ),
+      body: AsyncValueView(
+        value: activityAsync,
+        builder: (context, activity) {
+          _loadFrom(activity);
+          return _buildForm(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    final exercisesAsync = ref.watch(exerciseListProvider);
+    final dateFormat = DateFormat.yMMMd().add_Hm();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        TextField(
+          controller: _titleController,
+          decoration: const InputDecoration(labelText: 'Title'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _descriptionController,
+          decoration: const InputDecoration(labelText: 'Description (optional)'),
+          maxLines: 2,
+        ),
+        const SizedBox(height: 12),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Started'),
+          subtitle: Text(dateFormat.format(_startedAt)),
+          trailing: const Icon(Icons.edit_calendar),
+          onTap: _pickStartedAt,
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Ended'),
+          subtitle: Text(_endedAt != null ? dateFormat.format(_endedAt!) : 'Not set'),
+          trailing: _endedAt != null
+              ? IconButton(
+                  tooltip: 'Clear ended time',
+                  icon: const Icon(Icons.clear),
+                  onPressed: () => setState(() => _endedAt = null),
+                )
+              : const Icon(Icons.edit_calendar),
+          onTap: _pickEndedAt,
+        ),
+        if (!_isEditing) ...[
+          const SizedBox(height: 8),
+          Consumer(
+            builder: (context, ref, _) {
+              final workoutsAsync = ref.watch(workoutListProvider);
+              return workoutsAsync.maybeWhen(
+                data: (workouts) => workouts.isEmpty
+                    ? const SizedBox.shrink()
+                    : MenuAnchor(
+                        builder: (context, controller, child) => OutlinedButton.icon(
+                          onPressed: () =>
+                              controller.isOpen ? controller.close() : controller.open(),
+                          icon: const Icon(Icons.content_copy),
+                          label: const Text('Start from a saved workout'),
+                        ),
+                        menuChildren: workouts
+                            .map(
+                              (w) => MenuItemButton(
+                                onPressed: () => _startFromWorkout(w),
+                                child: Text(w.name),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              );
+            },
+          ),
+        ],
+        const SizedBox(height: 16),
+        Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        for (var i = 0; i < _exercises.length; i++)
+          _ActivityExerciseCard(
+            exercise: _exercises[i],
+            exerciseName: exercisesAsync.valueOrNull
+                ?.firstWhere(
+                  (e) => e.id == _exercises[i].exerciseId,
+                  orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
+                )
+                .name,
+            onChanged: (updated) => _updateExerciseAt(i, updated),
+            onRemove: () => _removeExerciseAt(i),
+          ),
+        const SizedBox(height: 8),
+        AsyncValueView(
+          value: exercisesAsync,
+          builder: (context, allExercises) => MenuAnchor(
+            builder: (context, controller, child) => OutlinedButton.icon(
+              onPressed: () => controller.isOpen ? controller.close() : controller.open(),
+              icon: const Icon(Icons.add),
+              label: const Text('Add exercise'),
+            ),
+            menuChildren: allExercises
+                .map(
+                  (exercise) => MenuItemButton(
+                    onPressed: () => _addExercise(exercise),
+                    child: Text(exercise.name),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ],
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: _submitting ? null : _submit,
+          child: Text(_isEditing ? 'Save' : 'Create'),
+        ),
+      ],
+    );
+  }
+}
+
+Future<DateTime?> _pickDateTime(BuildContext context, DateTime initial) async {
+  final date = await showDatePicker(
+    context: context,
+    initialDate: initial,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+  );
+  if (date == null || !context.mounted) return null;
+  final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
+  if (time == null) return null;
+  return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+}
+
+class _ActivityExerciseCard extends StatelessWidget {
+  const _ActivityExerciseCard({
+    required this.exercise,
+    required this.exerciseName,
+    required this.onChanged,
+    required this.onRemove,
+  });
+
+  final ActivityExercise exercise;
+  final String? exerciseName;
+  final ValueChanged<ActivityExercise> onChanged;
+  final VoidCallback onRemove;
+
+  void _addSet() {
+    onChanged(exercise.copyWith(sets: [...exercise.sets, const ActivitySet()]));
+  }
+
+  void _removeSetAt(int index) {
+    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..removeAt(index)));
+  }
+
+  void _updateSetAt(int index, ActivitySet updated) {
+    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..[index] = updated));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    exerciseName ?? '#${exercise.exerciseId}',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Remove exercise',
+                  icon: const Icon(Icons.close),
+                  onPressed: onRemove,
+                ),
+              ],
+            ),
+            for (var i = 0; i < exercise.sets.length; i++)
+              _ActivitySetRow(
+                index: i,
+                set: exercise.sets[i],
+                onChanged: (updated) => _updateSetAt(i, updated),
+                onRemove: () => _removeSetAt(i),
+              ),
+            TextButton.icon(
+              onPressed: _addSet,
+              icon: const Icon(Icons.add),
+              label: const Text('Add set'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivitySetRow extends StatelessWidget {
+  const _ActivitySetRow({
+    required this.index,
+    required this.set,
+    required this.onChanged,
+    required this.onRemove,
+  });
+
+  final int index;
+  final ActivitySet set;
+  final ValueChanged<ActivitySet> onChanged;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text('${index + 1}.'),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextFormField(
+            initialValue: set.weightKg?.toString(),
+            decoration: const InputDecoration(labelText: 'kg', isDense: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (value) => onChanged(set.copyWith(weightKg: double.tryParse(value))),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextFormField(
+            initialValue: set.reps?.toString(),
+            decoration: const InputDecoration(labelText: 'reps', isDense: true),
+            keyboardType: TextInputType.number,
+            onChanged: (value) => onChanged(set.copyWith(reps: int.tryParse(value))),
+          ),
+        ),
+        const SizedBox(width: 8),
+        DropdownButton<SetType>(
+          value: set.setType,
+          items: SetType.values
+              .map((type) => DropdownMenuItem(value: type, child: Text(type.name)))
+              .toList(),
+          onChanged: (value) {
+            if (value != null) onChanged(set.copyWith(setType: value));
+          },
+        ),
+        IconButton(
+          tooltip: 'Remove set',
+          icon: const Icon(Icons.close, size: 18),
+          onPressed: onRemove,
+        ),
+      ],
+    );
+  }
+}
