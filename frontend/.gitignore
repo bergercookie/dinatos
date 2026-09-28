@@ -49,6 +49,7 @@ app.*.map.json
 # build (`flutter build apk`/`appbundle`), which the default template's
 # .gitignore doesn't anticipate.
 /android/.gradle/
+/android/.kotlin/
 /android/build/
 /android/app/build/
 
