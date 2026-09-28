@@ -79,6 +79,14 @@ async def test_me_returns_the_logged_in_user(client: AsyncClient) -> None:
     assert response.json()["email"] == "test@example.com"
 
 
+async def test_me_without_a_token_is_rejected(anonymous_client: AsyncClient) -> None:
+    # `/auth/me` sits under `/auth`, but that prefix is not uniformly public:
+    # register and login are the only two endpoints that work unauthenticated.
+    # The API description in main.py says so, and this is what keeps that
+    # claim true.
+    assert (await anonymous_client.get("/auth/me")).status_code == 401
+
+
 async def test_the_same_token_keeps_working_across_requests_until_logged_out(
     anonymous_client: AsyncClient,
 ) -> None:

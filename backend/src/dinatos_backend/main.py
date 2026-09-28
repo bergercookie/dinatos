@@ -16,7 +16,31 @@ from dinatos_backend.api.routers import (
 )
 from dinatos_backend.config import get_settings
 
-app = FastAPI(title="Dinatos", version=__version__, lifespan=lifespan)
+app = FastAPI(
+    title="Dinatos",
+    version=__version__,
+    lifespan=lifespan,
+    description=(
+        "The Dinatos REST API.\n\n"
+        "Everything except `GET /health` needs an "
+        "`Authorization: Bearer <token>` header. Call `POST /auth/register` or "
+        "`POST /auth/login` to get one -- those two, and only those two, work "
+        "without it (`/auth/me` and `/auth/logout` are themselves "
+        "authenticated).\n\n"
+        "This is a self-hosted service: `/docs` (this page), `/redoc` and the "
+        "raw `/openapi.json` are served by the same app, so they are only "
+        "reachable to whoever can already reach the API itself."
+    ),
+    openapi_tags=[
+        {"name": "auth", "description": "Registration, login and session revocation."},
+        {"name": "exercises", "description": "The exercise catalog, shared by every user."},
+        {"name": "workouts", "description": "Workout templates: exercises and sets, no dates."},
+        {"name": "activities", "description": "Logged instances of a workout, actually performed."},
+        {"name": "measurements", "description": "Body weight, fat percentage and circumferences."},
+        {"name": "profile", "description": "Per-user display settings."},
+        {"name": "imports", "description": "One-shot migration of a Hevy CSV export."},
+    ],
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_allowed_origins,
