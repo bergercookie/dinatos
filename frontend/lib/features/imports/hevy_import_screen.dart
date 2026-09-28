@@ -30,18 +30,9 @@ class _HevyImportScreenState extends ConsumerState<HevyImportScreen> {
     required bool isWorkouts,
     required void Function(bool busy) setBusy,
   }) async {
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-      withData: true,
-    );
-    if (picked == null || picked.files.isEmpty) return;
-    final file = picked.files.single;
-    final bytes = file.bytes;
-    if (bytes == null) {
-      _showMessage('Could not read the selected file.');
-      return;
-    }
+    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['csv']);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
 
     setBusy(true);
     try {
