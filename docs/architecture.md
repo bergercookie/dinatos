@@ -136,7 +136,12 @@ watching `set_index` reset to `0`. See
 `backend/tests/fixtures/hevy_*.csv` for synthetic sample files covering
 warmups/dropsets/supersets/bodyweight/cardio -- fixtures are synthetic
 rather than a real export on purpose, so nobody's actual training history
-ends up committed to a public repo. The importer was also verified once,
+ends up committed to a public repo. Each fixture set exists in both of the
+two timestamp flavours Hevy emits, depending on which app exported it: the
+Android export writes `1 Jan 2026, 08:00` (day-first, 24-hour) and the
+web/PC export writes `Jan 1, 2026, 8:00 AM` (month-first, 12-hour), so
+`_parse_timestamp` accepts either and the behavioural tests are parametrized
+over both. The importer was also verified once,
 locally, against a real account export (75 activities, 468 exercise
 instances, 1148 sets, 131 exercises, 3 measurements -- all matching the
 source file's row counts exactly); that data was never committed.

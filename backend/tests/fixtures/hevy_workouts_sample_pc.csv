@@ -1,0 +1,11 @@
+"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"
+"Leg Day","Jan 1, 2026, 8:00 AM","Jan 1, 2026, 8:45 AM","","Squat (Barbell)",,"",0,"warmup",20,10,,,
+"Leg Day","Jan 1, 2026, 8:00 AM","Jan 1, 2026, 8:45 AM","","Squat (Barbell)",,"",1,"normal",60,5,,,
+"Leg Day","Jan 1, 2026, 8:00 AM","Jan 1, 2026, 8:45 AM","","Squat (Barbell)",,"",2,"dropset",40,8,,,
+"Leg Day","Jan 1, 2026, 8:00 AM","Jan 1, 2026, 8:45 AM","","Plank",,"hold it",0,"normal",,,,60,
+"Leg Day","Jan 1, 2026, 8:00 AM","Jan 1, 2026, 8:45 AM","","Squat (Barbell)",,"back-off set",0,"normal",30,12,,,
+"Cardio","Jan 2, 2026, 9:00 AM","Jan 2, 2026, 9:30 AM","Easy morning session","Elliptical Trainer",,"",0,"normal",,,5.2,1800,
+"Superset Day","Jan 3, 2026, 6:00 PM","Jan 3, 2026, 6:40 PM","","Bench Press (Dumbbell)",0,"",0,"normal",20,10,,,
+"Superset Day","Jan 3, 2026, 6:00 PM","Jan 3, 2026, 6:40 PM","","Bench Press (Dumbbell)",0,"",1,"failure",20,8,,,
+"Superset Day","Jan 3, 2026, 6:00 PM","Jan 3, 2026, 6:40 PM","","Bicep Curl (Dumbbell)",0,"",0,"normal",12,12,,,
+"Superset Day","Jan 3, 2026, 6:00 PM","Jan 3, 2026, 6:40 PM","","Bicep Curl (Dumbbell)",0,"",1,"failure",12,10,,,
