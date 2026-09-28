@@ -3,7 +3,7 @@
 Authentication is a server-side session per login (`AuthSession`), not a
 self-verifying token: the string handed to the client is nothing but a
 high-entropy random value, meaningless without the database row it happens
-to be a key into. See `docs/architecture.md`'s "Authentication" section for
+to be a key into. See `docs/architecture/backend.md`'s "Authentication" section for
 why this replaced the earlier stateless-JWT design -- a signed,
 self-verifying token buys nothing once every request already needs a
 database lookup anyway, and giving that up is what makes `POST /auth/logout`
@@ -160,7 +160,7 @@ async def get_valid_session(db: AsyncSession, token: str) -> AuthSession | None:
 
 async def revoke_session(db: AsyncSession, session: AuthSession) -> None:
     """Log out: revoke exactly this one session, not every session the
-    account has open elsewhere (see `docs/architecture.md`'s
+    account has open elsewhere (see `docs/architecture/backend.md`'s
     "Authentication").
     """
     session.revoked_at = datetime.now(UTC)

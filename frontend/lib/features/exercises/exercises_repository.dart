@@ -11,7 +11,7 @@ final exercisesRepositoryProvider = Provider<ExercisesRepository>((ref) {
 });
 
 /// Exercises are the one resource shared across every account (see
-/// docs/architecture.md's "Concepts") -- every other repository scopes
+/// docs/architecture/domain-model.md's "Concepts") -- every other repository scopes
 /// implicitly to the caller via the bearer token, same as this one, but
 /// there's no per-user data here to scope.
 class ExercisesRepository {

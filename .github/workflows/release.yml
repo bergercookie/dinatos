@@ -63,7 +63,7 @@ jobs:
       # ubuntu-latest already carries an Android SDK/NDK for exactly this;
       # nothing extra to install, unlike the Linux desktop job below.
       - name: Build release APK
-        # Debug-signed on purpose for now (see docs/architecture.md) --
+        # Debug-signed on purpose for now (see docs/architecture/distribution.md) --
         # android/app/build.gradle.kts's release buildType still points at
         # the debug signing config; a real release keystore is future work,
         # not a gap in this workflow.
@@ -117,4 +117,4 @@ jobs:
           body: |
             Docker image: `ghcr.io/${{ github.repository_owner }}/dinatos-backend:${{ needs.version.outputs.version }}`
 
-            See [`docs/getting-started.md`](docs/getting-started.md) for how to run the backend and point a client at it.
+            See [`docs/deploy/index.md`](docs/deploy/index.md) for how to run the backend and point a client at it.

@@ -1,6 +1,6 @@
 /// A GIF plus instructions/muscles/equipment for one exercise, from
 /// whichever provider the backend has active (see
-/// docs/architecture.md's "Exercise tutorials") -- `source` says which,
+/// docs/architecture/backend.md's "Exercise tutorials") -- `source` says which,
 /// but the shape is otherwise identical either way.
 class ExerciseTutorial {
   const ExerciseTutorial({

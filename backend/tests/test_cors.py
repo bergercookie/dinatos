@@ -9,7 +9,7 @@ async def test_preflight_from_an_allowed_origin_gets_cors_headers(
     """The Flutter web frontend is served from a different origin than the
     backend -- without CORS headers on the response, the browser itself
     (not the server) blocks the request before it ever reaches a route.
-    See docs/architecture.md's "Frontend" section for how this was found.
+    See docs/architecture/frontend.md's "CORS" section for how this was found.
     """
     response = await anonymous_client.options(
         "/auth/register",

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://dinatos:dinatos@localhost:5432/dinatos"
 
-    # Sessions are revocable (see docs/architecture.md's "Authentication"),
+    # Sessions are revocable (see docs/architecture/backend.md's "Authentication"),
     # so unlike a stateless token's TTL, this doesn't have to be short to be
     # safe -- logout (or noticing a device was stolen) is the actual
     # mitigation. 30 days trades a little exposure window for not asking

@@ -10,7 +10,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 });
 
 /// One row per user -- no id in the path, always the caller's own (see
-/// docs/architecture.md's "API surface").
+/// docs/architecture/backend.md's "API surface").
 class ProfileRepository {
   ProfileRepository(this._dio);
 
