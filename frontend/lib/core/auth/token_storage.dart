@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../secure_store.dart';
 
 /// The session token is the only thing worth persisting (see
-/// docs/architecture.md's "Authentication" section) -- it's opaque to the
+/// docs/architecture/backend.md's "Authentication" section) -- it's opaque to the
 /// client either way, so all this needs to survive an app restart is the
 /// token itself, until it expires, is revoked (logout, here or elsewhere),
 /// or the API otherwise rejects it.

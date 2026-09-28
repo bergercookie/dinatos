@@ -6,7 +6,7 @@
 #   cp .env.example .env   # then edit it
 #   just docker up
 #
-# See docs/getting-started.md.
+# See docs/deploy/quickstart.md.
 
 name: dinatos
 

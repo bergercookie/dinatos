@@ -13,7 +13,7 @@
     "init_hook": [
       "echo 'Dinatos development environment loaded.'",
       "echo 'Run `just --list` to see available tasks.'",
-      "echo 'See DEVBOX.md for devbox-specific guidance.'"
+      "echo 'See docs/development/environment-setup.md for devbox-specific guidance.'"
     ],
     "scripts": {
       "install": "just install",

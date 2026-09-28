@@ -4,6 +4,15 @@ This repo is friendly to an agent working unattended in a fresh, ephemeral
 container: `just install && just check` needs nothing but Python, `uv`, and a
 recent `just`.
 
+This file is environment gotchas and non-obvious failure modes -- the things
+that break silently or confusingly in a fresh/unattended container. For the
+human-facing narrative (how to set up a normal dev environment, what CI
+checks, PR expectations), see `CONTRIBUTING.md`; for why the code is built
+the way it is, see `docs/architecture/` (rendered as part of the Sphinx
+site, readable in place too). A fact belongs in exactly one of these three
+places -- if you're about to duplicate something from here into one of
+those, cross-reference instead.
+
 ## `just` must be recent enough for `mod`
 
 The root `justfile` imports each package's own `justfile` with `mod backend
@@ -133,7 +142,7 @@ The token itself is opaque (`secrets.token_urlsafe`), not a JWT -- an
 earlier version of this signed a stateless `{"sub": user_id, "exp": ...}`
 JWT instead, verified by signature and expiry alone with no database
 lookup, specifically to avoid a per-request session check. That trade
-was reversed on purpose (see `docs/architecture.md`'s "Authentication"
+was reversed on purpose (see `docs/architecture/backend.md`'s "Authentication"
 section for the full reasoning): once `get_current_user` needs a database
 read either way (to reload the `User` row so a deleted account's token
 stops working immediately), a signed self-verifying token buys nothing a
@@ -273,7 +282,7 @@ Postgres for exactly this reason.
 ## The Linux desktop target needs its own apt packages, not just the Flutter SDK
 
 `flutter build linux` (added for `packaging/linux/`'s `.deb`/AppImage, see
-`docs/architecture.md`'s "Distribution" section) fails at the CMake
+`docs/architecture/distribution.md`) fails at the CMake
 configure step without `libgtk-3-dev` (the renderer's windowing toolkit)
 and `libsecret-1-dev` (what `flutter_secure_storage` links against on
 Linux) already installed -- `clang cmake ninja-build pkg-config` cover the

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 project = "Dinatos"
-copyright = "2026, Dinatos contributors"
-author = "Dinatos contributors"
+copyright = "2026, Nikos Koukis"
+author = "Nikos Koukis"
 
 extensions = ["myst_parser"]
 myst_enable_extensions = ["colon_fence"]
+# Lets a link like `backend.md#authentication` resolve to a heading anywhere
+# up to this depth, from any other page -- used throughout for cross-section
+# references (e.g. deploy/ pointing at the design rationale in architecture/).
+myst_heading_anchors = 3
 
 # Every .md file in the repo is a doc source, read in place rather than
 # copied, so the docs render the same content you see browsing the repo.

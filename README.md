@@ -6,8 +6,7 @@ log against them. Inspired by Hevy, built to run on your own homelab.
 **Status:** a FastAPI + async SQLAlchemy backend (multi-user accounts with
 session-based auth, exercises, workouts, activities, a profile, body
 measurements, a Hevy CSV importer) and a Flutter frontend against it (web,
-Android, and Linux desktop). See [`docs/architecture.md`](docs/architecture.md)
-for the API surface, the app's structure, and build order.
+Android, and Linux desktop).
 
 ## Screenshots
 
@@ -45,40 +44,42 @@ committed here.
 
 ```bash
 cp .env.example .env   # then edit it -- see the file for what to set
-just dev                # Postgres + backend + frontend, together
+docker compose up -d    # Postgres + backend
 ```
 
-Opens at `http://127.0.0.1:8081`; log in with whatever you set
-`DINATOS_ADMIN_EMAIL`/`DINATOS_ADMIN_PASSWORD` to in `.env` (that account is
-created automatically on first startup). See
-[`docs/getting-started.md`](docs/getting-started.md) for running each piece
-on its own instead, and for what needs to already be installed (Docker, the
-Flutter SDK).
+See [Running your own instance](https://bergercookie.github.io/dinatos/deploy/index.html)
+for configuration, upgrades/backups, and getting a client (web, Android, or
+Linux desktop) pointed at it.
 
-```bash
-just install   # create the backend virtualenv
-just check     # lint, test, build docs -- what CI runs (backend + docs)
-```
+## Using it
 
-`just` on its own lists every available recipe. Each package directory
-(`backend/`, `docs/`, `frontend/`) also owns its own self-sufficient
-`justfile`, runnable directly, e.g. `cd backend && just test`. The frontend
-needs the Flutter SDK, not just Python/uv, so `just frontend check` is
-separate from the root `just check` -- see AGENTS.md.
+Already have access to a running instance and just want to log workouts,
+track measurements, or import your history from Hevy? See
+[Using Dinatos](https://bergercookie.github.io/dinatos/user-guide/index.html).
+
+## Contributing
+
+Changing the code itself starts at [`CONTRIBUTING.md`](CONTRIBUTING.md) --
+Devbox + `just` are the supported way to interact with this repo. See
+[Contributing](https://bergercookie.github.io/dinatos/development/index.html)
+and [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html)
+for everything beyond the quick version.
 
 ## Releases
 
 Pushing a `v*` tag builds and publishes a backend Docker image (to
 `ghcr.io/bergercookie/dinatos-backend`), a Linux `.deb`/`.AppImage`, and an
-Android APK -- see the [Releases page](https://github.com/bergercookie/dinatos/releases)
-for the latest, and [`docs/architecture.md`](docs/architecture.md)'s
-"Distribution" section for exactly what each one is and how it's built.
-Every client build asks for the backend's URL on first launch (or later,
-from the profile screen), so one release works against anyone's own
+Android APK -- see the
+[Releases page](https://github.com/bergercookie/dinatos/releases) for the
+latest. Every client build asks for the backend's URL on first launch (or
+later, from the profile screen), so one release works against anyone's own
 homelab instance rather than whichever one built it.
 
 ## Documentation
 
 Rendered at [the GitHub Pages site](https://bergercookie.github.io/dinatos/)
-(once published), and readable in place under [`docs/`](docs/) and
-[`AGENTS.md`](AGENTS.md).
+(once published), and readable in place under [`docs/`](docs/).
+
+## License
+
+[MIT](LICENSE) -- (c) Nikos Koukis.
