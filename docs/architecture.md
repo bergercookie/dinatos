@@ -74,6 +74,44 @@ calling user's own data:
 - `/measurements` -- dated body-measurement entries, scoped to their owner.
 - `/imports/hevy/workouts` and `/imports/hevy/measurements` -- see below.
 
+## API documentation
+
+FastAPI serves its generated schema itself -- `/docs` (Swagger UI), `/redoc`
+and `/openapi.json` -- so the documentation is the routers and schemas
+themselves, and can't drift from the API. `main.py` only adds a description
+and `openapi_tags` on top: descriptions and the grouping in the page's tag
+list are worth writing by hand, but everything else is derived.
+
+The app shows the same page at its own `/docs` route (Profile -> "API
+documentation"). On the web target that's an iframe of `<server>/docs`, so
+there's one source of truth: the in-app screen decides *where* the docs
+render, not *what* they say. Everywhere else -- native targets, and the web
+when the browser refuses the frame -- the same screen falls back to the URLs
+with a copy button, rather than showing an empty box. The frame is refused in
+one case worth naming: an HTTPS page framing an HTTP backend is mixed content,
+which no page is allowed to work around.
+
+Two things about that screen are less obvious than they look:
+
+- The route is reached with `context.go`, not `context.push`. Verified in a
+  real browser: `push` renders the screen correctly but leaves the address
+  bar on `#/profile`, so the `/docs` link can't be copied, bookmarked or
+  reloaded -- which is the entire point of giving it its own route. `go` fixes
+  the URL and leaves nothing to pop, hence the screen's own explicit back
+  button. A unit test asserting the router's location would *not* have caught
+  this, because the router state was correct in the failing case too; only
+  the browser's address bar wasn't.
+- The route lives at `/#/docs`, not `/docs`. Flutter web routes with a hash, so
+  that is the real form of the URL; a bare `/docs` would be the backend's own
+  page. If you serve both behind one origin, keep that distinction straight.
+
+Swagger UI loads its own JavaScript and CSS from `cdn.jsdelivr.net`, which
+`/openapi.json` does not: behind an air gap the frame renders empty and the
+console says `SwaggerUIBundle is not defined`. Vendoring those assets (a
+`swagger-ui-dist` copy, served by the backend) would fix it, at the cost of a
+copied JS bundle and its license to keep in sync; the raw schema is the better
+codegen input regardless.
+
 ## Authentication
 
 Multi-user accounts, not a single-instance password gate: anyone can
@@ -341,6 +379,9 @@ browser against a live backend, which is what surfaced the missing
 middleware as a `net::ERR_FAILED`/"could not reach the server" in the first
 place; `flutter analyze`/`flutter test` have no way to catch a CORS problem,
 since there's no browser involved in either.
+
+The `/docs` route is the other browser-only problem here, and it needed a
+browser to find for the same reason -- see "API documentation" above.
 
 ## Distribution
 

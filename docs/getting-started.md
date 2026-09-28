@@ -136,6 +136,32 @@ mirrors `just check` for the backend, but needs the Flutter SDK, not just
 Python/uv -- see AGENTS.md for why it's a separate recipe and CI job rather
 than folded into the root `just check`.
 
+## Browsing the API documentation
+
+Every endpoint is described by the schema FastAPI generates from the code, so
+the docs can't drift from the API. Open it straight from the running backend:
+
+- `http://127.0.0.1:8000/docs` -- Swagger UI, with a "Try it out" button
+- `http://127.0.0.1:8000/redoc` -- ReDoc, a read-only reference
+- `http://127.0.0.1:8000/openapi.json` -- the raw schema, for codegen
+
+The app has the same page inlined, so you don't have to leave it: Profile ->
+"API documentation". On the web target that embeds the backend's own Swagger UI
+in a frame (the page itself lives at `/#/docs` -- Flutter web routes with a
+hash, so that's the honest form of the URL). On a phone or desktop build, and
+on the web when the browser won't allow the frame, that screen falls back to
+the links above with a copy button.
+
+Two things worth knowing:
+
+- Everything except `/health` and the login/register endpoints needs
+  `Authorization: Bearer $token`, so the docs page's "Try it out" needs a token
+  too. `/auth/me` and `/auth/logout` are themselves authenticated.
+- Swagger UI loads its JavaScript and CSS from a public CDN
+  (`cdn.jsdelivr.net`). Behind an air gap, or offline, the page's frame and
+  buttons won't render -- `/openapi.json` still will, and is the better input
+  to codegen anyway.
+
 ## Importing your Hevy history
 
 Export your data from Hevy (Settings -> Export), then upload both CSVs from

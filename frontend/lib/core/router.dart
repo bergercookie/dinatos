@@ -7,6 +7,7 @@ import '../features/activities/activity_form_screen.dart';
 import '../features/activities/activity_list_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
+import '../features/docs/api_docs_screen.dart';
 import '../features/exercises/exercise_form_screen.dart';
 import '../features/exercises/exercise_list_screen.dart';
 import '../features/exercises/exercise_tutorial_screen.dart';
@@ -52,6 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      // A top-level route rather than another /profile/... sub-route: the web
+      // embed is a platform view filling the whole body, and a bottom nav bar
+      // (plus the semantics tree a shell brings) only gets in the way of it.
+      GoRoute(path: '/docs', builder: (context, state) => const ApiDocsScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
         branches: [

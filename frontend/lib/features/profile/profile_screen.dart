@@ -179,6 +179,17 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.go('/profile/import-hevy'),
         ),
+        ListTile(
+          title: const Text('API documentation'),
+          subtitle: const Text('Browse and try out the REST API'),
+          trailing: const Icon(Icons.chevron_right),
+          // `go`, not `push`: verified in a real browser that `push` renders
+          // this screen but leaves the address bar on `#/profile`, so the
+          // /docs link couldn't be copied, bookmarked or reloaded. `go` leaves
+          // nothing to pop, which is why the docs screen carries its own
+          // explicit back button.
+          onTap: () => context.go('/docs'),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _heightController,
