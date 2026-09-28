@@ -31,7 +31,14 @@ from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.workout import SetType
 from dinatos_backend.schemas.imports import HevyMeasurementImportResult, HevyWorkoutImportResult
 
-_TIMESTAMP_FORMAT = "%d %b %Y, %H:%M"
+# Hevy writes the same logical timestamp two different ways depending on which
+# app the export came from: the Android export uses "1 Jan 2026, 08:00"
+# (day-first, 24-hour), while the web/PC export uses "Sep 24, 2026, 9:13 PM"
+# (month-first, 12-hour). Both are accepted so either export imports.
+_TIMESTAMP_FORMATS = (
+    "%d %b %Y, %H:%M",  # Android export
+    "%b %d, %Y, %I:%M %p",  # web/PC export
+)
 
 _MEASUREMENT_FIELDS = (
     "weight_kg",
@@ -54,7 +61,14 @@ _MEASUREMENT_FIELDS = (
 
 
 def _parse_timestamp(value: str) -> datetime:
-    return datetime.strptime(value, _TIMESTAMP_FORMAT)
+    for fmt in _TIMESTAMP_FORMATS:
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    raise ValueError(
+        f"unrecognized Hevy timestamp {value!r}; expected one of: {', '.join(_TIMESTAMP_FORMATS)}"
+    )
 
 
 def _optional_float(value: str) -> float | None:

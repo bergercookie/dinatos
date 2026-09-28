@@ -19,6 +19,22 @@ async def test_import_hevy_workouts_endpoint(client: AsyncClient) -> None:
     assert len(activities.json()) == 3
 
 
+async def test_import_hevy_workouts_endpoint_accepts_pc_export(client: AsyncClient) -> None:
+    """The web/PC export writes timestamps in a different format than Android.
+
+    Both must reach the same 200 -- the endpoint does not care which app
+    produced the file.
+    """
+    csv_bytes = (FIXTURES / "hevy_workouts_sample_pc.csv").read_bytes()
+
+    response = await client.post(
+        "/imports/hevy/workouts",
+        files={"file": ("workout_data.csv", csv_bytes, "text/csv")},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"activities_created": 3, "exercises_created": 5}
+
+
 async def test_reimporting_the_same_workouts_file_is_rejected(client: AsyncClient) -> None:
     csv_bytes = (FIXTURES / "hevy_workouts_sample.csv").read_bytes()
     files = {"file": ("workout_data.csv", csv_bytes, "text/csv")}

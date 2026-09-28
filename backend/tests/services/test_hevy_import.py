@@ -1,5 +1,7 @@
+from datetime import datetime
 from pathlib import Path
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +11,7 @@ from dinatos_backend.models.hevy_import import HevyImportKind
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.user import User
 from dinatos_backend.services.hevy_import import (
+    _parse_timestamp,
     find_previous_import,
     hash_csv_content,
     import_hevy_measurements,
@@ -17,6 +20,15 @@ from dinatos_backend.services.hevy_import import (
 )
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
+
+# Hevy's Android and web/PC exports carry identical columns but write
+# timestamps differently ("1 Jan 2026, 08:00" vs "Jan 1, 2026, 8:00 AM").
+# Both must import identically, so the behavioural tests run against each.
+WORKOUT_FIXTURES = ["hevy_workouts_sample.csv", "hevy_workouts_sample_pc.csv"]
+MEASUREMENT_FIXTURES = [
+    "hevy_measurements_sample.csv",
+    "hevy_measurements_sample_pc.csv",
+]
 
 
 async def _create_user(db: AsyncSession, email: str = "owner@example.com") -> User:
@@ -27,9 +39,33 @@ async def _create_user(db: AsyncSession, email: str = "owner@example.com") -> Us
     return user
 
 
-async def test_import_workouts_groups_rows_into_activities(db: AsyncSession) -> None:
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        # Android export: day-first, 24-hour.
+        ("1 Jan 2026, 08:00", datetime(2026, 1, 1, 8, 0)),
+        ("31 Dec 2026, 23:59", datetime(2026, 12, 31, 23, 59)),
+        # web/PC export: month-first, 12-hour with a meridiem suffix.
+        ("Jan 1, 2026, 8:00 AM", datetime(2026, 1, 1, 8, 0)),
+        ("Sep 24, 2026, 9:13 PM", datetime(2026, 9, 24, 21, 13)),
+        # Midnight/noon: 12 must not roll over into the wrong day.
+        ("Jan 4, 2026, 12:30 AM", datetime(2026, 1, 4, 0, 30)),
+        ("Jan 4, 2026, 12:00 PM", datetime(2026, 1, 4, 12, 0)),
+    ],
+)
+def test_parse_timestamp_accepts_android_and_pc_formats(value: str, expected: datetime) -> None:
+    assert _parse_timestamp(value) == expected
+
+
+def test_parse_timestamp_rejects_unrecognized_value() -> None:
+    with pytest.raises(ValueError, match="unrecognized Hevy timestamp"):
+        _parse_timestamp("2026-01-01 08:00:00")
+
+
+@pytest.mark.parametrize("fixture", WORKOUT_FIXTURES)
+async def test_import_workouts_groups_rows_into_activities(db: AsyncSession, fixture: str) -> None:
     owner = await _create_user(db)
-    csv_text = (FIXTURES / "hevy_workouts_sample.csv").read_text()
+    csv_text = (FIXTURES / fixture).read_text()
 
     result = await import_hevy_workouts(db, owner.id, csv_text)
 
@@ -59,9 +95,10 @@ async def test_import_workouts_groups_rows_into_activities(db: AsyncSession) -> 
     assert superset_day.exercises[1].superset_group == 0
 
 
-async def test_import_workouts_infers_exercise_metric_flags(db: AsyncSession) -> None:
+@pytest.mark.parametrize("fixture", WORKOUT_FIXTURES)
+async def test_import_workouts_infers_exercise_metric_flags(db: AsyncSession, fixture: str) -> None:
     owner = await _create_user(db)
-    csv_text = (FIXTURES / "hevy_workouts_sample.csv").read_text()
+    csv_text = (FIXTURES / fixture).read_text()
 
     await import_hevy_workouts(db, owner.id, csv_text)
 
@@ -106,9 +143,10 @@ async def test_import_workouts_reuses_existing_exercises(db: AsyncSession) -> No
     assert len(squats) == 1
 
 
-async def test_import_measurements(db: AsyncSession) -> None:
+@pytest.mark.parametrize("fixture", MEASUREMENT_FIXTURES)
+async def test_import_measurements(db: AsyncSession, fixture: str) -> None:
     owner = await _create_user(db)
-    csv_text = (FIXTURES / "hevy_measurements_sample.csv").read_text()
+    csv_text = (FIXTURES / fixture).read_text()
 
     result = await import_hevy_measurements(db, owner.id, csv_text)
 
