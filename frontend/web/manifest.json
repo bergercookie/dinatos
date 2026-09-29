@@ -1,11 +1,11 @@
 {
-    "name": "dinatos_frontend",
-    "short_name": "dinatos_frontend",
+    "name": "Dinatos",
+    "short_name": "Dinatos",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#17252B",
+    "theme_color": "#17252B",
+    "description": "Dinatos: a self-hosted workout tracker.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

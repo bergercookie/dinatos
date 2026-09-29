@@ -28,7 +28,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Dinatos'), findsOneWidget);
+    expect(find.image(const AssetImage('assets/branding/wordmark.png')), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
   });
 }
