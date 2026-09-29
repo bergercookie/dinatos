@@ -109,6 +109,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          # Excludes the "<owner>~<repo>~<id>.dockerbuild" artifact that
+          # docker/build-push-action@v6 (buildx) auto-uploads for GitHub's
+          # build-summary UI: an unnamed pattern here also matches that one,
+          # and downloading it reliably fails after 5 retries, which fails
+          # this whole job and skips the release step below -- every tagged
+          # run so far built and pushed all four artifacts successfully but
+          # never actually created a GitHub Release because of this.
+          pattern: dinatos-*
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
