@@ -22,6 +22,13 @@
 
 set -euo pipefail
 
+function announce() {
+    echo
+    echo "========================"
+    echo "$*"
+    echo "========================"
+}
+
 ANDROID_CMDLINE_TOOLS_URL="${ANDROID_CMDLINE_TOOLS_URL:-https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip}"
 SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
 
@@ -42,7 +49,7 @@ else
     WORK_DIR="$(mktemp -d)"
     trap 'rm -rf "$WORK_DIR"' EXIT
 
-    echo "Downloading command-line tools from $ANDROID_CMDLINE_TOOLS_URL..."
+    announce "Downloading command-line tools from $ANDROID_CMDLINE_TOOLS_URL..."
     curl -fsSL -o "$WORK_DIR/cmdline-tools.zip" "$ANDROID_CMDLINE_TOOLS_URL"
 
     echo "Extracting..."
@@ -59,11 +66,11 @@ fi
 export ANDROID_HOME="$SDK_ROOT"
 export ANDROID_SDK_ROOT="$SDK_ROOT"
 
-echo "Installing platform-tools..."
-"$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools" >/dev/null
+announce "Installing platform-tools..."
+"$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools"
 
-echo "Accepting all SDK licenses..."
-yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null
+announce "Accepting all SDK licenses..."
+yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses
 
 echo
 echo "Done. sdkmanager is installed and its licenses are accepted."
