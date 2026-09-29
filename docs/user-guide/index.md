@@ -12,4 +12,5 @@ concepts
 getting-started
 using-the-app
 hevy-import
+mcp-server
 ```

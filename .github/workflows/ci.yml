@@ -26,9 +26,10 @@ jobs:
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
       # Before `just install`, which would re-lock and hide the drift.
       - run: just backend::check-lockfile
+      - run: just mcp_server::check-lockfile
       - name: Install dependencies
         # The ruff/mypy/tach hooks run through `uv run`, so the backend's
-        # virtualenv has to exist before the hooks start.
+        # (and mcp_server's own) virtualenv has to exist before the hooks start.
         run: just install
       - run: just check
 

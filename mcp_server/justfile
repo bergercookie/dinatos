@@ -1,0 +1,46 @@
+# An MCP server exposing the Dinatos API as tools for an LLM harness.
+#
+# Self-sufficient: `cd mcp_server && just <recipe>` works on its own. Imported
+# by the root justfile as the `mcp_server` module, so `just mcp_server
+# <recipe>` works from anywhere in the repo too.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Create/refresh the mcp_server virtualenv.
+install:
+    uv sync
+
+# Run the test suite. Coverage is on by default (see addopts in pyproject.toml);
+# needs nothing but this package's own venv -- tests spin up a real backend
+# app in-process over an in-memory sqlite database, never a running server.
+test *args:
+    uv run pytest {{args}}
+
+# The suite plus a browsable HTML report.
+coverage *args:
+    uv run pytest --cov-report=html {{args}}
+    @echo "HTML report: mcp_server/htmlcov/index.html"
+
+# Every pre-commit hook over the whole tree: ruff, mypy, tach, file hygiene.
+lint:
+    uvx pre-commit run --all-files
+
+# Apply the formatter and the safe lint fixes.
+fmt:
+    uv run ruff format .
+    uv run ruff check --fix .
+
+# Fail if uv.lock has drifted from pyproject.toml.
+check-lockfile:
+    uv lock --check
+
+# Everything CI runs for this package.
+check: lint check-lockfile test
+
+# Run the server over stdio -- point an LLM harness's MCP client config at
+# this (see README.md); needs DINATOS_MCP_TOKEN or DINATOS_MCP_EMAIL/
+# DINATOS_MCP_PASSWORD set, and a reachable Dinatos backend (DINATOS_MCP_BASE_URL).
+run:
+    uv run dinatos-mcp

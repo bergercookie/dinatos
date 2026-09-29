@@ -33,28 +33,34 @@ repos:
   - repo: local
     hooks:
       # ruff runs from the repo root against the root pyproject.toml, so it
-      # covers everything under backend/ and screenshots/ alike -- ruff
-      # itself needs no runtime dependencies, unlike mypy below, so it isn't
-      # limited by screenshots/ using its own uv dependency group. Markdown
-      # is in the trigger because ruff formats the Python blocks inside docs
-      # too.
+      # covers everything under backend/, mcp_server/ and screenshots/ alike
+      # -- ruff itself needs no runtime dependencies, unlike mypy below, so
+      # it isn't limited by screenshots/ using its own uv dependency group.
+      # Markdown is in the trigger because ruff formats the Python blocks
+      # inside docs too.
       - id: ruff-check
         name: ruff (lint + pyupgrade)
         entry: uv run --project backend ruff check --fix .
         language: system
-        files: ^(backend|screenshots)/.*\.py$
+        files: ^(backend|mcp_server|screenshots)/.*\.py$
         pass_filenames: false
       - id: ruff-format
         name: ruff (format)
         entry: uv run --project backend ruff format .
         language: system
-        files: (^(backend|screenshots)/.*\.py$|\.md$)
+        files: (^(backend|mcp_server|screenshots)/.*\.py$|\.md$)
         pass_filenames: false
       - id: mypy
-        name: mypy (strict)
+        name: mypy (strict, backend)
         entry: bash -c 'cd backend && uv run mypy'
         language: system
         files: ^backend/.*\.py$
+        pass_filenames: false
+      - id: mypy-mcp-server
+        name: mypy (strict, mcp_server)
+        entry: bash -c 'cd mcp_server && uv run mypy'
+        language: system
+        files: ^mcp_server/.*\.py$
         pass_filenames: false
       - id: tach
         name: tach (module boundaries)

@@ -20,16 +20,17 @@ mod backend 'backend/justfile'
 mod docker 'docker/justfile'
 mod docs 'docs/justfile'
 mod frontend 'frontend/justfile'
+mod mcp_server 'mcp_server/justfile'
 mod packaging 'packaging/justfile'
 mod screenshots 'screenshots/justfile'
 
 # ---------------------------------------------------------------- whole repo
 
 # Set up every package's virtualenv.
-install: backend::install
+install: backend::install mcp_server::install
 
-# Everything CI runs for the backend and docs (not the frontend -- see AGENTS.md).
-check: lint backend::test docs::docs
+# Everything CI runs for the backend, the MCP server, and docs (not the frontend -- see AGENTS.md).
+check: lint backend::test mcp_server::test docs::docs
 
 # Every pre-commit hook over the whole tree: ruff, mypy, tach, file hygiene.
 lint:
