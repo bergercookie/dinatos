@@ -7,6 +7,7 @@ import '../../core/auth/auth_notifier.dart';
 import '../../core/design_tokens.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
+import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -91,14 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
-                    child: Icon(Icons.fitness_center_rounded, size: 34, color: scheme.onPrimary),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text('Dinatos', style: Theme.of(context).textTheme.headlineMedium),
+                  const BrandHeader(),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Log in to your workout tracker',
