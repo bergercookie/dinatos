@@ -39,7 +39,7 @@ doesn't work here (it's old enough to reject this repo's `mod`-based root
 
 - `just check` must pass -- it's the same lint/test/docs gate CI's `check`
   job runs (pre-commit over the whole tree: ruff, `mypy --strict`, `tach`'s
-  module-boundary check, `hadolint` on `backend/Dockerfile`, plus file
+  module-boundary check, `hadolint` on the root `Dockerfile`, plus file
   hygiene hooks -- see `.pre-commit-config.yaml`; then the backend test
   suite; then a Sphinx docs build with warnings as errors).
 - Touched anything under `backend/alembic/versions/`? Also run

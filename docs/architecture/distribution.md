@@ -3,10 +3,11 @@
 Pushing a `v*` tag (e.g. `v1.2.3`) runs `.github/workflows/release.yml`,
 which builds and publishes, in parallel, everything a release needs:
 
-- The backend, as a Docker image pushed to
-  `ghcr.io/<owner>/dinatos-backend`, tagged with the version and `latest`
+- The backend and the built web app together, as one Docker image pushed to
+  `ghcr.io/<owner>/dinatos`, tagged with the version and `latest`
   (`linux/amd64` only -- see the workflow's own comment on what adding
-  `linux/arm64` would need).
+  `linux/arm64` would need). See "The Docker image builds its own frontend"
+  below.
 - The Linux desktop client, packaged both as a `.deb`
   (`packaging/linux/build-deb.sh`) and a portable `.AppImage`
   (`packaging/linux/build-appimage.sh`) -- both from the same

@@ -29,10 +29,14 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
 
+  # Backend + the built Flutter web app, served together from one origin --
+  # `http://127.0.0.1:8000` is both the API and the app itself, so there's
+  # nothing else to build or serve separately. See docs/deploy/clients.md
+  # for a client build served from its own origin instead.
   backend:
-    build: ./backend
-    image: dinatos-backend:local
-    container_name: dinatos-backend
+    build: .
+    image: dinatos:local
+    container_name: dinatos
     restart: unless-stopped
     depends_on:
       postgres:

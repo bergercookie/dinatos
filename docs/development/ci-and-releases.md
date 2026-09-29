@@ -39,9 +39,12 @@ There's no `just` recipe for "cut a release" -- pushing a `v*` tag (e.g.
 `v1.2.3`) is what triggers `.github/workflows/release.yml`, which builds and
 publishes everything a release needs, in parallel:
 
-- The backend, as a Docker image pushed to
-  `ghcr.io/<owner>/dinatos-backend`, tagged with the version and `latest`
-  (`linux/amd64` only).
+- The backend and the built web app together, as one Docker image pushed to
+  `ghcr.io/<owner>/dinatos`, tagged with the version and `latest`
+  (`linux/amd64` only). This job's own `Dockerfile` build (context: the repo
+  root) fetches and builds the Flutter web app itself as one of its stages,
+  so it needs no `subosito/flutter-action` step, unlike the two Flutter jobs
+  below.
 - The Linux desktop client, packaged both as a `.deb` and a portable
   `.AppImage`, both from the same `flutter build linux --release` bundle.
 - An Android APK, debug-signed (a real release keystore is future work, not
@@ -72,10 +75,11 @@ just packaging build-linux-artifacts <version>   # both Linux formats, one share
 APK output lands under `frontend/build/app/outputs/flutter-apk/`; Linux
 packages default to `dist/`, or accept a different output directory as
 their second argument. Test any change to `packaging/linux/`'s scripts or
-the Dockerfile locally before tagging -- a failure partway through the
-release workflow (e.g. the `.deb` step failing after the Docker image
-already pushed) leaves a real, partially-published state on GHCR with no
-automatic rollback.
+the root `Dockerfile` locally (`just docker build`, or a plain
+`docker build .` from the repo root) before tagging -- a failure partway
+through the release workflow (e.g. the `.deb` step failing after the Docker
+image already pushed) leaves a real, partially-published state on GHCR with
+no automatic rollback.
 
-`hadolint` lints `backend/Dockerfile` as a pre-commit hook, so most
-Dockerfile mistakes are caught by `just check` well before a release build.
+`hadolint` lints the `Dockerfile` as a pre-commit hook, so most Dockerfile
+mistakes are caught by `just check` well before a release build.

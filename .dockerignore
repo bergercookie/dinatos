@@ -1,0 +1,40 @@
+# Build context is the repo root (see Dockerfile) -- keep it to just what
+# the image's stages actually COPY, so `docker build` doesn't ship (or hash,
+# for layer-cache invalidation) everything else in the repo.
+
+# Backend dev/test-only state -- never needed inside the image.
+backend/.venv/
+backend/tests/
+backend/tests_migrations/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.tach/
+backend/htmlcov/
+backend/.coverage
+backend/.coverage.*
+backend/coverage.xml
+**/__pycache__/
+*.py[cod]
+
+# Frontend build/tool artifacts -- `flutter build web` itself runs inside
+# the frontend-builder stage; none of this is a build input.
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins-dependencies
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/linux/flutter/ephemeral/
+frontend/test/
+
+# Unrelated to the image build at all.
+.git/
+.github/
+docs/
+mcp_server/
+packaging/
+screenshots/
+.env
+Dockerfile
+.dockerignore

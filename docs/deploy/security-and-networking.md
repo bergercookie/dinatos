@@ -2,14 +2,14 @@
 
 ## Binds to localhost only, by design
 
-`docker-compose.yml` publishes both Postgres (`5432`) and the backend
-(`8000`) on `127.0.0.1` only -- not reachable from another machine on your
-network, let alone the internet, without something in front of it. Put
-your own reverse proxy (nginx, Caddy, Traefik, whatever you already run for
-other self-hosted services) in front of the backend for anything that
-needs to be reachable outside the host it runs on, and terminate TLS there
-rather than in the backend itself -- the backend has no TLS support of its
-own to configure.
+`docker-compose.yml` publishes both Postgres (`5432`) and the app (`8000`,
+API and web UI together) on `127.0.0.1` only -- not reachable from another
+machine on your network, let alone the internet, without something in front
+of it. Put your own reverse proxy (nginx, Caddy, Traefik, whatever you
+already run for other self-hosted services) in front of it for anything
+that needs to be reachable outside the host it runs on, and terminate TLS
+there rather than in the backend itself -- the backend has no TLS support
+of its own to configure.
 
 ## CORS
 
@@ -18,12 +18,14 @@ own to configure.
 origin can call the API from a browser. This is safe specifically because
 authentication is a bearer token sent in a header, never a cookie: there's
 no ambient session for a third-party site to ride along on, which is the
-actual risk a wildcard origin usually creates. It exists at all because the
-Flutter *web* client runs on a different origin than the backend by
-construction (see [Clients](clients.md)); native clients (Android, Linux)
-never go through a browser and aren't affected by this setting either way.
-Lock it down to your own frontend's specific origin(s) if you'd rather not
-rely on that reasoning.
+actual risk a wildcard origin usually creates. It doesn't affect the bundled
+web UI at all (same origin as the API by construction, so the browser never
+treats it as cross-origin); it only matters for a Flutter *web* build served
+from a different origin than the backend (see [Clients](clients.md)) --
+native clients (Android, Linux) never go through a browser and aren't
+affected by this setting either way. Lock it down to a specific list of
+origins if you'd rather not rely on that reasoning -- if you only ever use
+the bundled UI, that list can be empty.
 
 ## The insecure-TLS client toggle
 
