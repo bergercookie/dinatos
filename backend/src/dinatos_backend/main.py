@@ -47,6 +47,10 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    # `X-Total-Count` (GET /exercises' pagination total) is otherwise
+    # invisible to browser JS on a cross-origin response -- only headers
+    # named here are exposed, regardless of allow_headers above.
+    expose_headers=["X-Total-Count"],
 )
 app.include_router(auth.router)
 app.include_router(exercises.router)

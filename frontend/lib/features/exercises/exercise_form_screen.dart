@@ -71,6 +71,7 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
         await repository.create(exercise);
       }
       ref.invalidate(exerciseListProvider);
+      ref.invalidate(exercisePagingProvider);
       if (mounted) context.pop();
     } on ApiException catch (error) {
       setState(() => _error = error.message);
@@ -84,6 +85,7 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
     try {
       await ref.read(exercisesRepositoryProvider).delete(widget.exerciseId!);
       ref.invalidate(exerciseListProvider);
+      ref.invalidate(exercisePagingProvider);
       if (mounted) context.pop();
     } on ApiException catch (error) {
       setState(() {
@@ -135,14 +137,16 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Name'),
-            validator: (value) => (value == null || value.isEmpty) ? 'Name is required' : null,
+            validator: (value) =>
+                (value == null || value.isEmpty) ? 'Name is required' : null,
           ),
           const SizedBox(height: 16),
           Text('Tracks', style: Theme.of(context).textTheme.titleMedium),
           CheckboxListTile(
             title: const Text('Weight'),
             value: _tracksWeight,
-            onChanged: (value) => setState(() => _tracksWeight = value ?? false),
+            onChanged: (value) =>
+                setState(() => _tracksWeight = value ?? false),
           ),
           CheckboxListTile(
             title: const Text('Reps'),
@@ -152,12 +156,14 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
           CheckboxListTile(
             title: const Text('Distance'),
             value: _tracksDistance,
-            onChanged: (value) => setState(() => _tracksDistance = value ?? false),
+            onChanged: (value) =>
+                setState(() => _tracksDistance = value ?? false),
           ),
           CheckboxListTile(
             title: const Text('Duration'),
             value: _tracksDuration,
-            onChanged: (value) => setState(() => _tracksDuration = value ?? false),
+            onChanged: (value) =>
+                setState(() => _tracksDuration = value ?? false),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.md),
