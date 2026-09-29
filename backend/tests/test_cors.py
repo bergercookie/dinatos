@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 from dinatos_backend.config import get_settings
 

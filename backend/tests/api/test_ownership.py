@@ -2,7 +2,7 @@
 profile are invisible to, and untouchable by, any other account.
 """
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 
 async def _register_and_login(client: AsyncClient, email: str) -> str:

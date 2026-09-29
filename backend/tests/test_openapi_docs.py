@@ -13,7 +13,7 @@ otherwise only observable by hand.
 
 from typing import Any
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 from dinatos_backend.main import app
 

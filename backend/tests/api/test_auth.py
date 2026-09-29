@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 _EMAIL = "session-test@example.com"
 _PASSWORD = "hunter22"

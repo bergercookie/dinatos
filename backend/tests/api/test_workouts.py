@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 
 async def _create_exercise(client: AsyncClient, name: str = "Squat (Barbell)") -> int:

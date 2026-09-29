@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 
 async def test_create_and_list_measurements(client: AsyncClient) -> None:

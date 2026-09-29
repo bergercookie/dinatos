@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 
 async def test_health_returns_ok(client: AsyncClient) -> None:
