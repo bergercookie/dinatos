@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api_exception.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/measurement.dart';
 import 'measurements_providers.dart';
 import 'measurements_repository.dart';
@@ -123,36 +124,38 @@ class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New measurement')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Date'),
-            subtitle: Text(
-              '${_measuredAt.year}-${_measuredAt.month.toString().padLeft(2, '0')}-'
-              '${_measuredAt.day.toString().padLeft(2, '0')}',
-            ),
-            trailing: const Icon(Icons.edit_calendar),
-            onTap: _pickDate,
-          ),
-          const SizedBox(height: 8),
-          for (final field in _fields)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: TextField(
-                controller: _controllers[field],
-                decoration: InputDecoration(labelText: _labels[field]),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      body: ResponsiveBody(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Date'),
+              subtitle: Text(
+                '${_measuredAt.year}-${_measuredAt.month.toString().padLeft(2, '0')}-'
+                '${_measuredAt.day.toString().padLeft(2, '0')}',
               ),
+              trailing: const Icon(Icons.edit_calendar),
+              onTap: _pickDate,
             ),
-          if (_error != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            ErrorBanner(message: _error!),
+            const SizedBox(height: 8),
+            for (final field in _fields)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: TextField(
+                  controller: _controllers[field],
+                  decoration: InputDecoration(labelText: _labels[field]),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+              ),
+            if (_error != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              ErrorBanner(message: _error!),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Save')),
           ],
-          const SizedBox(height: AppSpacing.xl),
-          FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Save')),
-        ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/async_value_view.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise_tutorial.dart';
 import 'exercises_providers.dart';
 
@@ -17,20 +18,22 @@ class ExerciseTutorialScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(exercise.valueOrNull?.name ?? 'Tutorial')),
-      body: AsyncValueView(
-        value: tutorial,
-        onRetry: () => ref.invalidate(exerciseTutorialProvider(exerciseId)),
-        builder: (context, data) {
-          if (data == null) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No tutorial available for this exercise.'),
-              ),
-            );
-          }
-          return _TutorialView(tutorial: data);
-        },
+      body: ResponsiveBody(
+        child: AsyncValueView(
+          value: tutorial,
+          onRetry: () => ref.invalidate(exerciseTutorialProvider(exerciseId)),
+          builder: (context, data) {
+            if (data == null) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('No tutorial available for this exercise.'),
+                ),
+              );
+            }
+            return _TutorialView(tutorial: data);
+          },
+        ),
       ),
     );
   }

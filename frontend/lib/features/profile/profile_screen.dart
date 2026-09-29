@@ -10,6 +10,7 @@ import '../../core/design_tokens.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/profile.dart';
 import 'profile_providers.dart';
 import 'profile_repository.dart';
@@ -95,11 +96,13 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: AsyncValueView(
-        value: profileAsync,
-        onRetry: () => ref.invalidate(profileProvider),
-        builder: (context, profile) =>
-            _ProfileForm(email: email, profile: profile, serverUrl: ref.watch(serverUrlProvider)),
+      body: ResponsiveBody(
+        child: AsyncValueView(
+          value: profileAsync,
+          onRetry: () => ref.invalidate(profileProvider),
+          builder: (context, profile) =>
+              _ProfileForm(email: email, profile: profile, serverUrl: ref.watch(serverUrlProvider)),
+        ),
       ),
     );
   }

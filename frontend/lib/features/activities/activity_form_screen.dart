@@ -7,6 +7,7 @@ import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
@@ -164,7 +165,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
     if (!_isEditing) {
       return Scaffold(
         appBar: AppBar(title: Text(title)),
-        body: _buildForm(context),
+        body: ResponsiveBody(child: _buildForm(context)),
       );
     }
     final activityAsync = ref.watch(activityProvider(widget.activityId!));
@@ -179,12 +180,14 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
           ),
         ],
       ),
-      body: AsyncValueView(
-        value: activityAsync,
-        builder: (context, activity) {
-          _loadFrom(activity);
-          return _buildForm(context);
-        },
+      body: ResponsiveBody(
+        child: AsyncValueView(
+          value: activityAsync,
+          builder: (context, activity) {
+            _loadFrom(activity);
+            return _buildForm(context);
+          },
+        ),
       ),
     );
   }
