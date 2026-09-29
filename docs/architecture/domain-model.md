@@ -5,7 +5,12 @@
 - **users** -- local accounts, first-class from the start: this is a
   household app, not a single-user one. `exercises` are the one thing shared
   across every account; everything else belongs to exactly one.
-- **exercises** -- e.g. Romanian deadlift.
+- **exercises** -- e.g. Romanian deadlift. The shipped catalog
+  (`Exercise.is_custom=False`) is immutable -- a widely-agreed-upon staple
+  set every instance starts with, never editable or deletable, so the
+  catalog someone's workouts and tutorials reference can't be pulled out
+  from under them. Anything a user adds themselves is a custom exercise
+  (`is_custom=True`, the default) and is fully theirs to edit or delete.
 - **workouts** -- a named list of exercises, e.g. an upper-body routine.
 - **activities** -- a recorded gym session: a list of completed exercises
   with their sets, reps and weights. An activity can come from running a

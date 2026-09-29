@@ -151,7 +151,15 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
         }
         final exercise = state.items[index];
         return AppListCard(
-          leading: const AppIconAvatar(icon: Icons.fitness_center_rounded),
+          leading: AppIconAvatar(
+            icon: exercise.isCustom ? Icons.fitness_center_rounded : Icons.verified_rounded,
+            background: exercise.isCustom
+                ? null
+                : Theme.of(context).colorScheme.secondaryContainer,
+            color: exercise.isCustom
+                ? null
+                : Theme.of(context).colorScheme.onSecondaryContainer,
+          ),
           title: exercise.name,
           subtitle: _TrackedChips(exercise: exercise),
           trailing: IconButton(
@@ -206,13 +214,21 @@ class _TrackedChips extends StatelessWidget {
       if (exercise.tracksDistance) 'Distance',
       if (exercise.tracksDuration) 'Duration',
     ];
-    if (tracked.isEmpty) return const Text('Nothing tracked');
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Wrap(
         spacing: 6,
         runSpacing: 4,
-        children: tracked.map((label) => Chip(label: Text(label))).toList(),
+        children: [
+          if (!exercise.isCustom)
+            Chip(
+              avatar: const Icon(Icons.verified_rounded, size: 16),
+              label: const Text('Built-in'),
+              visualDensity: VisualDensity.compact,
+            ),
+          if (tracked.isEmpty) const Text('Nothing tracked'),
+          ...tracked.map((label) => Chip(label: Text(label))),
+        ],
       ),
     );
   }

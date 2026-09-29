@@ -33,6 +33,16 @@ async def _get_or_404(db: AsyncSession, exercise_id: int) -> Exercise:
     return exercise
 
 
+def _ensure_custom(exercise: Exercise) -> None:
+    """Guards the two mutations (`update`/`delete`) the shipped, seeded
+    catalog must never allow -- see `Exercise.is_custom`'s docstring for why.
+    """
+    if not exercise.is_custom:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "built-in exercises cannot be edited or deleted"
+        )
+
+
 @router.get("", response_model=list[ExerciseRead])
 async def list_exercises(
     response: Response,
@@ -67,7 +77,10 @@ async def list_exercises(
 
 @router.post("", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
 async def create_exercise(payload: ExerciseCreate, db: AsyncSession = Depends(get_db)) -> Exercise:
-    exercise = Exercise(**payload.model_dump())
+    # is_custom is never accepted from the client (see ExerciseCreate) --
+    # anything created through this endpoint is by definition someone's own
+    # exercise, never part of the shipped catalog.
+    exercise = Exercise(**payload.model_dump(), is_custom=True)
     db.add(exercise)
     await db.commit()
     await db.refresh(exercise)
@@ -122,6 +135,7 @@ async def update_exercise(
     exercise_id: int, payload: ExerciseUpdate, db: AsyncSession = Depends(get_db)
 ) -> Exercise:
     exercise = await _get_or_404(db, exercise_id)
+    _ensure_custom(exercise)
     for field_name, value in payload.model_dump(exclude_unset=True).items():
         setattr(exercise, field_name, value)
     await db.commit()
@@ -132,5 +146,6 @@ async def update_exercise(
 @router.delete("/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_exercise(exercise_id: int, db: AsyncSession = Depends(get_db)) -> None:
     exercise = await _get_or_404(db, exercise_id)
+    _ensure_custom(exercise)
     await db.delete(exercise)
     await db.commit()

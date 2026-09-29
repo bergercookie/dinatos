@@ -38,7 +38,9 @@ class Settings(BaseSettings):
     # instance's empty `exercises` table on startup -- see
     # `services.exercise.bootstrap_default_exercises`. On by default (an
     # empty exercise picker on first launch is worse than a starting list
-    # someone can edit or delete from); `screenshots/generate.py` turns
+    # to build workouts from immediately); those seeded rows are immutable
+    # (`Exercise.is_custom`), so someone who doesn't want one just adds
+    # their own custom exercise instead. `screenshots/generate.py` turns
     # this off so its own curated, demo-sized exercise list stays exactly
     # what it creates.
     seed_default_exercises: bool = True
