@@ -15,10 +15,14 @@ class Settings(BaseSettings):
     # someone logging their workouts to re-authenticate mid-week.
     session_ttl_days: int = 30
 
-    # The Flutter *web* target is served from its own origin (a different
-    # port at minimum), so without this the browser blocks every request
-    # with a CORS error before it reaches the app at all -- native targets
-    # (Android) don't go through a browser and aren't affected either way.
+    # Needed whenever a Flutter *web* client is served from a different
+    # origin than this backend -- e.g. `web_dir` below unset/missing and the
+    # build served separately, or plain local dev (`flutter run -d
+    # web-server`) -- without this the browser blocks every request with a
+    # CORS error before it reaches the app at all. Not needed for the common
+    # case of `web_dir` serving the bundled build itself (same origin, so
+    # the browser never treats it as cross-origin to begin with), nor for
+    # native targets (Android), which don't go through a browser either way.
     # `["*"]` is safe here specifically because auth is a bearer token in a
     # header, never a cookie: there's no session for a third-party site to
     # ride along on (`allow_credentials` stays False), which is the actual
@@ -55,6 +59,18 @@ class Settings(BaseSettings):
     # is fetched and cached one exercise at a time, in memory only, never
     # written to the database -- see `services.tutorials.cache`.
     workoutx_api_key: str | None = None
+
+    # Where to look for a built Flutter web app (an `index.html` plus its
+    # assets) to serve alongside the API -- see `main.py`. Relative to the
+    # process's working directory, which is why the Docker image's runtime
+    # stage copies the web build to exactly `web/` under its `/app` WORKDIR:
+    # the default here needs no override to find it there. A directory that
+    # doesn't exist (the common case outside the Docker image -- e.g. `just
+    # backend run`, or these test suites) just means nothing is mounted and
+    # the API behaves exactly as it did before this setting existed. Point
+    # this at a different build (or set it to a nonexistent path to disable
+    # serving one at all) without needing to rebuild the image.
+    web_dir: str = "web"
 
 
 @lru_cache

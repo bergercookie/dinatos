@@ -1,34 +1,42 @@
 # Clients
 
-`docker-compose.yml` (see [Quickstart](quickstart.md)) only stands up
-**Postgres and the backend** -- there's no packaged frontend web container
-today. Getting a client in front of your instance means one of:
+## The web app -- already there
 
-## Build the Flutter web app yourself
+`docker-compose.yml` (see [Quickstart](quickstart.md)) builds one image that
+serves **the API and the built Flutter web app together, from the same
+origin**. Open `http://127.0.0.1:8000` (or wherever you've put a reverse
+proxy in front of it) in a browser and you're at the app itself -- nothing
+to build or serve separately, and no Server URL to fill in first: the build
+baked into the image already talks to whatever origin served it.
 
-```bash
-cd frontend
-flutter build web --release
-```
+## Use a prebuilt native client instead
 
-`build/web/` is a static site: serve it with any static file server (nginx,
-Caddy, `python3 -m http.server`, ...) alongside the backend, on whatever
-origin you like. It asks for the backend's Server URL on first launch (see
-[Getting started](../user-guide/getting-started.md)), so the same build
-works no matter what URL you serve it from or what backend you point it at
--- rebuilding per-deployment isn't necessary. See
-[CORS](security-and-networking.md#cors) for the one thing this needs from
-the backend side.
-
-## Use a prebuilt native client
-
-Every tagged release publishes an Android APK and Linux `.deb`/`.AppImage`
-packages -- see the
+Every tagged release also publishes an Android APK and Linux
+`.deb`/`.AppImage` packages -- see the
 [Releases page](https://github.com/bergercookie/dinatos/releases) and
 [Distribution](../architecture/distribution.md) for exactly what's built.
-Install one, then point it at your instance's URL the same way as the web
-build: the Server URL field on first launch, editable later from the
-profile screen.
+Install one, then point it at your instance's URL: the Server URL field on
+first launch, editable later from the profile screen.
 
 There's no packaged macOS or Windows build yet, and no iOS build (Flutter
 supports the platform, but nothing in this repo builds or signs it).
+
+## Serving the web app from its own origin instead
+
+Some setups still want the frontend on a different origin than the backend
+-- a CDN in front of static assets, or a reverse-proxy layout that can't put
+both behind the same host/port. Build it yourself:
+
+```bash
+cd frontend
+flutter build web --release --dart-define=API_BASE_URL=https://api.example.com
+```
+
+`build/web/` is then a static site: serve it with any static file server
+(nginx, Caddy, `python3 -m http.server`, ...) on whatever origin you like.
+Without `API_BASE_URL`, a web build defaults to same-origin (the image's own
+setup above); with it, every request goes to that URL instead, and the
+Server URL field (still editable from the login/profile screens) starts out
+pre-filled with it. See [CORS](security-and-networking.md#cors) for the one
+thing a split setup like this needs from the backend side that the bundled,
+same-origin build doesn't.

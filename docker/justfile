@@ -1,4 +1,5 @@
-# Runs the backend + Postgres via docker-compose.yml at the repo root.
+# Runs the app (backend + the built web UI) + Postgres via
+# docker-compose.yml at the repo root.
 #
 # Self-sufficient: `cd docker && just <recipe>` works on its own. Imported
 # by the root justfile as the `docker` module, so `just docker <recipe>`
@@ -29,6 +30,6 @@ logs:
 down:
     cd "{{repo_root}}" && docker compose down
 
-# Attach a network-troubleshooting shell (ping, dig, tcpdump, curl, ...) to the running backend container.
+# Attach a network-troubleshooting shell (ping, dig, tcpdump, curl, ...) to the running app container.
 debug:
-    docker run --rm -it --network container:dinatos-backend nicolaka/netshoot
+    docker run --rm -it --network container:dinatos nicolaka/netshoot

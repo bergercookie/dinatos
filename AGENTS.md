@@ -78,25 +78,40 @@ Every other `Settings` field has a default too (see config.py), so
 constructing it never needs anything set beyond `DINATOS_DATABASE_URL`
 pointing at a real Postgres for the commands above.
 
-## The Dockerfile needs `--no-editable` on its second `uv sync`
+## The Dockerfile builds the frontend too, and needs `--no-editable` on its second `uv sync`
 
-`backend/Dockerfile` is a two-stage build: `uv sync` in the builder stage,
-then only `.venv/` is copied into the runtime stage. `uv sync`'s default
-install of the project itself is *editable* -- a path reference back to
-`/app/src` in the builder stage's filesystem, not a real package -- so
-without `--no-editable` on the final `uv sync --locked --no-dev` (after
-`src/` is copied in), the runtime image's venv points at a directory that
-does not exist there, and every import of `dinatos_backend` fails with
-`ModuleNotFoundError` at container start. Caught by actually running the
-built image against a real Postgres, not just `docker build` succeeding --
-a broken editable install still builds fine; it only fails when something
-tries to `import dinatos_backend`.
+The root `Dockerfile` (build context: the repo root, not `backend/` -- its
+`frontend-builder` stage needs `frontend/` too) has three stages: a
+`frontend-builder` stage that downloads Flutter's current `stable` release
+(asking Google's own `releases_linux.json` feed which archive that is right
+before downloading it, the same approach as "Frontend needs the Flutter
+SDK" above, just resolved inside the build itself) and runs `flutter build
+web --release`; the backend's own two-stage `uv` build, `uv sync` in the
+`builder` stage, then only `.venv/` copied into the `runtime` stage; and
+`runtime` itself, which also copies the frontend build's `build/web` in at
+`web/`, exactly where `Settings.web_dir` (`backend/src/dinatos_backend/config.py`)
+expects it -- see `main.py`'s `_mount_web_ui` for what serves it from there.
 
-Building the image needs real internet access (PyPI, Docker Hub); a
-sandboxed session behind a TLS-intercepting proxy may need its CA bundle
-threaded into the build (`PIP_CERT`/`SSL_CERT_FILE`) to verify this works at
+`uv sync`'s default install of the project itself is *editable* -- a path
+reference back to `/app/src` in the builder stage's filesystem, not a real
+package -- so without `--no-editable` on the final `uv sync --locked
+--no-dev` (after `src/` is copied in), the runtime image's venv points at a
+directory that does not exist there, and every import of `dinatos_backend`
+fails with `ModuleNotFoundError` at container start. Caught by actually
+running the built image against a real Postgres, not just `docker build`
+succeeding -- a broken editable install still builds fine; it only fails
+when something tries to `import dinatos_backend`.
+
+Building the image needs real internet access (PyPI, Docker Hub,
+`storage.googleapis.com` for the Flutter SDK); a sandboxed session behind a
+TLS-intercepting proxy may need its CA bundle threaded into the build
+(`PIP_CERT`/`SSL_CERT_FILE`, and for apt in the `frontend-builder` stage,
+its certs installed via `update-ca-certificates`) to verify this works at
 all -- that's an environment-verification workaround, never something to
-add permanently to the committed Dockerfile itself.
+add permanently to the committed Dockerfile itself. The frontend build step
+alone takes a real minute or more (SDK download + `flutter build web`), so
+budget more time for a full `docker build .` than the backend-only image
+used to need.
 
 ## Migrations have their own test suite: `just backend test-migrations`
 

@@ -221,11 +221,51 @@ exercise again; every view after that, in the same process, doesn't.
 
 ## Container image
 
-`backend/Dockerfile` is a two-stage `uv` build (resolve + compile in one
-image, ship only the venv in a slim runtime image), running as a non-root
-numeric uid, with migrations run automatically on start
-(`docker-entrypoint.sh`: `alembic upgrade head` then `exec uvicorn ...`, so
-uvicorn is PID 1 and shuts down cleanly on `SIGTERM`).
+The root `Dockerfile` (build context: the repo root, since it needs
+`frontend/` too) is a three-stage build: a `frontend-builder` stage
+downloads Flutter's current `stable` release and runs `flutter build web
+--release`, alongside the backend's own two-stage `uv` build (resolve +
+compile in one image, ship only the venv in a slim runtime image). The
+runtime stage copies in both: the venv from the backend `builder` stage, and
+`build/web` from `frontend-builder` at exactly the path `Settings.web_dir`
+defaults to (`web/`, under `/app`) -- see "Serving the bundled web app"
+below. It all runs as a non-root numeric uid, with migrations run
+automatically on start (`docker-entrypoint.sh`: `alembic upgrade head` then
+`exec uvicorn ...`, so uvicorn is PID 1 and shuts down cleanly on
+`SIGTERM`).
+
+`frontend-builder` pins no Flutter version, deliberately: nothing else in
+this repo does either (every CI job and the release workflow's Android/Linux
+jobs use `subosito/flutter-action@v2` with `channel: stable`, no
+`flutter-version:`), so a pinned archive here would just be a second,
+easily-drifting source of truth for the same thing. It instead asks Google's
+own `releases_linux.json` feed which archive `stable` currently points to
+and downloads exactly that, right before using it -- the same approach
+AGENTS.md recommends for a fresh unattended container, just resolved inside
+the build itself instead of by hand.
+
+### Serving the bundled web app
+
+`main.py`'s `_mount_web_ui` mounts a small `StaticFiles` subclass
+(`_WebApp`) at `/`, but only if `Settings.web_dir` (default: `web`, relative
+to the working directory) actually exists -- true for the Docker image
+(which copies the Flutter build there), false everywhere else this backend
+runs (`just backend run`, every test in `backend/tests/`), where the app
+behaves exactly as it did before this existed. It's mounted last, after
+every API router and `/health`, so those are always matched first; `_WebApp`
+only ever serves what nothing else claimed. `_WebApp.get_response` falls
+back to `index.html` for anything that 404s, which in practice only matters
+for a direct request to a path that isn't a real asset -- Flutter web's
+default hash-based routing (`/#/workouts/1`) never sends its client-side
+route to the server at all, so a browser only ever requests `/` to begin
+with.
+
+The web build itself needs no `--dart-define=API_BASE_URL` at build time:
+the frontend's `ApiConfig` already defaults an override-less web build to
+whatever origin actually served it, which is this same backend, on the same
+origin, once `_WebApp` is serving it -- see
+[Clients](../deploy/clients.md) for building against a separately-hosted
+backend instead.
 
 The runtime stage's `uv sync` needs `--no-editable`: `uv sync`'s default
 install of the project itself is *editable* -- a path reference back to
@@ -242,8 +282,8 @@ editable install still builds fine; it only fails when something tries to
 [Deploying with Docker Compose](../deploy/quickstart.md) for running it.
 `just docker debug` attaches
 [`nicolaka/netshoot`](https://github.com/nicolaka/netshoot) (ping,
-traceroute, dig, tcpdump, curl, ...) to the running backend container's
-network namespace for troubleshooting -- deliberately not baked into
-`backend/Dockerfile` itself: the runtime image never gains these tools or
-the layer weight of installing them, and it's pulled from Docker Hub the
-first time it's used, not part of any build.
+traceroute, dig, tcpdump, curl, ...) to the running app container's network
+namespace for troubleshooting -- deliberately not baked into the `Dockerfile`
+itself: the runtime image never gains these tools or the layer weight of
+installing them, and it's pulled from Docker Hub the first time it's used,
+not part of any build.

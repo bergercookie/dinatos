@@ -1,7 +1,13 @@
 """The FastAPI application."""
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from dinatos_backend import __version__
 from dinatos_backend.api.lifespan import lifespan
@@ -64,3 +70,38 @@ app.include_router(imports.router)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+class _WebApp(StaticFiles):
+    """Serves a built Flutter web app, falling back to `index.html` for any
+    path that doesn't resolve to an actual file.
+
+    Flutter web's default (hash-based) routing never sends its client-side
+    routes to the server at all -- a browser on `/#/workouts/1` only ever
+    requests `/` -- so in practice this fallback is a safety net for the odd
+    direct request to a path that isn't a real asset, not something the app
+    relies on to navigate.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                return await super().get_response("index.html", scope)
+            raise
+
+
+def _mount_web_ui(app: FastAPI, web_dir: Path) -> None:
+    """Serves a built Flutter web app under `/`, mounted last and
+    deliberately not itself an included router -- every path above
+    (including `/health`) is matched first, so this only ever serves what
+    nothing else claimed. A no-op when `web_dir` doesn't exist, which is the
+    common case outside the Docker image (`just backend run`, these tests)
+    -- see `Settings.web_dir`.
+    """
+    if web_dir.is_dir():
+        app.mount("/", _WebApp(directory=web_dir, html=True), name="web-ui")
+
+
+_mount_web_ui(app, Path(get_settings().web_dir))

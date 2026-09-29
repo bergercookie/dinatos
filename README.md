@@ -44,12 +44,13 @@ committed here.
 
 ```bash
 cp .env.example .env   # then edit it -- see the file for what to set
-docker compose up -d    # Postgres + backend
+docker compose up -d    # Postgres + the app (API and web UI, same origin)
 ```
 
-See [Running your own instance](https://bergercookie.github.io/dinatos/deploy/index.html)
-for configuration, upgrades/backups, and getting a client (web, Android, or
-Linux desktop) pointed at it.
+Then open `http://127.0.0.1:8000` in a browser -- that's the app itself, no
+separate frontend to build or serve. See
+[Running your own instance](https://bergercookie.github.io/dinatos/deploy/index.html)
+for configuration, upgrades/backups, and native (Android/Linux) clients.
 
 ## Using it
 
@@ -67,11 +68,11 @@ for everything beyond the quick version.
 
 ## Releases
 
-Pushing a `v*` tag builds and publishes a backend Docker image (to
-`ghcr.io/bergercookie/dinatos-backend`), a Linux `.deb`/`.AppImage`, and an
-Android APK -- see the
+Pushing a `v*` tag builds and publishes a Docker image with the backend and
+web UI together (to `ghcr.io/bergercookie/dinatos`), a Linux
+`.deb`/`.AppImage`, and an Android APK -- see the
 [Releases page](https://github.com/bergercookie/dinatos/releases) for the
-latest. Every client build asks for the backend's URL on first launch (or
+latest. The native builds ask for the backend's URL on first launch (or
 later, from the profile screen), so one release works against anyone's own
 homelab instance rather than whichever one built it.
 

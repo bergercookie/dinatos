@@ -1,9 +1,10 @@
 # Quickstart
 
-Dinatos ships as a backend Docker image plus Postgres; `docker-compose.yml`
-at the repo root wires the two together. This is the fastest path to a
-running instance -- see [Clients](clients.md) right after for how you or
-anyone else actually connects to it.
+Dinatos ships as one Docker image (the backend API plus the built web app,
+served together) plus Postgres; `docker-compose.yml` at the repo root wires
+the two together. This is the fastest path to a running instance -- see
+[Clients](clients.md) right after for other ways to connect to it (native
+Android/Linux clients, or a web build served from its own origin).
 
 ```bash
 git clone https://github.com/bergercookie/dinatos.git
@@ -15,11 +16,12 @@ docker compose up -d
 (Or, with `just` on `PATH`: `just docker up` -- an identical wrapper around
 the same `docker compose` invocation.)
 
-This starts Postgres and the backend, and runs database migrations
-automatically on the backend's first start -- nothing extra to run by hand.
-The backend listens on `http://127.0.0.1:8000` (`/docs` for the interactive
-API); see [Security and networking](security-and-networking.md) for why
-that's `127.0.0.1`, not `0.0.0.0`, by design.
+This starts Postgres and the app, and runs database migrations
+automatically on the app's first start -- nothing extra to run by hand.
+It listens on `http://127.0.0.1:8000` -- open that in a browser and you're
+at the app itself (`/docs` for the interactive API instead); see
+[Security and networking](security-and-networking.md) for why that's
+`127.0.0.1`, not `0.0.0.0`, by design.
 
 ## `.env` -- what to set
 

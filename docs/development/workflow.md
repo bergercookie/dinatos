@@ -32,14 +32,17 @@ Three ways, in increasing order of how much you're standing up yourself:
 [Deploying with Docker Compose](../deploy/quickstart.md)) or one you run
 yourself -- picks up `backend/.env` if present.
 
-**With Docker** (`backend/Dockerfile` + `docker-compose.yml` at the repo
-root -- Postgres and the backend together, migrations run automatically on
-container start):
+**With Docker** (the root `Dockerfile` + `docker-compose.yml` at the repo
+root -- Postgres and the app together, migrations run automatically on
+container start). Note this builds the bundled web app too (the
+`frontend-builder` stage needs the Flutter SDK, which this downloads itself
+-- see the `Dockerfile`'s own comments), so it's slower than `just backend
+run` above for a backend-only edit/test loop:
 
 ```bash
 cp .env.example .env   # then edit it
-just docker up      # http://127.0.0.1:8000 -- /docs for the interactive API
-just docker logs     # follow the backend's logs
+just docker up      # http://127.0.0.1:8000 -- the app itself; /docs for the API
+just docker logs     # follow its logs
 just docker down     # stop; the postgres data volume is kept
 ```
 
