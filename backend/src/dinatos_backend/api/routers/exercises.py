@@ -107,7 +107,7 @@ async def get_exercise_tutorial(
     try:
         tutorial = await provider.get_tutorial(exercise.name)
     except Exception as error:
-        # Deliberately broad, not just `httpx.HTTPError`: a third-party
+        # Deliberately broad, not just `httpx2.HTTPError`: a third-party
         # API's response shape is never fully trusted (a malformed body, an
         # unexpected missing field), and letting *any* of that surface as
         # an unhandled 500 has a real, non-obvious cost beyond a bad error

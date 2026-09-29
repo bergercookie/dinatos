@@ -16,7 +16,7 @@ this project's own choice not to persist third-party tutorial content at
 all (see that module's docstring).
 """
 
-import httpx
+import httpx2 as httpx
 
 from dinatos_backend.services.tutorials.base import ExerciseTutorial
 

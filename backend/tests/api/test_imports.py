@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"
 

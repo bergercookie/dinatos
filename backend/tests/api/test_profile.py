@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 
 async def test_read_profile_creates_it_on_first_access(client: AsyncClient) -> None:

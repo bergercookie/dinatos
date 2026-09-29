@@ -1,5 +1,5 @@
-import httpx
-from httpx import AsyncClient
+import httpx2 as httpx
+from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.main import app
@@ -215,7 +215,7 @@ async def test_get_exercise_tutorial_is_502_when_the_provider_is_unreachable(
 
 
 async def test_get_exercise_tutorial_502_still_carries_cors_headers(client: AsyncClient) -> None:
-    """Deliberately a plain `KeyError`, not `httpx.HTTPError`: a
+    """Deliberately a plain `KeyError`, not `httpx2.HTTPError`: a
     third-party provider's response shape is never fully trusted, and the
     router has to turn *any* failure into a real `HTTPException` --
     letting one through unhandled bypasses `CORSMiddleware` entirely
