@@ -11,6 +11,11 @@ dependencies = [
     "asyncpg>=0.29",
     "email-validator>=2.3.0",
     "fastapi>=0.115",
+    # A runtime dependency, not just a test/dev one: services/tutorials/workoutx.py
+    # imports it unconditionally (services/tutorials/__init__.py imports
+    # WorkoutXProvider at module load regardless of whether WorkoutX is
+    # actually configured), so a production install needs it too.
+    "httpx2>=2.13.1",
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
     "python-multipart>=0.0.9",
@@ -37,7 +42,6 @@ testing-infra = [
 ]
 dev = [
     "aiosqlite>=0.20",
-    "httpx2>=2.13.1",
     "mypy>=1.11",
     "pytest>=8.3",
     "pytest-alembic>=0.13.0",
