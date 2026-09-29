@@ -121,6 +121,27 @@ Argon2's slowness there would only cost real request latency for no
 security benefit. Never swap the two: Argon2 for the password, SHA-256 for
 the session token.
 
+## MCP server
+
+`mcp_server/` (package `dinatos-mcp`, entry point `dinatos-mcp`) exposes a
+handful of the endpoints above -- exercises, workouts, activities -- as MCP
+tools, so an LLM harness (Claude Desktop, or any other MCP client) can
+create exercises, build workout templates and log activities on someone's
+behalf. It's deliberately its own `uv` project (own `pyproject.toml`,
+`uv.lock`, virtualenv), not a module inside `dinatos_backend`: it's a
+*client* of this API, the same as the Flutter app or a `curl` script, so it
+depends on this package only in its own tests (to spin up the real FastAPI
+app in-process over an ASGI transport, rather than a live server) -- never
+at runtime, where it talks HTTP like anyone else.
+
+Authentication reuses the session mechanism above unchanged: `DinatosClient`
+(`mcp_server/src/dinatos_mcp/client.py`) either carries a bearer token given
+directly (`DINATOS_MCP_TOKEN`), or logs in lazily on first use with an email
+and password (`DINATOS_MCP_EMAIL`/`DINATOS_MCP_PASSWORD`) and caches the
+token it gets back for the process's lifetime -- there's no separate
+service-account concept, no API key scheme of its own to maintain. See
+`docs/user-guide/mcp-server.md` for how to point an LLM harness at it.
+
 ## Hevy import
 
 `POST /imports/hevy/workouts` and `POST /imports/hevy/measurements` take

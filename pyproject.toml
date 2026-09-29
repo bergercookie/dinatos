@@ -8,7 +8,13 @@
 
 [tool.ruff]
 line-length = 100
-src = ["backend/src", "backend/tests", "backend/tests_migrations"]
+src = [
+    "backend/src",
+    "backend/tests",
+    "backend/tests_migrations",
+    "mcp_server/src",
+    "mcp_server/tests",
+]
 target-version = "py312"
 
 [tool.ruff.lint]
@@ -23,6 +29,7 @@ ignore = ["ANN401"]
 "backend/tests/*" = ["S101", "S104", "S105", "S106"]
 # S106: a throwaway testcontainers Postgres credential, not a real secret.
 "backend/tests_migrations/*" = ["S106"]
+"mcp_server/tests/*" = ["S101", "S104", "S105", "S106"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency injection is `Depends(...)` as an argument default by
