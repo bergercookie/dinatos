@@ -1,7 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.api.deps import get_current_user
@@ -35,14 +35,32 @@ async def _get_or_404(db: AsyncSession, exercise_id: int) -> Exercise:
 
 @router.get("", response_model=list[ExerciseRead])
 async def list_exercises(
-    search: str | None = None, db: AsyncSession = Depends(get_db)
+    response: Response,
+    search: str | None = None,
+    limit: int | None = Query(None, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
 ) -> list[Exercise]:
     """List exercises, optionally filtered by a case-insensitive name search --
-    this backs the watch-sync picker's search box.
+    this backs the watch-sync picker's search box, and the exercises list
+    screen, and the workout/activity exercise pickers.
+
+    `limit`/`offset` are opt-in: the pickers omit them and get every matching
+    row in one shot, exactly as before pagination existed, since they need
+    the full set to build their own in-memory picker/lookup. The exercises
+    list screen passes them to page through the catalog instead of fetching
+    everything up front. Either way the true total (before slicing) comes
+    back via the `X-Total-Count` header rather than an envelope, so the
+    response body's shape -- a bare array -- never changes for callers that
+    don't ask for a page.
     """
     query = select(Exercise).order_by(Exercise.name)
     if search:
         query = query.where(Exercise.name.ilike(f"%{search}%"))
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+    response.headers["X-Total-Count"] = str(total or 0)
+    if limit is not None:
+        query = query.limit(limit).offset(offset)
     result = await db.execute(query)
     return list(result.scalars())
 

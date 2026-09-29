@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/async_value_view.dart';
+import '../../core/api_exception.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
 import '../../core/widgets/empty_state.dart';
@@ -10,13 +10,41 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise.dart';
 import 'exercises_providers.dart';
 
-class ExerciseListScreen extends ConsumerWidget {
+class ExerciseListScreen extends ConsumerStatefulWidget {
   const ExerciseListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final exercises = ref.watch(exerciseListProvider);
-    final searching = ref.watch(exerciseSearchProvider).isNotEmpty;
+  ConsumerState<ExerciseListScreen> createState() => _ExerciseListScreenState();
+}
+
+class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
+  final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fires a bit before the true end so the next page is usually already
+    // loading by the time a person scrolls into view of the last item.
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >
+          _scrollController.position.maxScrollExtent - 400) {
+        ref.read(exercisePagingProvider.notifier).loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(exercisePagingProvider);
+    final searching = state.search.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Exercises')),
@@ -27,67 +55,140 @@ class ExerciseListScreen extends ConsumerWidget {
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(
-          onRefresh: () => ref.refresh(exerciseListProvider.future),
+          onRefresh: () => ref.read(exercisePagingProvider.notifier).refresh(),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  0,
+                ),
                 child: TextField(
+                  controller: _searchController,
                   decoration: const InputDecoration(
                     hintText: 'Search exercises...',
                     prefixIcon: Icon(Icons.search_rounded),
                     isDense: true,
                   ),
-                  onChanged: (value) => ref.read(exerciseSearchProvider.notifier).state = value,
+                  onChanged: (value) =>
+                      ref.read(exercisePagingProvider.notifier).setSearch(value),
                 ),
               ),
-              Expanded(
-                child: AsyncValueView(
-                  value: exercises,
-                  onRetry: () => ref.invalidate(exerciseListProvider),
-                  builder: (context, data) {
-                    if (data.isEmpty) {
-                      return EmptyState(
-                        icon: searching ? Icons.search_off_rounded : Icons.fitness_center_rounded,
-                        title: searching ? 'No matching exercises' : 'No exercises yet',
-                        message: searching
-                            ? 'Try a different search term.'
-                            : 'Add the exercises you train so you can build workouts around them.',
-                        actionLabel: searching ? null : 'Add exercise',
-                        onAction: searching ? null : () => context.go('/exercises/new'),
-                      );
-                    }
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.lg,
-                        AppSpacing.lg,
-                        AppSpacing.xxl,
-                      ),
-                      itemCount: data.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
-                      itemBuilder: (context, index) {
-                        final exercise = data[index];
-                        return AppListCard(
-                          leading: const AppIconAvatar(icon: Icons.fitness_center_rounded),
-                          title: exercise.name,
-                          subtitle: _TrackedChips(exercise: exercise),
-                          trailing: IconButton(
-                            tooltip: 'View tutorial',
-                            icon: const Icon(Icons.play_circle_outline_rounded),
-                            onPressed: () => context.go('/exercises/${exercise.id}/tutorial'),
-                          ),
-                          onTap: () => context.go('/exercises/${exercise.id}/edit'),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
+              Expanded(child: _buildBody(context, state, searching: searching)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    ExercisePageState state, {
+    required bool searching,
+  }) {
+    if (state.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error != null && state.items.isEmpty) {
+      final error = state.error;
+      final scheme = Theme.of(context).colorScheme;
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline_rounded, size: 40, color: scheme.error),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                error is ApiException ? error.message : 'Something went wrong.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton.tonal(
+                onPressed: () =>
+                    ref.read(exercisePagingProvider.notifier).refresh(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (state.items.isEmpty) {
+      return EmptyState(
+        icon: searching
+            ? Icons.search_off_rounded
+            : Icons.fitness_center_rounded,
+        title: searching ? 'No matching exercises' : 'No exercises yet',
+        message: searching ? 'Try a different search term.' : 'Add the exercises you train so you can build workouts around them.',
+        actionLabel: searching ? null : 'Add exercise',
+        onAction: searching ? null : () => context.go('/exercises/new'),
+      );
+    }
+    // +1 for a trailing loading/end-of-list row, whenever there's something
+    // to say about it (more to load, or a load-more error).
+    final showFooter =
+        state.hasMore || state.loadingMore || state.error != null;
+    return ListView.separated(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.xxl,
+      ),
+      itemCount: state.items.length + (showFooter ? 1 : 0),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AppSpacing.sm),
+      itemBuilder: (context, index) {
+        if (index >= state.items.length) {
+          return _ListFooter(state: state);
+        }
+        final exercise = state.items[index];
+        return AppListCard(
+          leading: const AppIconAvatar(icon: Icons.fitness_center_rounded),
+          title: exercise.name,
+          subtitle: _TrackedChips(exercise: exercise),
+          trailing: IconButton(
+            tooltip: 'View tutorial',
+            icon: const Icon(Icons.play_circle_outline_rounded),
+            onPressed: () => context.go('/exercises/${exercise.id}/tutorial'),
+          ),
+          onTap: () => context.go('/exercises/${exercise.id}/edit'),
+        );
+      },
+    );
+  }
+}
+
+class _ListFooter extends ConsumerWidget {
+  const _ListFooter({required this.state});
+
+  final ExercisePageState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (state.error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: TextButton.icon(
+            onPressed: () =>
+                ref.read(exercisePagingProvider.notifier).loadMore(),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
+          ),
+        ),
+      );
+    }
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Center(child: CircularProgressIndicator()),
     );
   }
 }

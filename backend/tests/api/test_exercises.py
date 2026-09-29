@@ -51,6 +51,51 @@ async def test_list_exercises_filters_by_search(client: AsyncClient) -> None:
     assert names == ["Bench Press (Dumbbell)", "Squat (Barbell)"]
 
 
+async def test_list_exercises_without_limit_returns_everything(client: AsyncClient) -> None:
+    for name in ["Squat (Barbell)", "Bench Press (Dumbbell)", "Deadlift (Barbell)"]:
+        await client.post("/exercises", json={"name": name})
+
+    response = await client.get("/exercises")
+
+    assert response.status_code == 200
+    assert response.headers["x-total-count"] == "3"
+    assert len(response.json()) == 3
+
+
+async def test_list_exercises_paginates_when_limit_is_given(client: AsyncClient) -> None:
+    for name in ["Squat (Barbell)", "Bench Press (Dumbbell)", "Deadlift (Barbell)"]:
+        await client.post("/exercises", json={"name": name})
+
+    response = await client.get("/exercises", params={"limit": 2})
+    assert response.status_code == 200
+    assert response.headers["x-total-count"] == "3"
+    names = [item["name"] for item in response.json()]
+    assert names == ["Bench Press (Dumbbell)", "Deadlift (Barbell)"]
+
+    response = await client.get("/exercises", params={"limit": 2, "offset": 2})
+    assert response.status_code == 200
+    assert response.headers["x-total-count"] == "3"
+    names = [item["name"] for item in response.json()]
+    assert names == ["Squat (Barbell)"]
+
+
+async def test_list_exercises_pagination_respects_search(client: AsyncClient) -> None:
+    await client.post("/exercises", json={"name": "Squat (Barbell)"})
+    await client.post("/exercises", json={"name": "Squat (Dumbbell)"})
+    await client.post("/exercises", json={"name": "Bench Press (Dumbbell)"})
+
+    response = await client.get("/exercises", params={"search": "squat", "limit": 1})
+
+    assert response.status_code == 200
+    assert response.headers["x-total-count"] == "2"
+    assert len(response.json()) == 1
+
+
+async def test_list_exercises_rejects_an_out_of_range_limit(client: AsyncClient) -> None:
+    response = await client.get("/exercises", params={"limit": 500})
+    assert response.status_code == 422
+
+
 async def test_update_exercise(client: AsyncClient) -> None:
     created = await client.post("/exercises", json={"name": "Plank"})
     exercise_id = created.json()["id"]

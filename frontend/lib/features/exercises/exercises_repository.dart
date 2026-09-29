@@ -10,6 +10,16 @@ final exercisesRepositoryProvider = Provider<ExercisesRepository>((ref) {
   return ExercisesRepository(ref.watch(dioProvider));
 });
 
+/// One page of [ExercisesRepository.listPage], plus the true total row count
+/// (over the whole search, not just this page) so a caller knows when it has
+/// reached the end.
+class ExercisePage {
+  const ExercisePage({required this.items, required this.total});
+
+  final List<Exercise> items;
+  final int total;
+}
+
 /// Exercises are the one resource shared across every account (see
 /// docs/architecture/domain-model.md's "Concepts") -- every other repository scopes
 /// implicitly to the caller via the bearer token, same as this one, but
@@ -23,9 +33,43 @@ class ExercisesRepository {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/exercises',
-        queryParameters: search != null && search.isNotEmpty ? {'search': search} : null,
+        queryParameters: search != null && search.isNotEmpty
+            ? {'search': search}
+            : null,
       );
-      return response.data!.map((e) => Exercise.fromJson(e as Map<String, dynamic>)).toList();
+      return response.data!
+          .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// A page of the catalog, for the exercises list screen's infinite scroll --
+  /// unlike [list], this always passes `limit`/`offset`, so the backend
+  /// slices the result and reports the true (pre-slice) count via the
+  /// `X-Total-Count` header instead of returning everything in one shot.
+  Future<ExercisePage> listPage({
+    String? search,
+    required int limit,
+    required int offset,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/exercises',
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+      final items = response.data!
+          .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final total = int.parse(
+        response.headers.value('x-total-count') ?? '${items.length}',
+      );
+      return ExercisePage(items: items, total: total);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }
@@ -42,7 +86,10 @@ class ExercisesRepository {
 
   Future<Exercise> create(Exercise exercise) async {
     try {
-      final response = await _dio.post<Map<String, dynamic>>('/exercises', data: exercise.toJson());
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/exercises',
+        data: exercise.toJson(),
+      );
       return Exercise.fromJson(response.data!);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
@@ -67,7 +114,9 @@ class ExercisesRepository {
   /// reach the provider, a network error) still throws.
   Future<ExerciseTutorial?> getTutorial(int id) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>('/exercises/$id/tutorial');
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/exercises/$id/tutorial',
+      );
       return ExerciseTutorial.fromJson(response.data!);
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
