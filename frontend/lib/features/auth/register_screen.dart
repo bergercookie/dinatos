@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/auth/auth_notifier.dart';
+import '../../core/design_tokens.dart';
+import '../../core/widgets/error_banner.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -45,19 +47,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xl),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+                    child: Icon(Icons.fitness_center_rounded, size: 34, color: scheme.onPrimary),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   Text('Create an account', style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Start tracking your training with Dinatos',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(labelText: 'Email'),
@@ -79,10 +95,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         : null,
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    const SizedBox(height: AppSpacing.md),
+                    ErrorBanner(message: _error!),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   FilledButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting

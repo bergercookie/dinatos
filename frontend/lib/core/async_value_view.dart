@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_exception.dart';
+import 'design_tokens.dart';
 
 /// The loading/error/data switch every list screen needs for its
 /// `FutureProvider`, in one place instead of repeated per screen.
@@ -17,21 +18,30 @@ class AsyncValueView<T> extends StatelessWidget {
     return value.when(
       data: (data) => builder(context, data),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(error is ApiException ? error.message : 'Something went wrong.'),
-              if (onRetry != null) ...[
-                const SizedBox(height: 12),
-                FilledButton(onPressed: onRetry, child: const Text('Retry')),
+      error: (error, stackTrace) {
+        final scheme = Theme.of(context).colorScheme;
+        return Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xxl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline_rounded, size: 40, color: scheme.error),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  error is ApiException ? error.message : 'Something went wrong.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+                if (onRetry != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

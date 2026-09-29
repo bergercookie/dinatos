@@ -6,8 +6,10 @@ import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_state.dart';
+import '../../core/design_tokens.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
+import '../../core/widgets/error_banner.dart';
 import '../../models/profile.dart';
 import 'profile_providers.dart';
 import 'profile_repository.dart';
@@ -151,69 +153,135 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.xxl,
+      ),
       children: [
-        if (widget.email != null)
-          ListTile(title: const Text('Email'), subtitle: Text(widget.email!)),
-        ListTile(
-          title: const Text('Server'),
-          subtitle: Text(widget.serverUrl),
-          trailing: IconButton(
-            tooltip: 'Change server',
-            icon: const Icon(Icons.edit),
-            onPressed: () => _editServerUrl(context, ref),
+        const _SectionHeader('Account'),
+        Card(
+          child: Column(
+            children: [
+              if (widget.email != null)
+                ListTile(
+                  leading: const Icon(Icons.alternate_email_rounded),
+                  title: const Text('Email'),
+                  subtitle: Text(widget.email!),
+                ),
+              ListTile(
+                leading: const Icon(Icons.dns_outlined),
+                title: const Text('Server'),
+                subtitle: Text(widget.serverUrl),
+                trailing: IconButton(
+                  tooltip: 'Change server',
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _editServerUrl(context, ref),
+                ),
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.lock_open_outlined),
+                title: const Text('Allow self-signed certificates'),
+                subtitle: const Text('Skips TLS certificate verification for this server'),
+                value: ref.watch(allowInsecureTlsProvider),
+                onChanged: (value) async {
+                  await ref.read(insecureTlsStorageProvider).write(value);
+                  ref.read(allowInsecureTlsProvider.notifier).state = value;
+                },
+              ),
+            ],
           ),
         ),
-        SwitchListTile(
-          title: const Text('Allow self-signed certificates'),
-          subtitle: const Text('Skips TLS certificate verification for this server'),
-          value: ref.watch(allowInsecureTlsProvider),
-          onChanged: (value) async {
-            await ref.read(insecureTlsStorageProvider).write(value);
-            ref.read(allowInsecureTlsProvider.notifier).state = value;
-          },
+        const SizedBox(height: AppSpacing.xl),
+        const _SectionHeader('Data'),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.file_upload_outlined),
+                title: const Text('Import from Hevy'),
+                subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.go('/profile/import-hevy'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.api_outlined),
+                title: const Text('API documentation'),
+                subtitle: const Text('Browse and try out the REST API'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                // `go`, not `push`: verified in a real browser that `push`
+                // renders this screen but leaves the address bar on
+                // `#/profile`, so the /docs link couldn't be copied,
+                // bookmarked or reloaded. `go` leaves nothing to pop, which
+                // is why the docs screen carries its own explicit back button.
+                onTap: () => context.go('/docs'),
+              ),
+            ],
+          ),
         ),
-        ListTile(
-          title: const Text('Import from Hevy'),
-          subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go('/profile/import-hevy'),
+        const SizedBox(height: AppSpacing.xl),
+        const _SectionHeader('Preferences'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _heightController,
+                  decoration: const InputDecoration(labelText: 'Height (cm)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                DropdownButtonFormField<UnitSystem>(
+                  initialValue: _unitSystem,
+                  decoration: const InputDecoration(labelText: 'Unit system'),
+                  items: UnitSystem.values
+                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _unitSystem = value);
+                  },
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  ErrorBanner(message: _error!),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _submitting ? null : _save,
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        ListTile(
-          title: const Text('API documentation'),
-          subtitle: const Text('Browse and try out the REST API'),
-          trailing: const Icon(Icons.chevron_right),
-          // `go`, not `push`: verified in a real browser that `push` renders
-          // this screen but leaves the address bar on `#/profile`, so the
-          // /docs link couldn't be copied, bookmarked or reloaded. `go` leaves
-          // nothing to pop, which is why the docs screen carries its own
-          // explicit back button.
-          onTap: () => context.go('/docs'),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _heightController,
-          decoration: const InputDecoration(labelText: 'Height (cm)'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<UnitSystem>(
-          initialValue: _unitSystem,
-          decoration: const InputDecoration(labelText: 'Unit system'),
-          items: UnitSystem.values
-              .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) setState(() => _unitSystem = value);
-          },
-        ),
-        if (_error != null) ...[
-          const SizedBox(height: 12),
-          Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-        ],
-        const SizedBox(height: 24),
-        FilledButton(onPressed: _submitting ? null : _save, child: const Text('Save')),
       ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.sm),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
     );
   }
 }

@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
+import '../../core/design_tokens.dart';
+import '../../core/widgets/app_list_card.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../models/measurement.dart';
 import 'measurements_providers.dart';
 import 'measurements_repository.dart';
@@ -42,10 +45,23 @@ class MeasurementListScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(measurementListProvider),
           builder: (context, data) {
             if (data.isEmpty) {
-              return const Center(child: Text('No measurements logged yet.'));
+              return EmptyState(
+                icon: Icons.straighten_rounded,
+                title: 'No measurements logged yet',
+                message: 'Track weight and body measurements over time to see your progress.',
+                actionLabel: 'Add measurement',
+                onAction: () => context.go('/measurements/new'),
+              );
             }
-            return ListView.builder(
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               itemCount: data.length,
+              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final measurement = data[index];
                 final subtitleParts = <String>[
@@ -56,14 +72,21 @@ class MeasurementListScreen extends ConsumerWidget {
                   key: ValueKey(measurement.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
-                    color: Theme.of(context).colorScheme.errorContainer,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                     alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Icon(Icons.delete),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
                   ),
                   onDismissed: (_) => _delete(context, ref, measurement),
-                  child: ListTile(
-                    title: Text(dateFormat.format(measurement.measuredAt.toLocal())),
+                  child: AppListCard(
+                    leading: const AppIconAvatar(icon: Icons.straighten_rounded),
+                    title: dateFormat.format(measurement.measuredAt.toLocal()),
                     subtitle: subtitleParts.isEmpty ? null : Text(subtitleParts.join(' · ')),
                   ),
                 );

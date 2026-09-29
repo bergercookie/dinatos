@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
+import '../../core/design_tokens.dart';
+import '../../core/widgets/error_banner.dart';
 import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
@@ -289,10 +291,10 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
           ),
         ),
         if (_error != null) ...[
-          const SizedBox(height: 12),
-          Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          const SizedBox(height: AppSpacing.md),
+          ErrorBanner(message: _error!),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         FilledButton(
           onPressed: _submitting ? null : _submit,
           child: Text(_isEditing ? 'Save' : 'Create'),

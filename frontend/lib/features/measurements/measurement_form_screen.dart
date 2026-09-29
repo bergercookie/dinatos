@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
+import '../../core/design_tokens.dart';
+import '../../core/widgets/error_banner.dart';
 import '../../models/measurement.dart';
 import 'measurements_providers.dart';
 import 'measurements_repository.dart';
@@ -145,10 +147,10 @@ class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
               ),
             ),
           if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            const SizedBox(height: AppSpacing.md),
+            ErrorBanner(message: _error!),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Save')),
         ],
       ),
