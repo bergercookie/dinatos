@@ -16,6 +16,17 @@ async def test_bootstrap_default_exercises_seeds_an_empty_catalog(db: AsyncSessi
     assert names == {entry["name"] for entry in load_free_exercise_db()}
 
 
+async def test_bootstrap_default_exercises_seeds_built_in_exercises(db: AsyncSession) -> None:
+    """Seeded rows are the immutable, shipped catalog (see
+    `Exercise.is_custom`'s docstring) -- never editable/deletable, unlike an
+    exercise a person adds themselves.
+    """
+    await bootstrap_default_exercises(db)
+
+    result = await db.execute(select(Exercise.is_custom))
+    assert all(is_custom is False for is_custom in result.scalars())
+
+
 async def test_bootstrap_default_exercises_infers_tracking_flags_by_category(
     db: AsyncSession,
 ) -> None:

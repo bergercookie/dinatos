@@ -16,6 +16,7 @@ Map<String, dynamic> _exercise(int id, String name) => {
   'tracks_reps': true,
   'tracks_distance': false,
   'tracks_duration': false,
+  'is_custom': true,
 };
 
 Response<List<dynamic>> _page(List<Map<String, dynamic>> items, int total) =>

@@ -18,6 +18,7 @@ Response<Map<String, dynamic>> _exerciseResponse(int id, String name) => Respons
     'tracks_reps': true,
     'tracks_distance': false,
     'tracks_duration': false,
+    'is_custom': false,
   },
 );
 

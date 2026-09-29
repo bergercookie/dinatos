@@ -1,7 +1,9 @@
 import httpx
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.main import app
+from dinatos_backend.models.exercise import Exercise
 from dinatos_backend.services.tutorials import ExerciseTutorial, get_tutorial_provider
 
 
@@ -25,6 +27,7 @@ async def test_create_and_get_exercise(client: AsyncClient) -> None:
     assert body["name"] == "Squat (Barbell)"
     assert body["tracks_weight"] is True
     assert body["tracks_distance"] is False
+    assert body["is_custom"] is True
 
     response = await client.get(f"/exercises/{body['id']}")
     assert response.status_code == 200
@@ -106,6 +109,18 @@ async def test_update_exercise(client: AsyncClient) -> None:
     assert response.json()["name"] == "Plank"
 
 
+async def test_builtin_exercise_cannot_be_updated(client: AsyncClient, db: AsyncSession) -> None:
+    exercise = Exercise(name="Squat (Barbell)", is_custom=False)
+    db.add(exercise)
+    await db.commit()
+
+    response = await client.patch(f"/exercises/{exercise.id}", json={"tracks_duration": True})
+
+    assert response.status_code == 403
+    response = await client.get(f"/exercises/{exercise.id}")
+    assert response.json()["tracks_duration"] is False
+
+
 async def test_update_missing_exercise_is_404(client: AsyncClient) -> None:
     response = await client.patch("/exercises/999", json={"name": "x"})
     assert response.status_code == 404
@@ -120,6 +135,18 @@ async def test_delete_exercise(client: AsyncClient) -> None:
 
     response = await client.get(f"/exercises/{exercise_id}")
     assert response.status_code == 404
+
+
+async def test_builtin_exercise_cannot_be_deleted(client: AsyncClient, db: AsyncSession) -> None:
+    exercise = Exercise(name="Squat (Barbell)", is_custom=False)
+    db.add(exercise)
+    await db.commit()
+
+    response = await client.delete(f"/exercises/{exercise.id}")
+
+    assert response.status_code == 403
+    response = await client.get(f"/exercises/{exercise.id}")
+    assert response.status_code == 200
 
 
 async def test_delete_missing_exercise_is_404(client: AsyncClient) -> None:

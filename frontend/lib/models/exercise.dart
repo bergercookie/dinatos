@@ -6,6 +6,7 @@ class Exercise {
     this.tracksReps = true,
     this.tracksDistance = false,
     this.tracksDuration = false,
+    this.isCustom = true,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
@@ -15,6 +16,7 @@ class Exercise {
     tracksReps: json['tracks_reps'] as bool,
     tracksDistance: json['tracks_distance'] as bool,
     tracksDuration: json['tracks_duration'] as bool,
+    isCustom: json['is_custom'] as bool,
   );
 
   final int? id;
@@ -24,8 +26,14 @@ class Exercise {
   final bool tracksDistance;
   final bool tracksDuration;
 
-  /// The subset of fields the create/update endpoints accept -- `id` is
-  /// server-assigned, never sent back.
+  /// False only for the shipped, built-in catalog -- server-assigned, never
+  /// editable/deletable (the backend rejects it with a 403). See
+  /// `ExerciseFormScreen` and `ExerciseListScreen` for how the UI reflects
+  /// this.
+  final bool isCustom;
+
+  /// The subset of fields the create/update endpoints accept -- `id` and
+  /// `isCustom` are both server-assigned, never sent back.
   Map<String, dynamic> toJson() => {
     'name': name,
     'tracks_weight': tracksWeight,

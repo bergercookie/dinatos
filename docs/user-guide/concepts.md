@@ -3,10 +3,13 @@
 Dinatos organizes everything around four kinds of thing:
 
 - **Exercises** -- a single movement, e.g. "Romanian deadlift." Every
-  account on an instance shares the same exercise catalog: if you rename or
-  add one, everyone on that instance sees it. Most exercises come with a
-  tutorial -- a picture or GIF plus instructions, target muscles, and
-  equipment -- see [Browsing exercises](using-the-app.md#exercises).
+  account on an instance shares the same exercise catalog: if you add one,
+  everyone on that instance sees it. The catalog Dinatos ships with (marked
+  "Built-in" in the app) is a fixed, widely-agreed-upon staple set and can't
+  be renamed, edited, or deleted -- only an exercise you add yourself can.
+  Most exercises come with a tutorial -- a picture or GIF plus instructions,
+  target muscles, and equipment -- see
+  [Browsing exercises](using-the-app.md#exercises).
 - **Workouts** -- a named, reusable plan: a list of exercises, with a target
   number of sets/reps/weight for each. Think of this as a template -- "Upper
   body A," "Leg day" -- that you build once and reuse. Workouts are private

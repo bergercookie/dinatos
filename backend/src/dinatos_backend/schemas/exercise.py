@@ -25,6 +25,10 @@ class ExerciseRead(ExerciseBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    # Server-controlled, never accepted on create/update (see ExerciseCreate/
+    # ExerciseUpdate above) -- whether a client could set it is exactly what
+    # would let the shipped catalog be spoofed as editable.
+    is_custom: bool
 
 
 class ExerciseTutorialRead(BaseModel):

@@ -8,6 +8,10 @@ muscles, and equipment, where available. If you don't see one you need,
 add it -- it's immediately available to every account on the instance, not
 just yours.
 
+Exercises marked "Built-in" are the catalog Dinatos ships with and can't be
+renamed, edited, or deleted -- if one doesn't fit, add your own custom
+exercise instead. Anything you add yourself you can edit or delete freely.
+
 ## Building a workout
 
 A workout is a reusable plan: give it a name, add exercises, and set a

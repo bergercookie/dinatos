@@ -11,7 +11,10 @@ calling user's own data:
 - `/auth/register`, `/auth/login`, `/auth/me`, `/auth/logout` -- see
   "Authentication" below.
 - `/exercises` -- full CRUD, plus `?search=` (backs the watch-sync picker).
-  The one shared, global resource: every user's catalog is the same.
+  The one shared, global resource: every user's catalog is the same. `PATCH`
+  and `DELETE` are a 403 against a built-in (`is_custom=False`) exercise --
+  only a user-created one can be edited or deleted; see "Exercise
+  tutorials" below and `Exercise.is_custom`'s docstring.
   `/exercises/{id}/tutorial` -- a GIF plus instructions/muscles/equipment,
   see "Exercise tutorials" below.
 - `/workouts` -- saved routine templates, scoped to their owner. Nested

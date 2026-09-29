@@ -44,6 +44,7 @@ def _default_exercises() -> Iterator[dict[str, Any]]:
             "tracks_reps": tracks_reps,
             "tracks_distance": tracks_distance,
             "tracks_duration": tracks_duration,
+            "is_custom": False,
         }
 
 
