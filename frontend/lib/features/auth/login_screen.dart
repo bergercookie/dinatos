@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/auth/auth_notifier.dart';
+import '../../core/design_tokens.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
+import '../../core/widgets/error_banner.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -73,6 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       // A scroll view, not just Center+Column, now that the TLS checkbox's
       // extra row can push this past a short viewport's height (a small
@@ -80,16 +83,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // -- overflowing silently past the edge is worse than a scrollbar.
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
+          constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+                    child: Icon(Icons.fitness_center_rounded, size: 34, color: scheme.onPrimary),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   Text('Dinatos', style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Log in to your workout tracker',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
                   TextFormField(
                     controller: _serverUrlController,
                     decoration: const InputDecoration(labelText: 'Server URL'),
@@ -123,10 +138,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         (value == null || value.isEmpty) ? 'Password is required' : null,
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    const SizedBox(height: AppSpacing.md),
+                    ErrorBanner(message: _error!),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   FilledButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting

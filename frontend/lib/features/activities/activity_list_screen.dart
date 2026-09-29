@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/async_value_view.dart';
+import '../../core/design_tokens.dart';
+import '../../core/widgets/app_list_card.dart';
+import '../../core/widgets/empty_state.dart';
+import '../../models/activity.dart';
 import 'activities_providers.dart';
 
 class ActivityListScreen extends ConsumerWidget {
@@ -28,18 +32,30 @@ class ActivityListScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(activityListProvider),
           builder: (context, data) {
             if (data.isEmpty) {
-              return const Center(child: Text('No logged activities yet.'));
+              return EmptyState(
+                icon: Icons.history_rounded,
+                title: 'No logged activities yet',
+                message: 'Log a session to start tracking what you actually did in the gym.',
+                actionLabel: 'Log activity',
+                onAction: () => context.go('/activities/new'),
+              );
             }
-            return ListView.builder(
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               itemCount: data.length,
+              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final activity = data[index];
-                return ListTile(
-                  title: Text(activity.title),
-                  subtitle: Text(
-                    '${dateFormat.format(activity.startedAt.toLocal())} · '
-                    '${activity.exercises.length} exercise(s)',
-                  ),
+                return AppListCard(
+                  leading: const AppIconAvatar(icon: Icons.history_rounded),
+                  title: activity.title,
+                  subtitle: Text(_subtitle(activity, dateFormat)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => context.go('/activities/${activity.id}'),
                 );
               },
@@ -48,5 +64,19 @@ class ActivityListScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _subtitle(Activity activity, DateFormat dateFormat) {
+    final exerciseCount = activity.exercises.length;
+    final parts = <String>[
+      dateFormat.format(activity.startedAt.toLocal()),
+      '$exerciseCount exercise${exerciseCount == 1 ? '' : 's'}',
+    ];
+    final endedAt = activity.endedAt;
+    if (endedAt != null) {
+      final duration = endedAt.difference(activity.startedAt);
+      if (duration.inMinutes > 0) parts.add('${duration.inMinutes} min');
+    }
+    return parts.join(' · ');
   }
 }

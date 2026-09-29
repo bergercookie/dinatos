@@ -131,6 +131,11 @@ void main() {
       find.widgetWithText(TextFormField, 'https://initial.example.com'),
       'https://changed.example.com',
     );
+    // The branded header above the form can push this link below the fold
+    // on a short test viewport -- the screen is deliberately scrollable for
+    // exactly that case (see login_screen.dart), so scroll it into view
+    // first rather than assuming it's already on-screen.
+    await tester.ensureVisible(find.text("Don't have an account? Register"));
     await tester.tap(find.text("Don't have an account? Register"));
     await tester.pumpAndSettle();
 
