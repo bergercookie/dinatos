@@ -6,6 +6,7 @@ import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/workout.dart';
 import 'workouts_providers.dart';
 
@@ -23,42 +24,44 @@ class WorkoutListScreen extends ConsumerWidget {
         onPressed: () => context.go('/workouts/new'),
         child: const Icon(Icons.add),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(workoutListProvider.future),
-        child: AsyncValueView(
-          value: workouts,
-          onRetry: () => ref.invalidate(workoutListProvider),
-          builder: (context, data) {
-            if (data.isEmpty) {
-              return EmptyState(
-                icon: Icons.list_alt_rounded,
-                title: 'No saved workouts yet',
-                message: 'Build a workout template once, then reuse it every time you train.',
-                actionLabel: 'Create workout',
-                onAction: () => context.go('/workouts/new'),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.xxl,
-              ),
-              itemCount: data.length,
-              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final workout = data[index];
-                return AppListCard(
-                  leading: const AppIconAvatar(icon: Icons.list_alt_rounded),
-                  title: workout.name,
-                  subtitle: Text(_subtitle(workout)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.go('/workouts/${workout.id}'),
+      body: ResponsiveBody(
+        child: RefreshIndicator(
+          onRefresh: () => ref.refresh(workoutListProvider.future),
+          child: AsyncValueView(
+            value: workouts,
+            onRetry: () => ref.invalidate(workoutListProvider),
+            builder: (context, data) {
+              if (data.isEmpty) {
+                return EmptyState(
+                  icon: Icons.list_alt_rounded,
+                  title: 'No saved workouts yet',
+                  message: 'Build a workout template once, then reuse it every time you train.',
+                  actionLabel: 'Create workout',
+                  onAction: () => context.go('/workouts/new'),
                 );
-              },
-            );
-          },
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
+                itemCount: data.length,
+                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
+                itemBuilder: (context, index) {
+                  final workout = data[index];
+                  return AppListCard(
+                    leading: const AppIconAvatar(icon: Icons.list_alt_rounded),
+                    title: workout.name,
+                    subtitle: Text(_subtitle(workout)),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.go('/workouts/${workout.id}'),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );

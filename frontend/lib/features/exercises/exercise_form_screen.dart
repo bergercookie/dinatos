@@ -6,6 +6,7 @@ import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise.dart';
 import 'exercises_providers.dart';
 import 'exercises_repository.dart';
@@ -98,7 +99,7 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
     if (!_isEditing) {
       return Scaffold(
         appBar: AppBar(title: Text(title)),
-        body: _buildForm(context),
+        body: ResponsiveBody(child: _buildForm(context)),
       );
     }
     final exerciseAsync = ref.watch(exerciseProvider(widget.exerciseId!));
@@ -113,12 +114,14 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
           ),
         ],
       ),
-      body: AsyncValueView(
-        value: exerciseAsync,
-        builder: (context, exercise) {
-          _loadFrom(exercise);
-          return _buildForm(context);
-        },
+      body: ResponsiveBody(
+        child: AsyncValueView(
+          value: exerciseAsync,
+          builder: (context, exercise) {
+            _loadFrom(exercise);
+            return _buildForm(context);
+          },
+        ),
       ),
     );
   }

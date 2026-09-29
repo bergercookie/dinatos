@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_exception.dart';
+import '../../core/widgets/responsive_body.dart';
 import 'hevy_import_repository.dart';
 
 class HevyImportScreen extends ConsumerStatefulWidget {
@@ -100,39 +101,41 @@ class _HevyImportScreenState extends ConsumerState<HevyImportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Import from Hevy')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Export your data from Hevy (Settings -> Export), then upload the two CSV files '
-            'here. Importing the exact same file twice is safe -- you\'ll be asked to confirm '
-            'before it happens.',
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _importingWorkouts ? null : _importWorkouts,
-            icon: _importingWorkouts
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.fitness_center),
-            label: const Text('Import workouts CSV'),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _importingMeasurements ? null : _importMeasurements,
-            icon: _importingMeasurements
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.straighten),
-            label: const Text('Import measurements CSV'),
-          ),
-        ],
+      body: ResponsiveBody(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const Text(
+              'Export your data from Hevy (Settings -> Export), then upload the two CSV files '
+              'here. Importing the exact same file twice is safe -- you\'ll be asked to confirm '
+              'before it happens.',
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _importingWorkouts ? null : _importWorkouts,
+              icon: _importingWorkouts
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.fitness_center),
+              label: const Text('Import workouts CSV'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _importingMeasurements ? null : _importMeasurements,
+              icon: _importingMeasurements
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.straighten),
+              label: const Text('Import measurements CSV'),
+            ),
+          ],
+        ),
       ),
     );
   }
