@@ -1,10 +1,10 @@
 # Dinatos
 
-A self-hosted workout tracker: exercises, workouts, and the activities you
+A self-hosted workout tracker: exercises, routines, and the activities you
 log against them. Inspired by Hevy, built to run on your own homelab.
 
 **Status:** a FastAPI + async SQLAlchemy backend (multi-user accounts with
-session-based auth, exercises, workouts, activities, a profile, body
+session-based auth, exercises, routines, activities, a profile, body
 measurements, a Hevy CSV importer) and a Flutter frontend against it (web,
 Android, and Linux desktop).
 
@@ -24,11 +24,11 @@ Android, and Linux desktop).
 </tr>
 <tr>
 <td align="center" width="50%">
-<img src="screenshots/workout-creation.png" width="380"><br>
-<sub>Building a saved workout</sub>
+<img src="screenshots/routine-creation.png" width="380"><br>
+<sub>Building a saved routine</sub>
 </td>
 <td align="center" width="50%">
-<img src="screenshots/workout-execution.png" width="380"><br>
+<img src="screenshots/routine-execution.png" width="380"><br>
 <sub>Logging an activity from it</sub>
 </td>
 </tr>

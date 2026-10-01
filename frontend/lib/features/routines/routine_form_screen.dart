@@ -9,38 +9,38 @@ import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
-import '../../models/workout.dart';
+import '../../models/routine.dart';
 import '../exercises/exercises_providers.dart';
-import 'workouts_providers.dart';
-import 'workouts_repository.dart';
+import 'routines_providers.dart';
+import 'routines_repository.dart';
 
-/// Create when [workoutId] is null, otherwise edit (and `PUT`-replace) that
-/// workout's exercises and sets as a whole.
-class WorkoutFormScreen extends ConsumerStatefulWidget {
-  const WorkoutFormScreen({super.key, this.workoutId});
+/// Create when [routineId] is null, otherwise edit (and `PUT`-replace) that
+/// routine's exercises and sets as a whole.
+class RoutineFormScreen extends ConsumerStatefulWidget {
+  const RoutineFormScreen({super.key, this.routineId});
 
-  final int? workoutId;
+  final int? routineId;
 
   @override
-  ConsumerState<WorkoutFormScreen> createState() => _WorkoutFormScreenState();
+  ConsumerState<RoutineFormScreen> createState() => _RoutineFormScreenState();
 }
 
-class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
+class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  List<WorkoutExercise> _exercises = [];
+  List<RoutineExercise> _exercises = [];
   bool _submitting = false;
   String? _error;
   bool _loadedInitialValues = false;
 
-  bool get _isEditing => widget.workoutId != null;
+  bool get _isEditing => widget.routineId != null;
 
-  void _loadFrom(Workout workout) {
+  void _loadFrom(Routine routine) {
     if (_loadedInitialValues) return;
     _loadedInitialValues = true;
-    _nameController.text = workout.name;
-    _descriptionController.text = workout.description ?? '';
-    _exercises = List.of(workout.exercises);
+    _nameController.text = routine.name;
+    _descriptionController.text = routine.description ?? '';
+    _exercises = List.of(routine.exercises);
   }
 
   @override
@@ -52,7 +52,7 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
 
   void _addExercise(Exercise exercise) {
     setState(() {
-      _exercises = [..._exercises, WorkoutExercise(exerciseId: exercise.id!)];
+      _exercises = [..._exercises, RoutineExercise(exerciseId: exercise.id!)];
     });
   }
 
@@ -60,7 +60,7 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
     setState(() => _exercises = List.of(_exercises)..removeAt(index));
   }
 
-  void _updateExerciseAt(int index, WorkoutExercise updated) {
+  void _updateExerciseAt(int index, RoutineExercise updated) {
     setState(() => _exercises = List.of(_exercises)..[index] = updated);
   }
 
@@ -73,21 +73,21 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
       _submitting = true;
       _error = null;
     });
-    final workout = Workout(
+    final routine = Routine(
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
       exercises: _exercises,
     );
-    final repository = ref.read(workoutsRepositoryProvider);
+    final repository = ref.read(routinesRepositoryProvider);
     try {
       if (_isEditing) {
-        await repository.replace(widget.workoutId!, workout);
+        await repository.replace(widget.routineId!, routine);
       } else {
-        await repository.create(workout);
+        await repository.create(routine);
       }
-      ref.invalidate(workoutListProvider);
+      ref.invalidate(routineListProvider);
       if (mounted) context.pop();
     } on ApiException catch (error) {
       setState(() => _error = error.message);
@@ -99,8 +99,8 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
   Future<void> _delete() async {
     setState(() => _submitting = true);
     try {
-      await ref.read(workoutsRepositoryProvider).delete(widget.workoutId!);
-      ref.invalidate(workoutListProvider);
+      await ref.read(routinesRepositoryProvider).delete(widget.routineId!);
+      ref.invalidate(routineListProvider);
       if (mounted) context.pop();
     } on ApiException catch (error) {
       setState(() {
@@ -112,20 +112,20 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _isEditing ? 'Edit workout' : 'New workout';
+    final title = _isEditing ? 'Edit routine' : 'New routine';
     if (!_isEditing) {
       return Scaffold(
         appBar: AppBar(title: Text(title)),
         body: ResponsiveBody(child: _buildForm(context)),
       );
     }
-    final workoutAsync = ref.watch(workoutProvider(widget.workoutId!));
+    final routineAsync = ref.watch(routineProvider(widget.routineId!));
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: [
           IconButton(
-            tooltip: 'Delete workout',
+            tooltip: 'Delete routine',
             icon: const Icon(Icons.delete_outline),
             onPressed: _submitting ? null : _delete,
           ),
@@ -133,9 +133,9 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
       ),
       body: ResponsiveBody(
         child: AsyncValueView(
-          value: workoutAsync,
-          builder: (context, workout) {
-            _loadFrom(workout);
+          value: routineAsync,
+          builder: (context, routine) {
+            _loadFrom(routine);
             return _buildForm(context);
           },
         ),
@@ -162,7 +162,7 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
         Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         for (var i = 0; i < _exercises.length; i++)
-          _WorkoutExerciseCard(
+          _RoutineExerciseCard(
             exercise: _exercises[i],
             exerciseName: exercisesAsync.valueOrNull
                 ?.firstWhere(
@@ -206,28 +206,28 @@ class _WorkoutFormScreenState extends ConsumerState<WorkoutFormScreen> {
   }
 }
 
-class _WorkoutExerciseCard extends StatelessWidget {
-  const _WorkoutExerciseCard({
+class _RoutineExerciseCard extends StatelessWidget {
+  const _RoutineExerciseCard({
     required this.exercise,
     required this.exerciseName,
     required this.onChanged,
     required this.onRemove,
   });
 
-  final WorkoutExercise exercise;
+  final RoutineExercise exercise;
   final String? exerciseName;
-  final ValueChanged<WorkoutExercise> onChanged;
+  final ValueChanged<RoutineExercise> onChanged;
   final VoidCallback onRemove;
 
   void _addSet() {
-    onChanged(exercise.copyWith(sets: [...exercise.sets, const WorkoutSet()]));
+    onChanged(exercise.copyWith(sets: [...exercise.sets, const RoutineSet()]));
   }
 
   void _removeSetAt(int index) {
     onChanged(exercise.copyWith(sets: List.of(exercise.sets)..removeAt(index)));
   }
 
-  void _updateSetAt(int index, WorkoutSet updated) {
+  void _updateSetAt(int index, RoutineSet updated) {
     onChanged(exercise.copyWith(sets: List.of(exercise.sets)..[index] = updated));
   }
 
@@ -283,8 +283,8 @@ class _SetRow extends StatelessWidget {
   });
 
   final int index;
-  final WorkoutSet set;
-  final ValueChanged<WorkoutSet> onChanged;
+  final RoutineSet set;
+  final ValueChanged<RoutineSet> onChanged;
   final VoidCallback onRemove;
 
   @override

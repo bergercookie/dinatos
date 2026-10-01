@@ -1,6 +1,6 @@
 # Dinatos
 
-A self-hosted workout tracker: exercises, workouts, and the activities you
+A self-hosted workout tracker: exercises, routines, and the activities you
 log against them. Inspired by Hevy, built to run on your own homelab.
 
 This site has three parts, for three different reasons to be here:

@@ -2,11 +2,11 @@ import 'package:dinatos_frontend/models/activity.dart';
 import 'package:dinatos_frontend/models/exercise_tutorial.dart';
 import 'package:dinatos_frontend/models/hevy_import_result.dart';
 import 'package:dinatos_frontend/models/set_type.dart';
-import 'package:dinatos_frontend/models/workout.dart';
+import 'package:dinatos_frontend/models/routine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('Workout', () {
+  group('Routine', () {
     test('round-trips through fromJson/toJson for a nested exercise/set', () {
       final json = {
         'id': 1,
@@ -33,23 +33,23 @@ void main() {
         ],
       };
 
-      final workout = Workout.fromJson(json);
+      final routine = Routine.fromJson(json);
 
-      expect(workout.name, 'Push day');
-      expect(workout.exercises, hasLength(1));
-      expect(workout.exercises.single.sets.single.setType, SetType.warmup);
-      expect(workout.exercises.single.sets.single.targetWeightKg, 40.0);
+      expect(routine.name, 'Push day');
+      expect(routine.exercises, hasLength(1));
+      expect(routine.exercises.single.sets.single.setType, SetType.warmup);
+      expect(routine.exercises.single.sets.single.targetWeightKg, 40.0);
 
       // toJson() is the create/replace body -- it never re-emits server-
       // assigned ids, only what the API accepts back.
-      final body = workout.toJson();
+      final body = routine.toJson();
       expect(body, isNot(contains('id')));
       expect(body['exercises'], hasLength(1));
       expect((body['exercises'] as List).single, isNot(contains('id')));
     });
 
-    test("WorkoutSet.copyWith(targetWeightKg: null) clears it, doesn't keep the old value", () {
-      const original = WorkoutSet(targetWeightKg: 40);
+    test("RoutineSet.copyWith(targetWeightKg: null) clears it, doesn't keep the old value", () {
+      const original = RoutineSet(targetWeightKg: 40);
       final cleared = original.copyWith(targetWeightKg: null);
       expect(cleared.targetWeightKg, isNull);
     });
@@ -63,7 +63,7 @@ void main() {
         'description': null,
         'started_at': '2026-01-01T08:00:00Z',
         'ended_at': '2026-01-01T08:30:00Z',
-        'workout_id': null,
+        'routine_id': null,
         'exercises': [],
       });
 

@@ -18,7 +18,7 @@ from dinatos_backend.api.routers import (
     imports,
     measurements,
     profile,
-    workouts,
+    routines,
 )
 from dinatos_backend.config import get_settings
 
@@ -40,7 +40,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "auth", "description": "Registration, login and session revocation."},
         {"name": "exercises", "description": "The exercise catalog, shared by every user."},
-        {"name": "workouts", "description": "Workout templates: exercises and sets, no dates."},
+        {"name": "routines", "description": "Routine templates: exercises and sets, no dates."},
         {"name": "activities", "description": "Logged instances of a workout, actually performed."},
         {"name": "measurements", "description": "Body weight, fat percentage and circumferences."},
         {"name": "profile", "description": "Per-user display settings."},
@@ -60,7 +60,7 @@ app.add_middleware(
 )
 app.include_router(auth.router)
 app.include_router(exercises.router)
-app.include_router(workouts.router)
+app.include_router(routines.router)
 app.include_router(activities.router)
 app.include_router(profile.router)
 app.include_router(measurements.router)
@@ -77,7 +77,7 @@ class _WebApp(StaticFiles):
     path that doesn't resolve to an actual file.
 
     Flutter web's default (hash-based) routing never sends its client-side
-    routes to the server at all -- a browser on `/#/workouts/1` only ever
+    routes to the server at all -- a browser on `/#/routines/1` only ever
     requests `/` -- so in practice this fallback is a safety net for the odd
     direct request to a path that isn't a real asset, not something the app
     relies on to navigate.

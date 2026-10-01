@@ -5,8 +5,8 @@ import 'set_type.dart';
 /// it instead of `?? this.field` silently keeping the old value.
 const _unset = Object();
 
-class WorkoutSet {
-  const WorkoutSet({
+class RoutineSet {
+  const RoutineSet({
     this.id,
     this.position,
     this.setType = SetType.normal,
@@ -16,7 +16,7 @@ class WorkoutSet {
     this.targetDurationSeconds,
   });
 
-  factory WorkoutSet.fromJson(Map<String, dynamic> json) => WorkoutSet(
+  factory RoutineSet.fromJson(Map<String, dynamic> json) => RoutineSet(
     id: json['id'] as int,
     position: json['position'] as int,
     setType: SetType.fromJson(json['set_type'] as String),
@@ -44,13 +44,13 @@ class WorkoutSet {
     'target_duration_seconds': targetDurationSeconds,
   };
 
-  WorkoutSet copyWith({
+  RoutineSet copyWith({
     SetType? setType,
     Object? targetWeightKg = _unset,
     Object? targetReps = _unset,
     Object? targetDistanceKm = _unset,
     Object? targetDurationSeconds = _unset,
-  }) => WorkoutSet(
+  }) => RoutineSet(
     id: id,
     position: position,
     setType: setType ?? this.setType,
@@ -67,8 +67,8 @@ class WorkoutSet {
   );
 }
 
-class WorkoutExercise {
-  const WorkoutExercise({
+class RoutineExercise {
+  const RoutineExercise({
     this.id,
     this.position,
     required this.exerciseId,
@@ -76,13 +76,13 @@ class WorkoutExercise {
     this.sets = const [],
   });
 
-  factory WorkoutExercise.fromJson(Map<String, dynamic> json) => WorkoutExercise(
+  factory RoutineExercise.fromJson(Map<String, dynamic> json) => RoutineExercise(
     id: json['id'] as int,
     position: json['position'] as int,
     exerciseId: json['exercise_id'] as int,
     notes: json['notes'] as String?,
     sets: (json['sets'] as List<dynamic>)
-        .map((e) => WorkoutSet.fromJson(e as Map<String, dynamic>))
+        .map((e) => RoutineSet.fromJson(e as Map<String, dynamic>))
         .toList(),
   );
 
@@ -90,7 +90,7 @@ class WorkoutExercise {
   final int? position;
   final int exerciseId;
   final String? notes;
-  final List<WorkoutSet> sets;
+  final List<RoutineSet> sets;
 
   Map<String, dynamic> toJson() => {
     'exercise_id': exerciseId,
@@ -98,7 +98,7 @@ class WorkoutExercise {
     'sets': sets.map((s) => s.toJson()).toList(),
   };
 
-  WorkoutExercise copyWith({String? notes, List<WorkoutSet>? sets}) => WorkoutExercise(
+  RoutineExercise copyWith({String? notes, List<RoutineSet>? sets}) => RoutineExercise(
     id: id,
     position: position,
     exerciseId: exerciseId,
@@ -107,22 +107,22 @@ class WorkoutExercise {
   );
 }
 
-class Workout {
-  const Workout({this.id, required this.name, this.description, this.exercises = const []});
+class Routine {
+  const Routine({this.id, required this.name, this.description, this.exercises = const []});
 
-  factory Workout.fromJson(Map<String, dynamic> json) => Workout(
+  factory Routine.fromJson(Map<String, dynamic> json) => Routine(
     id: json['id'] as int,
     name: json['name'] as String,
     description: json['description'] as String?,
     exercises: (json['exercises'] as List<dynamic>)
-        .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
+        .map((e) => RoutineExercise.fromJson(e as Map<String, dynamic>))
         .toList(),
   );
 
   final int? id;
   final String name;
   final String? description;
-  final List<WorkoutExercise> exercises;
+  final List<RoutineExercise> exercises;
 
   /// The `POST`/`PUT` body -- a full replace, matching the backend's "no
   /// endpoint for patching one set in isolation" design.
@@ -132,8 +132,8 @@ class Workout {
     'exercises': exercises.map((e) => e.toJson()).toList(),
   };
 
-  Workout copyWith({String? name, String? description, List<WorkoutExercise>? exercises}) =>
-      Workout(
+  Routine copyWith({String? name, String? description, List<RoutineExercise>? exercises}) =>
+      Routine(
         id: id,
         name: name ?? this.name,
         description: description ?? this.description,

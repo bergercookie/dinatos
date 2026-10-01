@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from dinatos_backend.models.workout import SetType
+from dinatos_backend.models.routine import SetType
 
 
 class ActivitySetBase(BaseModel):
@@ -48,7 +48,7 @@ class ActivityBase(BaseModel):
     description: str | None = None
     started_at: datetime
     ended_at: datetime | None = None
-    workout_id: int | None = None
+    routine_id: int | None = None
 
 
 class ActivityCreate(ActivityBase):

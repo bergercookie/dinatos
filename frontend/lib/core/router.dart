@@ -16,8 +16,8 @@ import '../features/measurements/measurement_form_screen.dart';
 import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
 import '../features/profile/profile_screen.dart';
-import '../features/workouts/workout_form_screen.dart';
-import '../features/workouts/workout_list_screen.dart';
+import '../features/routines/routine_form_screen.dart';
+import '../features/routines/routine_list_screen.dart';
 import 'auth/auth_notifier.dart';
 import 'auth/auth_state.dart';
 
@@ -84,14 +84,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/workouts',
-                builder: (context, state) => const WorkoutListScreen(),
+                path: '/routines',
+                builder: (context, state) => const RoutineListScreen(),
                 routes: [
-                  GoRoute(path: 'new', builder: (context, state) => const WorkoutFormScreen()),
+                  GoRoute(path: 'new', builder: (context, state) => const RoutineFormScreen()),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) =>
-                        WorkoutFormScreen(workoutId: int.parse(state.pathParameters['id']!)),
+                        RoutineFormScreen(routineId: int.parse(state.pathParameters['id']!)),
                   ),
                 ],
               ),

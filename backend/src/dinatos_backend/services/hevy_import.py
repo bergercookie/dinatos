@@ -28,7 +28,7 @@ from dinatos_backend.models.activity import Activity, ActivityExercise, Activity
 from dinatos_backend.models.exercise import Exercise
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
-from dinatos_backend.models.workout import SetType
+from dinatos_backend.models.routine import SetType
 from dinatos_backend.schemas.imports import HevyMeasurementImportResult, HevyWorkoutImportResult
 
 # Hevy writes the same logical timestamp two different ways depending on which

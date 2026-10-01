@@ -68,13 +68,13 @@ def test_openapi_schema_documents_every_router() -> None:
     assert {tag["name"] for tag in schema["tags"]} >= {
         "auth",
         "exercises",
-        "workouts",
+        "routines",
         "activities",
         "measurements",
         "profile",
         "imports",
     }
-    assert {"/health", "/auth/login", "/exercises", "/workouts", "/activities"} <= set(
+    assert {"/health", "/auth/login", "/exercises", "/routines", "/activities"} <= set(
         schema["paths"]
     )
 

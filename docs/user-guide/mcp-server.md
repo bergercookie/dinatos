@@ -3,7 +3,7 @@
 `mcp_server/` runs an [MCP](https://modelcontextprotocol.io/) server that
 turns a running Dinatos instance into tools an LLM harness (Claude Desktop,
 or any other MCP client) can call directly: add a new exercise, create a
-saved workout template, or log an activity, all without leaving the chat.
+saved routine template, or log an activity, all without leaving the chat.
 
 It's a plain client of the same REST API the app itself uses -- see
 [MCP server](../architecture/backend.md#mcp-server) if you're curious how
@@ -60,12 +60,12 @@ for a remote instance.
 
 - **`list_exercises`** / **`create_exercise`** -- browse or add to the
   shared exercise catalog.
-- **`list_workouts`** / **`create_workout`** -- saved routine templates:
+- **`list_routines`** / **`create_routine`** -- saved routine templates:
   a name plus a prescribed list of exercises and target sets.
 - **`list_activities`** / **`log_activity`** -- logged sessions: what was
-  actually done, and when, optionally against one of your own workout
+  actually done, and when, optionally against one of your own routine
   templates.
 
 Ask your harness to look up an exercise's id with `list_exercises` before
-referencing it from `create_workout` or `log_activity` -- there's no
+referencing it from `create_routine` or `log_activity` -- there's no
 lookup-by-name on those two, the same as the REST API itself.

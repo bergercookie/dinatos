@@ -44,7 +44,7 @@ async def test_unknown_path_falls_back_to_index(web_client: AsyncClient) -> None
     or refreshed on it) has no matching file on disk -- it should still get
     the app shell, not a bare 404.
     """
-    response = await web_client.get("/workouts/123")
+    response = await web_client.get("/routines/123")
 
     assert response.status_code == 200
     assert "dinatos web ui" in response.text

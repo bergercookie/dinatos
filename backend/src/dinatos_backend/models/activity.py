@@ -7,13 +7,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dinatos_backend.models.base import Base, TimestampMixin
 from dinatos_backend.models.exercise import Exercise
-from dinatos_backend.models.workout import SetType
+from dinatos_backend.models.routine import SetType
 
 
 class Activity(Base, TimestampMixin):
     """A recorded gym session: what was actually done, and when.
 
-    May reference the `Workout` template it was run from, or be `None` for an
+    May reference the `Routine` template it was run from, or be `None` for an
     ephemeral session built on the spot.
     """
 
@@ -21,7 +21,7 @@ class Activity(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    workout_id: Mapped[int | None] = mapped_column(ForeignKey("workouts.id", ondelete="SET NULL"))
+    routine_id: Mapped[int | None] = mapped_column(ForeignKey("routines.id", ondelete="SET NULL"))
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(String(2000))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

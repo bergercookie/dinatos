@@ -8,8 +8,8 @@ from sqlalchemy.orm import selectinload
 from dinatos_backend.api.deps import get_current_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
+from dinatos_backend.models.routine import Routine
 from dinatos_backend.models.user import User
-from dinatos_backend.models.workout import Workout
 from dinatos_backend.schemas.activity import ActivityCreate, ActivityRead
 
 router = APIRouter(prefix="/activities", tags=["activities"])
@@ -45,17 +45,17 @@ async def _get_or_404(db: AsyncSession, owner_id: int, activity_id: int) -> Acti
     return activity
 
 
-async def _check_workout_ownership(db: AsyncSession, owner_id: int, workout_id: int | None) -> None:
-    """An activity may reference a workout template -- but only one of the
+async def _check_routine_ownership(db: AsyncSession, owner_id: int, routine_id: int | None) -> None:
+    """An activity may reference a routine template -- but only one of the
     caller's own, never another user's by guessing its id.
     """
-    if workout_id is None:
+    if routine_id is None:
         return
     result = await db.execute(
-        select(Workout.id).where(Workout.id == workout_id, Workout.owner_id == owner_id)
+        select(Routine.id).where(Routine.id == routine_id, Routine.owner_id == owner_id)
     )
     if result.scalar_one_or_none() is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "workout not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "routine not found")
 
 
 @router.get("", response_model=list[ActivityRead])
@@ -85,10 +85,10 @@ async def create_activity(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Activity:
-    await _check_workout_ownership(db, user.id, payload.workout_id)
+    await _check_routine_ownership(db, user.id, payload.routine_id)
     activity = Activity(
         owner_id=user.id,
-        workout_id=payload.workout_id,
+        routine_id=payload.routine_id,
         title=payload.title,
         description=payload.description,
         started_at=payload.started_at,
@@ -116,8 +116,8 @@ async def replace_activity(
 ) -> Activity:
     """Replaces the activity in full, including its exercises and sets."""
     activity = await _get_or_404(db, user.id, activity_id)
-    await _check_workout_ownership(db, user.id, payload.workout_id)
-    activity.workout_id = payload.workout_id
+    await _check_routine_ownership(db, user.id, payload.routine_id)
+    activity.routine_id = payload.routine_id
     activity.title = payload.title
     activity.description = payload.description
     activity.started_at = payload.started_at

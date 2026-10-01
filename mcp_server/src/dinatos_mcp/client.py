@@ -13,7 +13,7 @@ from typing import Any
 import httpx
 
 from dinatos_mcp.config import Settings
-from dinatos_mcp.schemas import ActivityExerciseInput, WorkoutExerciseInput
+from dinatos_mcp.schemas import ActivityExerciseInput, RoutineExerciseInput
 
 
 class DinatosConfigError(RuntimeError):
@@ -124,14 +124,14 @@ class DinatosClient:
         result: dict[str, Any] = await self._request("POST", "/exercises", json=payload)
         return result
 
-    async def list_workouts(self) -> list[dict[str, Any]]:
-        result: list[dict[str, Any]] = await self._request("GET", "/workouts")
+    async def list_routines(self) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = await self._request("GET", "/routines")
         return result
 
-    async def create_workout(
+    async def create_routine(
         self,
         name: str,
-        exercises: list[WorkoutExerciseInput],
+        exercises: list[RoutineExerciseInput],
         *,
         description: str | None = None,
     ) -> dict[str, Any]:
@@ -140,7 +140,7 @@ class DinatosClient:
             "description": description,
             "exercises": [item.model_dump(mode="json") for item in exercises],
         }
-        result: dict[str, Any] = await self._request("POST", "/workouts", json=payload)
+        result: dict[str, Any] = await self._request("POST", "/routines", json=payload)
         return result
 
     async def list_activities(
@@ -164,14 +164,14 @@ class DinatosClient:
         *,
         description: str | None = None,
         ended_at: datetime | None = None,
-        workout_id: int | None = None,
+        routine_id: int | None = None,
     ) -> dict[str, Any]:
         payload = {
             "title": title,
             "description": description,
             "started_at": started_at.isoformat(),
             "ended_at": ended_at.isoformat() if ended_at is not None else None,
-            "workout_id": workout_id,
+            "routine_id": routine_id,
             "exercises": [item.model_dump(mode="json") for item in exercises],
         }
         result: dict[str, Any] = await self._request("POST", "/activities", json=payload)

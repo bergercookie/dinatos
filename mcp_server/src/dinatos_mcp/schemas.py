@@ -1,11 +1,11 @@
-"""Nested-input shapes for the `create_workout`/`log_activity` tools.
+"""Nested-input shapes for the `create_routine`/`log_activity` tools.
 
 Deliberately not imported from `dinatos_backend.schemas`: this package talks
 to that API over HTTP, the same as any other client, rather than depending
 on the backend's own Python package at runtime (only its tests do, to spin
 up the real app in-process -- see tests/conftest.py). These mirror the
-backend's `WorkoutSetCreate`/`ActivitySetCreate` etc. shapes closely enough
-to round-trip through `POST /workouts` and `POST /activities` unchanged.
+backend's `RoutineSetCreate`/`ActivitySetCreate` etc. shapes closely enough
+to round-trip through `POST /routines` and `POST /activities` unchanged.
 """
 
 import enum
@@ -20,8 +20,8 @@ class SetType(enum.StrEnum):
     failure = "failure"
 
 
-class WorkoutSetInput(BaseModel):
-    """A prescribed set on a workout template -- targets, not what was
+class RoutineSetInput(BaseModel):
+    """A prescribed set on a routine template -- targets, not what was
     actually done (see `ActivitySetInput`)."""
 
     set_type: SetType = SetType.normal
@@ -31,10 +31,10 @@ class WorkoutSetInput(BaseModel):
     target_duration_seconds: int | None = None
 
 
-class WorkoutExerciseInput(BaseModel):
+class RoutineExerciseInput(BaseModel):
     exercise_id: int
     notes: str | None = None
-    sets: list[WorkoutSetInput] = []
+    sets: list[RoutineSetInput] = []
 
 
 class ActivitySetInput(BaseModel):

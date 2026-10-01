@@ -8,7 +8,7 @@ import 'exercises_repository.dart';
 
 final exerciseSearchProvider = StateProvider<String>((ref) => '');
 
-/// The *whole* catalog, unfiltered and unpaged -- only for the workout/
+/// The *whole* catalog, unfiltered and unpaged -- only for the routine/
 /// activity exercise pickers, which build an in-memory menu/lookup and need
 /// every row up front. The exercises list screen itself uses
 /// [exercisePagingProvider] instead; the two never share a provider because

@@ -58,7 +58,7 @@ Installed-Size: ${INSTALLED_SIZE}
 Depends: libgtk-3-0, libsecret-1-0
 Maintainer: Dinatos contributors <https://github.com/bergercookie/dinatos>
 Description: Self-hosted workout tracker
- Dinatos is a self-hosted workout tracker: exercises, workouts, and the
+ Dinatos is a self-hosted workout tracker: exercises, routines, and the
  activities you log against them. This is the Linux desktop client; it
  talks to a Dinatos backend you run yourself (see the Server field on
  first launch).

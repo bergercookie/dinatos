@@ -8,13 +8,13 @@
 - **exercises** -- e.g. Romanian deadlift. The shipped catalog
   (`Exercise.is_custom=False`) is immutable -- a widely-agreed-upon staple
   set every instance starts with, never editable or deletable, so the
-  catalog someone's workouts and tutorials reference can't be pulled out
+  catalog someone's routines and tutorials reference can't be pulled out
   from under them. Anything a user adds themselves is a custom exercise
   (`is_custom=True`, the default) and is fully theirs to edit or delete.
-- **workouts** -- a named list of exercises, e.g. an upper-body routine.
+- **routines** -- a named list of exercises, e.g. an upper-body routine.
 - **activities** -- a recorded gym session: a list of completed exercises
   with their sets, reps and weights. An activity can come from running a
-  saved workout, or from an ephemeral one built on the spot.
+  saved routine, or from an ephemeral one built on the spot.
 
 (See [Concepts](../user-guide/concepts.md) for the same model explained for
 someone using the app rather than changing its code.)
@@ -44,7 +44,7 @@ chasing a domain model that is still moving. Instead:
 1. **Tooling skeleton** -- justfiles, pre-commit (ruff, mypy, tach, pytest),
    an empty FastAPI app with a health check, CI running `just check`.
    *(done)*
-2. **Backend core** -- exercises, workouts, activities and settings: full
+2. **Backend core** -- exercises, routines, activities and settings: full
    CRUD over Postgres via async SQLAlchemy, with the test suite as the spec.
    *(done -- see [Backend](backend.md#api-surface))*
 3. **Hevy import** -- backend-only work that stress-tests the schema against
@@ -52,7 +52,7 @@ chasing a domain model that is still moving. Instead:
    against a real export -- see [Backend](backend.md#hevy-import))*
 4. **Flutter frontend** against the now-stable API -- this is where the
    domain model actually gets validated, before investing in watch sync.
-   *(done: exercises, workouts, activities, profile and measurements all
+   *(done: exercises, routines, activities, profile and measurements all
    have working screens against the real API -- see [Frontend](frontend.md))*
    *(current stage)*
 5. **Garmin bridge + watch app** -- a small relay service the watch polls,

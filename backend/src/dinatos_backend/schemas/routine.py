@@ -1,9 +1,9 @@
 from pydantic import BaseModel, ConfigDict
 
-from dinatos_backend.models.workout import SetType
+from dinatos_backend.models.routine import SetType
 
 
-class WorkoutSetBase(BaseModel):
+class RoutineSetBase(BaseModel):
     set_type: SetType = SetType.normal
     target_weight_kg: float | None = None
     target_reps: int | None = None
@@ -11,49 +11,49 @@ class WorkoutSetBase(BaseModel):
     target_duration_seconds: int | None = None
 
 
-class WorkoutSetCreate(WorkoutSetBase):
+class RoutineSetCreate(RoutineSetBase):
     pass
 
 
-class WorkoutSetRead(WorkoutSetBase):
+class RoutineSetRead(RoutineSetBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     position: int
 
 
-class WorkoutExerciseBase(BaseModel):
+class RoutineExerciseBase(BaseModel):
     exercise_id: int
     notes: str | None = None
 
 
-class WorkoutExerciseCreate(WorkoutExerciseBase):
-    sets: list[WorkoutSetCreate] = []
+class RoutineExerciseCreate(RoutineExerciseBase):
+    sets: list[RoutineSetCreate] = []
 
 
-class WorkoutExerciseRead(WorkoutExerciseBase):
+class RoutineExerciseRead(RoutineExerciseBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     position: int
-    sets: list[WorkoutSetRead]
+    sets: list[RoutineSetRead]
 
 
-class WorkoutBase(BaseModel):
+class RoutineBase(BaseModel):
     name: str
     description: str | None = None
 
 
-class WorkoutCreate(WorkoutBase):
-    """Also used to replace a workout in full via `PUT` -- there is no
+class RoutineCreate(RoutineBase):
+    """Also used to replace a routine in full via `PUT` -- there is no
     separate partial-update schema for the nested exercises/sets structure.
     """
 
-    exercises: list[WorkoutExerciseCreate] = []
+    exercises: list[RoutineExerciseCreate] = []
 
 
-class WorkoutRead(WorkoutBase):
+class RoutineRead(RoutineBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    exercises: list[WorkoutExerciseRead]
+    exercises: list[RoutineExerciseRead]
