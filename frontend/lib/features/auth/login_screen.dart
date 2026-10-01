@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/api_config.dart';
 import '../../core/api_exception.dart';
 import '../../core/auth/auth_notifier.dart';
 import '../../core/design_tokens.dart';
@@ -101,6 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   TextFormField(
                     controller: _serverUrlController,
+                    enabled: !ApiConfig.isFixedToServingOrigin,
                     decoration: const InputDecoration(labelText: 'Server URL'),
                     keyboardType: TextInputType.url,
                     validator: (value) =>

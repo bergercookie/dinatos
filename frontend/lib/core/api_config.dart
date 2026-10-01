@@ -26,4 +26,13 @@ class ApiConfig {
     }
     return 'http://127.0.0.1:8000';
   }
+
+  /// True for exactly the web-build-served-from-its-own-backend case
+  /// described above: no build-time override, so [baseUrl] is derived from
+  /// the browser's own address bar and can only ever be the origin this
+  /// build was served from. The login and profile screens disable editing
+  /// the Server URL field in that case -- there's no other value it could
+  /// meaningfully hold, and typing one in would just point the app at a
+  /// server whose CORS policy was never set up to serve this origin.
+  static bool get isFixedToServingOrigin => kIsWeb && _override.isEmpty;
 }

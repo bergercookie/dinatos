@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/api_config.dart';
 import '../../core/api_exception.dart';
 import '../../core/async_value_view.dart';
 import '../../core/auth/auth_notifier.dart';
@@ -177,11 +178,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 leading: const Icon(Icons.dns_outlined),
                 title: const Text('Server'),
                 subtitle: Text(widget.serverUrl),
-                trailing: IconButton(
-                  tooltip: 'Change server',
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _editServerUrl(context, ref),
-                ),
+                trailing: ApiConfig.isFixedToServingOrigin
+                    ? null
+                    : IconButton(
+                        tooltip: 'Change server',
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _editServerUrl(context, ref),
+                      ),
               ),
               SwitchListTile(
                 secondary: const Icon(Icons.lock_open_outlined),
