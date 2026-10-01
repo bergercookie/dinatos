@@ -20,7 +20,7 @@ class ActivityListScreen extends ConsumerWidget {
     final dateFormat = DateFormat.yMMMd().add_Hm();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Activities')),
+      appBar: AppBar(title: const Text('Home')),
       floatingActionButton: FloatingActionButton(
         tooltip: 'New activity',
         onPressed: () => context.go('/activities/new'),

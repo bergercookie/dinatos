@@ -332,7 +332,7 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.get_by_role("button", name="Create").click()
             page.wait_for_timeout(1000)
 
-            _goto_tab(page, "Activities")
+            _goto_tab(page, "Home")
             page.get_by_role("button", name="New activity").click()
             page.wait_for_timeout(400)
             _fill(page.get_by_role("textbox", name="Title"), ROUTINE_NAME)
