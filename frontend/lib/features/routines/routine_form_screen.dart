@@ -10,6 +10,7 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
+import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import 'routines_providers.dart';
 import 'routines_repository.dart';
@@ -176,20 +177,13 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
         const SizedBox(height: 8),
         AsyncValueView(
           value: exercisesAsync,
-          builder: (context, allExercises) => MenuAnchor(
-            builder: (context, controller, child) => OutlinedButton.icon(
-              onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-              icon: const Icon(Icons.add),
-              label: const Text('Add exercise'),
-            ),
-            menuChildren: allExercises
-                .map(
-                  (exercise) => MenuItemButton(
-                    onPressed: () => _addExercise(exercise),
-                    child: Text(exercise.name),
-                  ),
-                )
-                .toList(),
+          builder: (context, allExercises) => OutlinedButton.icon(
+            onPressed: () async {
+              final exercise = await showExercisePicker(context, exercises: allExercises);
+              if (exercise != null) _addExercise(exercise);
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add exercise'),
           ),
         ),
         if (_error != null) ...[

@@ -12,6 +12,7 @@ import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
+import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import '../routines/routines_providers.dart';
 import 'activities_providers.dart';
@@ -277,20 +278,13 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
         const SizedBox(height: 8),
         AsyncValueView(
           value: exercisesAsync,
-          builder: (context, allExercises) => MenuAnchor(
-            builder: (context, controller, child) => OutlinedButton.icon(
-              onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-              icon: const Icon(Icons.add),
-              label: const Text('Add exercise'),
-            ),
-            menuChildren: allExercises
-                .map(
-                  (exercise) => MenuItemButton(
-                    onPressed: () => _addExercise(exercise),
-                    child: Text(exercise.name),
-                  ),
-                )
-                .toList(),
+          builder: (context, allExercises) => OutlinedButton.icon(
+            onPressed: () async {
+              final exercise = await showExercisePicker(context, exercises: allExercises);
+              if (exercise != null) _addExercise(exercise);
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add exercise'),
           ),
         ),
         if (_error != null) ...[
