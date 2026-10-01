@@ -120,6 +120,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const MeasurementListScreen(),
                 routes: [
                   GoRoute(path: 'new', builder: (context, state) => const MeasurementFormScreen()),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => MeasurementFormScreen(
+                      measurementId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
                 ],
               ),
             ],
