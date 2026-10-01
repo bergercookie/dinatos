@@ -11,15 +11,15 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
-import '../../models/workout.dart';
+import '../../models/routine.dart';
 import '../exercises/exercises_providers.dart';
-import '../workouts/workouts_providers.dart';
+import '../routines/routines_providers.dart';
 import 'activities_providers.dart';
 import 'activities_repository.dart';
 
 /// Create when [activityId] is null, otherwise edit (and `PUT`-replace) that
 /// activity's exercises and sets as a whole -- the same full-replace shape
-/// `workouts` uses.
+/// `routines` uses.
 ///
 /// Weight/reps/set-type are the only per-set fields this form edits;
 /// distance/duration/RPE stay whatever they already were (null for a new
@@ -38,7 +38,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
   final _descriptionController = TextEditingController();
   DateTime _startedAt = DateTime.now();
   DateTime? _endedAt;
-  int? _workoutId;
+  int? _routineId;
   List<ActivityExercise> _exercises = [];
   bool _submitting = false;
   String? _error;
@@ -53,7 +53,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
     _descriptionController.text = activity.description ?? '';
     _startedAt = activity.startedAt.toLocal();
     _endedAt = activity.endedAt?.toLocal();
-    _workoutId = activity.workoutId;
+    _routineId = activity.routineId;
     _exercises = List.of(activity.exercises);
   }
 
@@ -64,11 +64,11 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
     super.dispose();
   }
 
-  void _startFromWorkout(Workout workout) {
+  void _startFromRoutine(Routine routine) {
     setState(() {
-      _titleController.text = workout.name;
-      _workoutId = workout.id;
-      _exercises = workout.exercises
+      _titleController.text = routine.name;
+      _routineId = routine.id;
+      _exercises = routine.exercises
           .map(
             (we) => ActivityExercise(
               exerciseId: we.exerciseId,
@@ -126,7 +126,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
           : _descriptionController.text.trim(),
       startedAt: _startedAt,
       endedAt: _endedAt,
-      workoutId: _workoutId,
+      routineId: _routineId,
       exercises: _exercises,
     );
     final repository = ref.read(activitiesRepositoryProvider);
@@ -234,22 +234,22 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
           const SizedBox(height: 8),
           Consumer(
             builder: (context, ref, _) {
-              final workoutsAsync = ref.watch(workoutListProvider);
-              return workoutsAsync.maybeWhen(
-                data: (workouts) => workouts.isEmpty
+              final routinesAsync = ref.watch(routineListProvider);
+              return routinesAsync.maybeWhen(
+                data: (routines) => routines.isEmpty
                     ? const SizedBox.shrink()
                     : MenuAnchor(
                         builder: (context, controller, child) => OutlinedButton.icon(
                           onPressed: () =>
                               controller.isOpen ? controller.close() : controller.open(),
                           icon: const Icon(Icons.content_copy),
-                          label: const Text('Start from a saved workout'),
+                          label: const Text('Start from a saved routine'),
                         ),
-                        menuChildren: workouts
+                        menuChildren: routines
                             .map(
-                              (w) => MenuItemButton(
-                                onPressed: () => _startFromWorkout(w),
-                                child: Text(w.name),
+                              (r) => MenuItemButton(
+                                onPressed: () => _startFromRoutine(r),
+                                child: Text(r.name),
                               ),
                             )
                             .toList(),

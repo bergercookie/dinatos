@@ -4,7 +4,7 @@ import '../design_tokens.dart';
 
 /// A leading icon in a rounded, tinted square -- the "what kind of thing is
 /// this row" glance every row in the list screens was missing (a bare
-/// `ListTile` gives a workout, an activity and an exercise the exact same
+/// `ListTile` gives a routine, an activity and an exercise the exact same
 /// silhouette; only the text tells them apart).
 class AppIconAvatar extends StatelessWidget {
   const AppIconAvatar({super.key, required this.icon, this.color, this.background});
@@ -29,7 +29,7 @@ class AppIconAvatar extends StatelessWidget {
   }
 }
 
-/// The card-based row every list screen (Workouts, Exercises, Activities)
+/// The card-based row every list screen (Routines, Exercises, Activities)
 /// now uses in place of a plain `ListTile` -- gives each entry a visible
 /// boundary and enough room for a second line of detail (date, set count,
 /// duration) instead of squeezing everything onto one.

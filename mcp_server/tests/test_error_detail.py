@@ -14,5 +14,5 @@ def test_falls_back_to_raw_text_when_the_body_has_no_detail_field() -> None:
 
 
 def test_reads_the_detail_field_from_a_fastapi_error_body() -> None:
-    response = httpx.Response(404, json={"detail": "workout not found"})
-    assert _error_detail(response) == "workout not found"
+    response = httpx.Response(404, json={"detail": "routine not found"})
+    assert _error_detail(response) == "routine not found"

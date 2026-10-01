@@ -83,15 +83,15 @@ EXERCISES = [
     "Pull-Up",
     "Barbell Row",
 ]
-WORKOUT_NAME = "Push Day A"
-WORKOUT_DESCRIPTION = "Chest, shoulders, triceps"
+ROUTINE_NAME = "Push Day A"
+ROUTINE_DESCRIPTION = "Chest, shoulders, triceps"
 
 # name -> (file stem, caption). Order is display order in README.md.
 SCREENSHOTS = {
     "login": ("login", "Signing in"),
     "exercise-view": ("exercise-view", "The exercise catalog"),
-    "workout-creation": ("workout-creation", "Building a saved workout"),
-    "workout-execution": ("workout-execution", "Logging an activity from it"),
+    "routine-creation": ("routine-creation", "Building a saved routine"),
+    "routine-execution": ("routine-execution", "Logging an activity from it"),
 }
 
 
@@ -209,7 +209,7 @@ def _fill(locator: Locator, value: str) -> None:
     key/text-input handling as it happens, rather than needing to survive an
     async round trip in a single bulk update. Select-all-then-delete first so
     this also works to *replace* a field's existing value (e.g. a set copied
-    from a saved workout), not just to fill an empty one.
+    from a saved routine), not just to fill an empty one.
     """
     locator.click()
     locator.press("ControlOrMeta+a")
@@ -297,11 +297,11 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.screenshot(path=path)
             saved["exercise-view"] = path
 
-            _goto_tab(page, "Workouts")
-            page.get_by_role("button", name="New workout").click()
+            _goto_tab(page, "Routines")
+            page.get_by_role("button", name="New routine").click()
             page.wait_for_timeout(400)
-            _fill(page.get_by_role("textbox", name="Name"), WORKOUT_NAME)
-            _fill(page.get_by_role("textbox", name="Description (optional)"), WORKOUT_DESCRIPTION)
+            _fill(page.get_by_role("textbox", name="Name"), ROUTINE_NAME)
+            _fill(page.get_by_role("textbox", name="Description (optional)"), ROUTINE_DESCRIPTION)
 
             page.get_by_role("button", name="Add exercise").click()
             page.wait_for_timeout(300)
@@ -325,9 +325,9 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             _fill_set(overhead, 0, "40", "8")
             _fill_set(overhead, 1, "45", "6")
 
-            path = output_dir / f"{SCREENSHOTS['workout-creation'][0]}.png"
+            path = output_dir / f"{SCREENSHOTS['routine-creation'][0]}.png"
             page.screenshot(path=path)
-            saved["workout-creation"] = path
+            saved["routine-creation"] = path
 
             page.get_by_role("button", name="Create").click()
             page.wait_for_timeout(1000)
@@ -335,10 +335,10 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             _goto_tab(page, "Activities")
             page.get_by_role("button", name="New activity").click()
             page.wait_for_timeout(400)
-            _fill(page.get_by_role("textbox", name="Title"), WORKOUT_NAME)
-            page.get_by_role("button", name="Start from a saved workout").click()
+            _fill(page.get_by_role("textbox", name="Title"), ROUTINE_NAME)
+            page.get_by_role("button", name="Start from a saved routine").click()
             page.wait_for_timeout(300)
-            page.get_by_role("button", name=WORKOUT_NAME, exact=True).click()
+            page.get_by_role("button", name=ROUTINE_NAME, exact=True).click()
             page.wait_for_timeout(400)
 
             # A realistic tweak: the last Overhead Press set went a little
@@ -346,9 +346,9 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             activity_overhead = page.get_by_role("group", name="Overhead Press")
             _fill(activity_overhead.get_by_role("textbox", name="kg").nth(1), "47.5")
 
-            path = output_dir / f"{SCREENSHOTS['workout-execution'][0]}.png"
+            path = output_dir / f"{SCREENSHOTS['routine-execution'][0]}.png"
             page.screenshot(path=path)
-            saved["workout-execution"] = path
+            saved["routine-execution"] = path
 
             # Finish the flow for real -- not needed for any screenshot, but
             # confirms the whole path this script exercises still actually works.

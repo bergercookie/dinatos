@@ -20,7 +20,7 @@ class AppShell extends StatelessWidget {
             navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.fitness_center), label: 'Exercises'),
-          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Workouts'),
+          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Routines'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Activities'),
           NavigationDestination(icon: Icon(Icons.straighten), label: 'Measurements'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),

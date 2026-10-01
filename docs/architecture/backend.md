@@ -17,12 +17,12 @@ calling user's own data:
   tutorials" below and `Exercise.is_custom`'s docstring.
   `/exercises/{id}/tutorial` -- a GIF plus instructions/muscles/equipment,
   see "Exercise tutorials" below.
-- `/workouts` -- saved routine templates, scoped to their owner. Nested
+- `/routines` -- saved routine templates, scoped to their owner. Nested
   exercises/sets are created and replaced as a whole (`POST`, `PUT`); there
   is no endpoint for patching one set in isolation.
 - `/activities` -- performed sessions, scoped to their owner, the same
-  nested create/replace shape as workouts, plus `?since=`/`?until=`
-  filtering. An activity may reference one of the caller's own `/workouts`
+  nested create/replace shape as routines, plus `?since=`/`?until=`
+  filtering. An activity may reference one of the caller's own `/routines`
   templates; referencing someone else's is a 404, the same as trying to
   read it directly.
 - `/profile` -- one row per user (`GET`/`PATCH`, no id in the path: always
@@ -124,9 +124,9 @@ the session token.
 ## MCP server
 
 `mcp_server/` (package `dinatos-mcp`, entry point `dinatos-mcp`) exposes a
-handful of the endpoints above -- exercises, workouts, activities -- as MCP
+handful of the endpoints above -- exercises, routines, activities -- as MCP
 tools, so an LLM harness (Claude Desktop, or any other MCP client) can
-create exercises, build workout templates and log activities on someone's
+create exercises, build routine templates and log activities on someone's
 behalf. It's deliberately its own `uv` project (own `pyproject.toml`,
 `uv.lock`, virtualenv), not a module inside `dinatos_backend`: it's a
 *client* of this API, the same as the Flutter app or a `curl` script, so it
@@ -256,7 +256,7 @@ every API router and `/health`, so those are always matched first; `_WebApp`
 only ever serves what nothing else claimed. `_WebApp.get_response` falls
 back to `index.html` for anything that 404s, which in practice only matters
 for a direct request to a path that isn't a real asset -- Flutter web's
-default hash-based routing (`/#/workouts/1`) never sends its client-side
+default hash-based routing (`/#/routines/1`) never sends its client-side
 route to the server at all, so a browser only ever requests `/` to begin
 with.
 

@@ -16,7 +16,7 @@ frontend/lib/
   core/       API client (Dio + an auth interceptor), auth state/storage,
               routing (go_router), theme
   models/     Hand-written request/response types, one file per resource
-  features/   One directory per resource (exercises, workouts, activities,
+  features/   One directory per resource (exercises, routines, activities,
               profile, measurements, auth, home) -- each with its own
               repository (wraps Dio), Riverpod providers, and screens
 ```
@@ -89,13 +89,13 @@ deploying operator would actually turn this on.
 
 ## Shared editing shape
 
-`workouts` and `activities` share the same nested "exercises, each with
+`routines` and `activities` share the same nested "exercises, each with
 sets" editing shape the backend's schemas do (see
 [API surface](backend.md#api-surface)), including the same full-replace
 semantics on save (`PUT`, not per-set `PATCH`). An activity's "start from a
-saved workout" button copies a workout's exercises and target weights/reps
+saved routine" button copies a routine's exercises and target weights/reps
 into a new activity client-side -- convenience only, not an API relationship
-beyond the `workout_id` reference already stored on the created activity.
+beyond the `routine_id` reference already stored on the created activity.
 
 ## The web target needs the backend's CORS middleware
 

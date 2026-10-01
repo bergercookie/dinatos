@@ -285,7 +285,7 @@ has processed it, surfacing as a real "Name is required" error on a field
 that was just filled. Typing character-by-character with real key events
 (`Locator.press_sequentially`), the way a person would, avoids the race
 entirely; select-all-then-delete first if the field might already hold a
-value (e.g. one copied from a saved workout) rather than being empty.
+value (e.g. one copied from a saved routine) rather than being empty.
 
 Seed data for anything backed by a genuinely global (not per-owner) table --
 `exercises` is the example here -- needs a fresh database per run, not a

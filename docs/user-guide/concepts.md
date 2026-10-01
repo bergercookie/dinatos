@@ -10,22 +10,22 @@ Dinatos organizes everything around four kinds of thing:
   Most exercises come with a tutorial -- a picture or GIF plus instructions,
   target muscles, and equipment -- see
   [Browsing exercises](using-the-app.md#exercises).
-- **Workouts** -- a named, reusable plan: a list of exercises, with a target
+- **Routines** -- a named, reusable plan: a list of exercises, with a target
   number of sets/reps/weight for each. Think of this as a template -- "Upper
-  body A," "Leg day" -- that you build once and reuse. Workouts are private
+  body A," "Leg day" -- that you build once and reuse. Routines are private
   to your own account.
 - **Activities** -- a record of a gym session you actually did: a list of
   exercises with the sets, reps, and weight you actually performed. An
-  activity can start from one of your saved workouts (copying its exercises
+  activity can start from one of your saved routines (copying its exercises
   in as a starting point) or be built from scratch on the spot. Also
   private to your own account.
 - **Measurements** -- dated body-measurement entries (weight, and whatever
-  else you choose to track), separate from any workout.
+  else you choose to track), separate from any routine.
 
 Your **profile** holds account-level settings and is where you log out,
 change the server you're pointed at, and import history from Hevy.
 
 Everything except the exercise catalog belongs to exactly one account --
 Dinatos is a household app from the start, so if your instance has more
-than one person logged in, nobody sees anyone else's workouts, activities,
+than one person logged in, nobody sees anyone else's routines, activities,
 or measurements.

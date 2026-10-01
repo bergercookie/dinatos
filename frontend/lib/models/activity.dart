@@ -1,6 +1,6 @@
 import 'set_type.dart';
 
-/// See `models/workout.dart`'s `_unset` -- same reason: distinguishes "not
+/// See `models/routine.dart`'s `_unset` -- same reason: distinguishes "not
 /// passed" from "explicitly cleared" in `copyWith`.
 const _unset = Object();
 
@@ -118,7 +118,7 @@ class Activity {
     this.description,
     required this.startedAt,
     this.endedAt,
-    this.workoutId,
+    this.routineId,
     this.exercises = const [],
   });
 
@@ -128,7 +128,7 @@ class Activity {
     description: json['description'] as String?,
     startedAt: DateTime.parse(json['started_at'] as String),
     endedAt: json['ended_at'] != null ? DateTime.parse(json['ended_at'] as String) : null,
-    workoutId: json['workout_id'] as int?,
+    routineId: json['routine_id'] as int?,
     exercises: (json['exercises'] as List<dynamic>)
         .map((e) => ActivityExercise.fromJson(e as Map<String, dynamic>))
         .toList(),
@@ -139,7 +139,7 @@ class Activity {
   final String? description;
   final DateTime startedAt;
   final DateTime? endedAt;
-  final int? workoutId;
+  final int? routineId;
   final List<ActivityExercise> exercises;
 
   Map<String, dynamic> toJson() => {
@@ -147,7 +147,7 @@ class Activity {
     'description': description,
     'started_at': startedAt.toUtc().toIso8601String(),
     'ended_at': endedAt?.toUtc().toIso8601String(),
-    'workout_id': workoutId,
+    'routine_id': routineId,
     'exercises': exercises.map((e) => e.toJson()).toList(),
   };
 
@@ -156,7 +156,7 @@ class Activity {
     String? description,
     DateTime? startedAt,
     DateTime? endedAt,
-    int? workoutId,
+    int? routineId,
     List<ActivityExercise>? exercises,
   }) => Activity(
     id: id,
@@ -164,7 +164,7 @@ class Activity {
     description: description ?? this.description,
     startedAt: startedAt ?? this.startedAt,
     endedAt: endedAt ?? this.endedAt,
-    workoutId: workoutId ?? this.workoutId,
+    routineId: routineId ?? this.routineId,
     exercises: exercises ?? this.exercises,
   );
 }

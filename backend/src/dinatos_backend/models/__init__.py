@@ -10,8 +10,8 @@ from dinatos_backend.models.exercise import Exercise
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.profile import UnitSystem, UserProfile
+from dinatos_backend.models.routine import Routine, RoutineExercise, RoutineSet, SetType
 from dinatos_backend.models.user import User
-from dinatos_backend.models.workout import SetType, Workout, WorkoutExercise, WorkoutSet
 
 __all__ = [
     "Activity",
@@ -23,12 +23,12 @@ __all__ = [
     "Exercise",
     "HevyImportKind",
     "HevyImportRecord",
+    "Routine",
+    "RoutineExercise",
+    "RoutineSet",
     "SetType",
     "TimestampMixin",
     "UnitSystem",
     "User",
     "UserProfile",
-    "Workout",
-    "WorkoutExercise",
-    "WorkoutSet",
 ]

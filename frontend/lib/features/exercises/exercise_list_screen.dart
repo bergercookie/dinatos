@@ -125,7 +125,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
             ? Icons.search_off_rounded
             : Icons.fitness_center_rounded,
         title: searching ? 'No matching exercises' : 'No exercises yet',
-        message: searching ? 'Try a different search term.' : 'Add the exercises you train so you can build workouts around them.',
+        message: searching ? 'Try a different search term.' : 'Add the exercises you train so you can build routines around them.',
         actionLabel: searching ? null : 'Add exercise',
         onAction: searching ? null : () => context.go('/exercises/new'),
       );

@@ -5,7 +5,7 @@ import pytest
 from dinatos_mcp import server
 from dinatos_mcp.client import DinatosClient
 from dinatos_mcp.config import Settings
-from dinatos_mcp.schemas import ActivityExerciseInput, WorkoutExerciseInput
+from dinatos_mcp.schemas import ActivityExerciseInput, RoutineExerciseInput
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ async def test_tools_are_registered_with_descriptions() -> None:
     assert names == {
         "list_exercises",
         "create_exercise",
-        "list_workouts",
-        "create_workout",
+        "list_routines",
+        "create_routine",
         "list_activities",
         "log_activity",
     }
@@ -42,15 +42,15 @@ async def test_create_exercise_tool() -> None:
 
 
 @pytest.mark.usefixtures("_use_test_client")
-async def test_create_workout_tool() -> None:
+async def test_create_routine_tool() -> None:
     exercise = await server.create_exercise("Overhead Press")
-    workout = await server.create_workout(
-        "Push day", [WorkoutExerciseInput(exercise_id=exercise["id"])]
+    routine = await server.create_routine(
+        "Push day", [RoutineExerciseInput(exercise_id=exercise["id"])]
     )
-    assert workout["name"] == "Push day"
+    assert routine["name"] == "Push day"
 
-    workouts = await server.list_workouts()
-    assert [w["name"] for w in workouts] == ["Push day"]
+    routines = await server.list_routines()
+    assert [w["name"] for w in routines] == ["Push day"]
 
 
 @pytest.mark.usefixtures("_use_test_client")

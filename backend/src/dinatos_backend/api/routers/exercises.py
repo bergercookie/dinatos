@@ -53,7 +53,7 @@ async def list_exercises(
 ) -> list[Exercise]:
     """List exercises, optionally filtered by a case-insensitive name search --
     this backs the watch-sync picker's search box, and the exercises list
-    screen, and the workout/activity exercise pickers.
+    screen, and the routine/activity exercise pickers.
 
     `limit`/`offset` are opt-in: the pickers omit them and get every matching
     row in one shot, exactly as before pagination existed, since they need

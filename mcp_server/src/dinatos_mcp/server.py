@@ -15,14 +15,14 @@ from mcp.server.fastmcp import FastMCP
 
 from dinatos_mcp.client import DinatosClient
 from dinatos_mcp.config import get_settings
-from dinatos_mcp.schemas import ActivityExerciseInput, WorkoutExerciseInput
+from dinatos_mcp.schemas import ActivityExerciseInput, RoutineExerciseInput
 
 mcp = FastMCP(
     "dinatos",
     instructions=(
         "Manage a Dinatos workout tracker instance: browse and add exercises, "
-        "create workout templates, and log activities. Look up exercise ids "
-        "with list_exercises before creating a workout or logging an activity "
+        "create routine templates, and log activities. Look up exercise ids "
+        "with list_exercises before creating a routine or logging an activity "
         "that references one."
     ),
 )
@@ -37,7 +37,7 @@ def get_client() -> DinatosClient:
 async def list_exercises(search: str | None = None) -> list[dict[str, Any]]:
     """List the exercise catalog, optionally filtered by a case-insensitive
     name search. Use this to find an exercise's id before referencing it
-    from create_workout or log_activity.
+    from create_routine or log_activity.
     """
     return await get_client().list_exercises(search)
 
@@ -64,20 +64,20 @@ async def create_exercise(
 
 
 @mcp.tool()
-async def list_workouts() -> list[dict[str, Any]]:
-    """List your saved workout templates, with their prescribed exercises and sets."""
-    return await get_client().list_workouts()
+async def list_routines() -> list[dict[str, Any]]:
+    """List your saved routine templates, with their prescribed exercises and sets."""
+    return await get_client().list_routines()
 
 
 @mcp.tool()
-async def create_workout(
-    name: str, exercises: list[WorkoutExerciseInput], description: str | None = None
+async def create_routine(
+    name: str, exercises: list[RoutineExerciseInput], description: str | None = None
 ) -> dict[str, Any]:
-    """Create a saved workout template: a name plus a prescribed list of
+    """Create a saved routine template: a name plus a prescribed list of
     exercises and sets. Sets here are targets (target_weight_kg,
     target_reps, ...), not performed values -- use log_activity for those.
     """
-    return await get_client().create_workout(name, exercises, description=description)
+    return await get_client().create_routine(name, exercises, description=description)
 
 
 @mcp.tool()
@@ -97,10 +97,10 @@ async def log_activity(
     exercises: list[ActivityExerciseInput],
     description: str | None = None,
     ended_at: datetime | None = None,
-    workout_id: int | None = None,
+    routine_id: int | None = None,
 ) -> dict[str, Any]:
     """Log a completed activity: what was actually done, and when. May
-    reference one of your own workout templates by id (workout_id) -- not
+    reference one of your own routine templates by id (routine_id) -- not
     someone else's, and not required for an ad-hoc session.
     """
     return await get_client().log_activity(
@@ -109,5 +109,5 @@ async def log_activity(
         exercises,
         description=description,
         ended_at=ended_at,
-        workout_id=workout_id,
+        routine_id=routine_id,
     )

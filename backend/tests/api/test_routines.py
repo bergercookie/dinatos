@@ -7,7 +7,7 @@ async def _create_exercise(client: AsyncClient, name: str = "Squat (Barbell)") -
     return exercise_id
 
 
-async def test_create_workout_with_nested_exercises_and_sets(client: AsyncClient) -> None:
+async def test_create_routine_with_nested_exercises_and_sets(client: AsyncClient) -> None:
     exercise_id = await _create_exercise(client)
 
     payload = {
@@ -24,7 +24,7 @@ async def test_create_workout_with_nested_exercises_and_sets(client: AsyncClient
             }
         ],
     }
-    response = await client.post("/workouts", json=payload)
+    response = await client.post("/routines", json=payload)
     assert response.status_code == 201
     body = response.json()
     assert body["name"] == "Leg day"
@@ -33,40 +33,40 @@ async def test_create_workout_with_nested_exercises_and_sets(client: AsyncClient
     assert body["exercises"][0]["sets"][0]["set_type"] == "warmup"
 
 
-async def test_list_and_get_workout(client: AsyncClient) -> None:
+async def test_list_and_get_routine(client: AsyncClient) -> None:
     exercise_id = await _create_exercise(client)
     created = await client.post(
-        "/workouts",
+        "/routines",
         json={"name": "Push day", "exercises": [{"exercise_id": exercise_id, "sets": []}]},
     )
-    workout_id = created.json()["id"]
+    routine_id = created.json()["id"]
 
-    response = await client.get("/workouts")
+    response = await client.get("/routines")
     assert response.status_code == 200
-    assert any(w["id"] == workout_id for w in response.json())
+    assert any(w["id"] == routine_id for w in response.json())
 
-    response = await client.get(f"/workouts/{workout_id}")
+    response = await client.get(f"/routines/{routine_id}")
     assert response.status_code == 200
     assert response.json()["name"] == "Push day"
 
 
-async def test_get_missing_workout_is_404(client: AsyncClient) -> None:
-    response = await client.get("/workouts/999")
+async def test_get_missing_routine_is_404(client: AsyncClient) -> None:
+    response = await client.get("/routines/999")
     assert response.status_code == 404
 
 
-async def test_replace_workout_swaps_exercises(client: AsyncClient) -> None:
+async def test_replace_routine_swaps_exercises(client: AsyncClient) -> None:
     squat_id = await _create_exercise(client, "Squat (Barbell)")
     bench_id = await _create_exercise(client, "Bench Press (Dumbbell)")
 
     created = await client.post(
-        "/workouts",
+        "/routines",
         json={"name": "Original", "exercises": [{"exercise_id": squat_id, "sets": []}]},
     )
-    workout_id = created.json()["id"]
+    routine_id = created.json()["id"]
 
     response = await client.put(
-        f"/workouts/{workout_id}",
+        f"/routines/{routine_id}",
         json={
             "name": "Replaced",
             "description": "swapped",
@@ -80,22 +80,22 @@ async def test_replace_workout_swaps_exercises(client: AsyncClient) -> None:
     assert body["exercises"][0]["exercise_id"] == bench_id
 
 
-async def test_replace_missing_workout_is_404(client: AsyncClient) -> None:
-    response = await client.put("/workouts/999", json={"name": "x", "exercises": []})
+async def test_replace_missing_routine_is_404(client: AsyncClient) -> None:
+    response = await client.put("/routines/999", json={"name": "x", "exercises": []})
     assert response.status_code == 404
 
 
-async def test_delete_workout(client: AsyncClient) -> None:
-    created = await client.post("/workouts", json={"name": "To delete", "exercises": []})
-    workout_id = created.json()["id"]
+async def test_delete_routine(client: AsyncClient) -> None:
+    created = await client.post("/routines", json={"name": "To delete", "exercises": []})
+    routine_id = created.json()["id"]
 
-    response = await client.delete(f"/workouts/{workout_id}")
+    response = await client.delete(f"/routines/{routine_id}")
     assert response.status_code == 204
 
-    response = await client.get(f"/workouts/{workout_id}")
+    response = await client.get(f"/routines/{routine_id}")
     assert response.status_code == 404
 
 
-async def test_delete_missing_workout_is_404(client: AsyncClient) -> None:
-    response = await client.delete("/workouts/999")
+async def test_delete_missing_routine_is_404(client: AsyncClient) -> None:
+    response = await client.delete("/routines/999")
     assert response.status_code == 404

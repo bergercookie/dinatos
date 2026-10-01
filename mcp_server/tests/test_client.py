@@ -10,9 +10,9 @@ from dinatos_mcp.config import Settings
 from dinatos_mcp.schemas import (
     ActivityExerciseInput,
     ActivitySetInput,
+    RoutineExerciseInput,
+    RoutineSetInput,
     SetType,
-    WorkoutExerciseInput,
-    WorkoutSetInput,
 )
 
 TEST_USER_EMAIL = "test@example.com"
@@ -42,32 +42,32 @@ async def test_create_and_list_exercises(client: DinatosClient) -> None:
     assert run["tracks_weight"] is False
 
 
-async def test_create_workout_with_nested_exercises_and_sets(client: DinatosClient) -> None:
+async def test_create_routine_with_nested_exercises_and_sets(client: DinatosClient) -> None:
     exercise_id = await _create_exercise(client)
 
-    workout = await client.create_workout(
+    routine = await client.create_routine(
         "Leg day",
         [
-            WorkoutExerciseInput(
+            RoutineExerciseInput(
                 exercise_id=exercise_id,
                 notes="go deep",
                 sets=[
-                    WorkoutSetInput(set_type=SetType.warmup, target_reps=10, target_weight_kg=20),
-                    WorkoutSetInput(set_type=SetType.normal, target_reps=5, target_weight_kg=60),
+                    RoutineSetInput(set_type=SetType.warmup, target_reps=10, target_weight_kg=20),
+                    RoutineSetInput(set_type=SetType.normal, target_reps=5, target_weight_kg=60),
                 ],
             )
         ],
         description="Squats and lunges",
     )
 
-    assert workout["name"] == "Leg day"
-    assert workout["description"] == "Squats and lunges"
-    assert len(workout["exercises"]) == 1
-    assert workout["exercises"][0]["notes"] == "go deep"
-    assert [s["set_type"] for s in workout["exercises"][0]["sets"]] == ["warmup", "normal"]
+    assert routine["name"] == "Leg day"
+    assert routine["description"] == "Squats and lunges"
+    assert len(routine["exercises"]) == 1
+    assert routine["exercises"][0]["notes"] == "go deep"
+    assert [s["set_type"] for s in routine["exercises"][0]["sets"]] == ["warmup", "normal"]
 
-    workouts = await client.list_workouts()
-    assert [w["name"] for w in workouts] == ["Leg day"]
+    routines = await client.list_routines()
+    assert [w["name"] for w in routines] == ["Leg day"]
 
 
 async def test_log_activity_with_nested_exercises_and_sets(client: DinatosClient) -> None:
@@ -95,16 +95,16 @@ async def test_log_activity_with_nested_exercises_and_sets(client: DinatosClient
     assert [a["title"] for a in activities] == ["Evening workout"]
 
 
-async def test_log_activity_rejects_unowned_workout_id(client: DinatosClient) -> None:
+async def test_log_activity_rejects_unowned_routine_id(client: DinatosClient) -> None:
     with pytest.raises(DinatosAPIError) as excinfo:
         await client.log_activity(
             "Ad-hoc session",
             started_at=datetime.fromisoformat("2026-09-24T21:13:00Z"),
             exercises=[],
-            workout_id=999,
+            routine_id=999,
         )
     assert excinfo.value.status_code == 404
-    assert "workout" in excinfo.value.detail
+    assert "routine" in excinfo.value.detail
 
 
 async def test_without_credentials_raises_config_error(backend_transport: ASGITransport) -> None:

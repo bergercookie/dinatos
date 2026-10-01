@@ -58,25 +58,25 @@ async def test_get_missing_activity_is_404(client: AsyncClient) -> None:
     assert response.status_code == 404
 
 
-async def test_create_activity_referencing_own_workout(client: AsyncClient) -> None:
+async def test_create_activity_referencing_own_routine(client: AsyncClient) -> None:
     exercise_id = await _create_exercise(client)
-    workout = await client.post(
-        "/workouts",
+    routine = await client.post(
+        "/routines",
         json={"name": "Push day", "exercises": [{"exercise_id": exercise_id, "sets": []}]},
     )
-    workout_id = workout.json()["id"]
+    routine_id = routine.json()["id"]
 
     response = await client.post(
         "/activities",
         json={
             "title": "Ran the routine",
             "started_at": "2026-01-01T10:00:00Z",
-            "workout_id": workout_id,
+            "routine_id": routine_id,
             "exercises": [],
         },
     )
     assert response.status_code == 201
-    assert response.json()["workout_id"] == workout_id
+    assert response.json()["routine_id"] == routine_id
 
 
 async def test_replace_activity(client: AsyncClient) -> None:
