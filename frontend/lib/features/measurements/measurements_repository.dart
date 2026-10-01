@@ -25,10 +25,31 @@ class MeasurementsRepository {
     }
   }
 
+  Future<BodyMeasurement> get(int id) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/measurements/$id');
+      return BodyMeasurement.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
   Future<BodyMeasurement> create(BodyMeasurement measurement) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/measurements',
+        data: measurement.toJson(),
+      );
+      return BodyMeasurement.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  Future<BodyMeasurement> replace(int id, BodyMeasurement measurement) async {
+    try {
+      final response = await _dio.put<Map<String, dynamic>>(
+        '/measurements/$id',
         data: measurement.toJson(),
       );
       return BodyMeasurement.fromJson(response.data!);

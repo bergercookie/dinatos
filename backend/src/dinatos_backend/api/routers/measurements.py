@@ -11,6 +11,18 @@ from dinatos_backend.schemas.measurement import BodyMeasurementCreate, BodyMeasu
 router = APIRouter(prefix="/measurements", tags=["measurements"])
 
 
+async def _get_or_404(db: AsyncSession, owner_id: int, measurement_id: int) -> BodyMeasurement:
+    result = await db.execute(
+        select(BodyMeasurement).where(
+            BodyMeasurement.id == measurement_id, BodyMeasurement.owner_id == owner_id
+        )
+    )
+    measurement = result.scalar_one_or_none()
+    if measurement is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "measurement not found")
+    return measurement
+
+
 @router.get("", response_model=list[BodyMeasurementRead])
 async def list_measurements(
     user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
@@ -36,17 +48,32 @@ async def create_measurement(
     return measurement
 
 
+@router.get("/{measurement_id}", response_model=BodyMeasurementRead)
+async def get_measurement(
+    measurement_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> BodyMeasurement:
+    return await _get_or_404(db, user.id, measurement_id)
+
+
+@router.put("/{measurement_id}", response_model=BodyMeasurementRead)
+async def replace_measurement(
+    measurement_id: int,
+    payload: BodyMeasurementCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> BodyMeasurement:
+    measurement = await _get_or_404(db, user.id, measurement_id)
+    for field, value in payload.model_dump().items():
+        setattr(measurement, field, value)
+    await db.commit()
+    await db.refresh(measurement)
+    return measurement
+
+
 @router.delete("/{measurement_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_measurement(
     measurement_id: int, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> None:
-    result = await db.execute(
-        select(BodyMeasurement).where(
-            BodyMeasurement.id == measurement_id, BodyMeasurement.owner_id == user.id
-        )
-    )
-    measurement = result.scalar_one_or_none()
-    if measurement is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "measurement not found")
+    measurement = await _get_or_404(db, user.id, measurement_id)
     await db.delete(measurement)
     await db.commit()
