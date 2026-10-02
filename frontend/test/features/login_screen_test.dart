@@ -42,6 +42,47 @@ void main() {
     return dio;
   }
 
+  testWidgets('marks Email and Password as a credential pair for password managers', (
+    tester,
+  ) async {
+    final container = ProviderContainer(overrides: _overrides(dio: stubbedFailingDio()));
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
+
+    Iterable<String>? hintsFor(String label) => tester
+        .widget<TextField>(
+          find.descendant(
+            of: find.widgetWithText(TextFormField, label),
+            matching: find.byType(TextField),
+          ),
+        )
+        .autofillHints;
+
+    expect(hintsFor('Email'), contains(AutofillHints.username));
+    expect(hintsFor('Password'), contains(AutofillHints.password));
+    // Both fields share one AutofillGroup, so they're offered/saved together.
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(TextFormField, 'Password'),
+        matching: find.byType(AutofillGroup),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(TextFormField, 'Email'),
+        matching: find.byType(AutofillGroup),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('prefills the Server URL field from serverUrlProvider', (tester) async {
     final container = ProviderContainer(
       overrides: _overrides(dio: stubbedFailingDio(), initialServerUrl: 'https://mine.example.com'),

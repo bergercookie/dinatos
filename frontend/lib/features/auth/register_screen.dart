@@ -55,61 +55,65 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const BrandHeader(),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text('Create an account', style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Start tracking your training with Dinatos',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Email is required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      helperText: 'At least 8 characters',
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const BrandHeader(),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text('Create an account', style: Theme.of(context).textTheme.headlineMedium),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Start tracking your training with Dinatos',
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                      textAlign: TextAlign.center,
                     ),
-                    obscureText: true,
-                    onFieldSubmitted: (_) => _submit(),
-                    validator: (value) => (value == null || value.length < 8)
-                        ? 'Password must be at least 8 characters'
-                        : null,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ErrorBanner(message: _error!),
+                    const SizedBox(height: AppSpacing.xl),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.username, AutofillHints.email],
+                      validator: (value) =>
+                          (value == null || value.isEmpty) ? 'Email is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        helperText: 'At least 8 characters',
+                      ),
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      onFieldSubmitted: (_) => _submit(),
+                      validator: (value) => (value == null || value.length < 8)
+                          ? 'Password must be at least 8 characters'
+                          : null,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      ErrorBanner(message: _error!),
+                    ],
+                    const SizedBox(height: AppSpacing.xl),
+                    FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Register'),
+                    ),
+                    TextButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Already have an account? Log in'),
+                    ),
                   ],
-                  const SizedBox(height: AppSpacing.xl),
-                  FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Register'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/login'),
-                    child: const Text('Already have an account? Log in'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
