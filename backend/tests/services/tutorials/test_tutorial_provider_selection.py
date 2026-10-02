@@ -4,6 +4,7 @@ from dinatos_backend.config import Settings
 from dinatos_backend.services import tutorials
 from dinatos_backend.services.tutorials import get_tutorial_provider
 from dinatos_backend.services.tutorials.cache import CachingTutorialProvider
+from dinatos_backend.services.tutorials.fallback import FallbackTutorialProvider
 from dinatos_backend.services.tutorials.free_exercise_db import FreeExerciseDbProvider
 from dinatos_backend.services.tutorials.workoutx import WorkoutXProvider
 
@@ -30,7 +31,10 @@ def test_uses_workoutx_when_an_api_key_is_configured(monkeypatch: pytest.MonkeyP
 
     provider = get_tutorial_provider()
 
-    assert isinstance(provider._provider, WorkoutXProvider)
+    assert isinstance(provider, FallbackTutorialProvider)
+    assert isinstance(provider._primary, CachingTutorialProvider)
+    assert isinstance(provider._primary._provider, WorkoutXProvider)
+    assert isinstance(provider._fallback, FreeExerciseDbProvider)
 
 
 def test_is_a_singleton_across_calls(monkeypatch: pytest.MonkeyPatch) -> None:

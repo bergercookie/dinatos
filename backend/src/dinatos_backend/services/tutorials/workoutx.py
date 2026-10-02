@@ -14,6 +14,10 @@ actually wraps this in production) keeps that same one-at-a-time shape in
 memory rather than persisting it, both to stay inside that clause and per
 this project's own choice not to persist third-party tutorial content at
 all (see that module's docstring).
+
+Failures here (a bad key, an outage) are not surfaced to the caller:
+`services.tutorials.fallback.FallbackTutorialProvider` serves the bundled
+dataset instead.
 """
 
 import httpx2 as httpx

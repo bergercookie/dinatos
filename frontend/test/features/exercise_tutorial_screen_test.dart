@@ -112,6 +112,112 @@ void main() {
     expect(find.textContaining('Sit up.'), findsOneWidget);
   });
 
+  Future<void> pumpTwoFrameTutorial(WidgetTester tester, {bool reduceMotion = false}) async {
+    final dio = MockDio();
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1'))
+        .thenAnswer((_) async => _exerciseResponse(1, '3/4 Sit-Up'));
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1/tutorial')).thenAnswer(
+      (_) async => Response(
+        requestOptions: RequestOptions(path: '/exercises/1/tutorial'),
+        statusCode: 200,
+        data: {
+          'source': 'free_exercise_db',
+          'gif_urls': ['https://example.test/0.jpg', 'https://example.test/1.jpg'],
+          'instructions': <String>[],
+          'equipment': null,
+          'primary_muscles': <String>[],
+          'secondary_muscles': <String>[],
+        },
+      ),
+    );
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MediaQuery(
+          data: MediaQueryData(disableAnimations: reduceMotion),
+          child: const MaterialApp(home: ExerciseTutorialScreen(exerciseId: 1)),
+        ),
+      ),
+    );
+    // Not `pumpAndSettle`: the carousel's periodic timer never settles.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
+  testWidgets('alternates start/end frames, and a tap pauses and resumes', (tester) async {
+    await pumpTwoFrameTutorial(tester);
+    expect(find.text('Start'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 850));
+    expect(find.text('End'), findsOneWidget);
+
+    await tester.tap(find.text('End'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('End'), findsOneWidget); // paused: no longer advancing
+
+    await tester.tap(find.text('End'));
+    await tester.pump(const Duration(milliseconds: 850));
+    expect(find.text('Start'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox()); // unmount: cancels the timer
+  });
+
+  testWidgets('with reduced motion it never auto-plays; a tap steps to the next frame', (
+    tester,
+  ) async {
+    await pumpTwoFrameTutorial(tester, reduceMotion: true);
+    expect(find.text('Start'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Start'), findsOneWidget);
+
+    await tester.tap(find.text('Start'));
+    await tester.pump();
+    expect(find.text('End'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('names the tutorial source, with a tooltip explaining it', (tester) async {
+    final dio = MockDio();
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1'))
+        .thenAnswer((_) async => _exerciseResponse(1, '3/4 Sit-Up'));
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1/tutorial')).thenAnswer(
+      (_) async => Response(
+        requestOptions: RequestOptions(path: '/exercises/1/tutorial'),
+        statusCode: 200,
+        data: {
+          'source': 'workoutx',
+          'gif_urls': <String>[],
+          'instructions': <String>[],
+          'equipment': null,
+          'primary_muscles': <String>[],
+          'secondary_muscles': <String>[],
+        },
+      ),
+    );
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ExerciseTutorialScreen(exerciseId: 1)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Source: WorkoutX'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.help_outline_rounded));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('workoutxapp.com'), findsOneWidget);
+  });
+
   testWidgets('shows a clean empty state instead of an error when nothing is available', (
     tester,
   ) async {
