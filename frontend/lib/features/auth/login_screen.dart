@@ -88,79 +88,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const BrandHeader(),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Log in to your workout tracker',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  TextFormField(
-                    controller: _serverUrlController,
-                    enabled: !ApiConfig.isFixedToServingOrigin,
-                    decoration: const InputDecoration(labelText: 'Server URL'),
-                    keyboardType: TextInputType.url,
-                    validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Server URL is required' : null,
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Allow self-signed certificates'),
-                    subtitle: const Text('Skips TLS certificate verification for this server'),
-                    value: _allowInsecureTls,
-                    onChanged: (value) => setState(() => _allowInsecureTls = value ?? false),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Email is required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    obscureText: true,
-                    onFieldSubmitted: (_) => _submit(),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Password is required' : null,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ErrorBanner(message: _error!),
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const BrandHeader(),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Log in to your workout tracker',
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    TextFormField(
+                      controller: _serverUrlController,
+                      enabled: !ApiConfig.isFixedToServingOrigin,
+                      decoration: const InputDecoration(labelText: 'Server URL'),
+                      keyboardType: TextInputType.url,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty) ? 'Server URL is required' : null,
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Allow self-signed certificates'),
+                      subtitle: const Text('Skips TLS certificate verification for this server'),
+                      value: _allowInsecureTls,
+                      onChanged: (value) => setState(() => _allowInsecureTls = value ?? false),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.username, AutofillHints.email],
+                      validator: (value) =>
+                          (value == null || value.isEmpty) ? 'Email is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.password],
+                      onFieldSubmitted: (_) => _submit(),
+                      validator: (value) =>
+                          (value == null || value.isEmpty) ? 'Password is required' : null,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      ErrorBanner(message: _error!),
+                    ],
+                    const SizedBox(height: AppSpacing.xl),
+                    FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Log in'),
+                    ),
+                    TextButton(
+                      // Commits a changed server field before leaving, the
+                      // same as "Log in" -- register() runs against whatever
+                      // this screen's field says, not whatever the app
+                      // started up pointed at, so it has to be applied
+                      // whichever way the person leaves this screen.
+                      onPressed: () async {
+                        await _commitSettingsIfChanged();
+                        if (context.mounted) context.go('/register');
+                      },
+                      child: const Text("Don't have an account? Register"),
+                    ),
                   ],
-                  const SizedBox(height: AppSpacing.xl),
-                  FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Log in'),
-                  ),
-                  TextButton(
-                    // Commits a changed server field before leaving, the
-                    // same as "Log in" -- register() runs against whatever
-                    // this screen's field says, not whatever the app
-                    // started up pointed at, so it has to be applied
-                    // whichever way the person leaves this screen.
-                    onPressed: () async {
-                      await _commitSettingsIfChanged();
-                      if (context.mounted) context.go('/register');
-                    },
-                    child: const Text("Don't have an account? Register"),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
