@@ -14,12 +14,19 @@ from dinatos_backend.api.deps import get_current_session, get_current_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
-from dinatos_backend.schemas.auth import LoginRequest, TokenResponse, UserCreate, UserRead
+from dinatos_backend.schemas.auth import (
+    AuthConfig,
+    LoginRequest,
+    TokenResponse,
+    UserCreate,
+    UserRead,
+)
 from dinatos_backend.services.auth import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
     authenticate_user,
     create_session,
+    is_registration_open,
     register_user,
     revoke_session,
 )
@@ -27,9 +34,22 @@ from dinatos_backend.services.auth import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+@router.get("/config", response_model=AuthConfig)
+async def read_auth_config(db: AsyncSession = Depends(get_db)) -> AuthConfig:
+    """Public: lets the login screen hide its "Register" link when
+    self-registration is turned off (`DINATOS_ALLOW_REGISTRATION`).
+    """
+    return AuthConfig(registration_enabled=await is_registration_open(db))
+
+
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
-    """The first account ever created on an instance is its admin."""
+    """The first account ever created on an instance is its admin. Rejected
+    with 403 once self-registration is disabled (an admin creates accounts
+    via `POST /admin/users` then).
+    """
+    if not await is_registration_open(db):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "registration is disabled")
     try:
         return await register_user(db, payload.email, payload.password)
     except EmailAlreadyRegisteredError as error:

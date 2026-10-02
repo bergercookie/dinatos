@@ -22,3 +22,13 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"  # noqa: S105 -- an auth scheme name, not a secret
+
+
+class AuthConfig(BaseModel):
+    """What the login screen needs to know before anyone is signed in."""
+
+    registration_enabled: bool
+
+
+class AdminUserCreate(UserCreate):
+    is_admin: bool = False

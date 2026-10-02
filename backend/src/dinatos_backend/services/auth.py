@@ -46,20 +46,42 @@ def verify_password(password: str, password_hash: str) -> bool:
     return True
 
 
-async def register_user(db: AsyncSession, email: str, password: str) -> User:
+async def _has_any_user(db: AsyncSession) -> bool:
+    return (await db.execute(select(User).limit(1))).scalar_one_or_none() is not None
+
+
+async def is_registration_open(db: AsyncSession) -> bool:
+    """Whether `POST /auth/register` should currently be accepted: the
+    `allow_registration` setting, except that an instance with no accounts
+    yet is always open -- nobody could create the first (admin) one
+    otherwise, short of `admin_email`/`admin_password` being configured.
+    """
+    return get_settings().allow_registration or not await _has_any_user(db)
+
+
+async def create_user(
+    db: AsyncSession, email: str, password: str, *, is_admin: bool | None = None
+) -> User:
+    """Creates an account. `is_admin=None` means "the default": the very
+    first account on a fresh instance has no one to grant it admin, so it
+    grants itself, and every account after that starts plain.
+    """
     existing = await db.execute(select(User).where(User.email == email))
     if existing.scalar_one_or_none() is not None:
         raise EmailAlreadyRegisteredError
 
-    # The very first account on a fresh instance has no one to grant it
-    # admin, so it grants itself -- every account after that starts plain.
-    has_any_user = (await db.execute(select(User).limit(1))).scalar_one_or_none() is not None
+    if is_admin is None:
+        is_admin = not await _has_any_user(db)
 
-    user = User(email=email, password_hash=hash_password(password), is_admin=not has_any_user)
+    user = User(email=email, password_hash=hash_password(password), is_admin=is_admin)
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def register_user(db: AsyncSession, email: str, password: str) -> User:
+    return await create_user(db, email, password)
 
 
 async def bootstrap_admin_user(db: AsyncSession) -> None:

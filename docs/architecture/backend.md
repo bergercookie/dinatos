@@ -74,8 +74,12 @@ for what this means for an air-gapped deployment.
 ## Authentication
 
 Multi-user accounts, not a single-instance password gate: anyone can
-`POST /auth/register` (the first account on a fresh instance becomes admin;
-nothing beyond that is admin-gated yet), then `POST /auth/login` to get a
+`POST /auth/register` unless `DINATOS_ALLOW_REGISTRATION=false` (the first
+account on a fresh instance becomes admin, and can always register, so a
+locked-down instance is never unbootstrappable). Admins can create accounts
+regardless of that flag via `POST /admin/users` (the `/admin/*` routes sit
+behind the `require_admin` dependency); `GET /auth/config` is the public
+endpoint the login screen reads to decide whether to show "Register". Then `POST /auth/login` to get a
 bearer token.
 
 **This is a server-side session per login (`AuthSession`), not a
