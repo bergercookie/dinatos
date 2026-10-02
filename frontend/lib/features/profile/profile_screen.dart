@@ -88,16 +88,7 @@ class ProfileScreen extends ConsumerWidget {
     final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            tooltip: 'Log out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Profile')),
       body: ResponsiveBody(
         child: AsyncValueView(
           value: profileAsync,
