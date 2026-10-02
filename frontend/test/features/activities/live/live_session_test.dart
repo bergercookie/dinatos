@@ -67,6 +67,27 @@ void main() {
     });
   });
 
+  group('markSaved', () {
+    test('records the saved activity id/title and flips isSaved', () {
+      final notifier = LiveActivityNotifier()..start();
+
+      expect(notifier.state!.isSaved, isFalse);
+      notifier.markSaved(activityId: 42, title: 'Leg day');
+
+      expect(notifier.state!.isSaved, isTrue);
+      expect(notifier.state!.savedActivityId, 42);
+      expect(notifier.state!.savedTitle, 'Leg day');
+    });
+
+    test('is a no-op before start()', () {
+      final notifier = LiveActivityNotifier();
+
+      notifier.markSaved(activityId: 42, title: 'Leg day');
+
+      expect(notifier.state, isNull);
+    });
+  });
+
   test('totalSets counts every set across all exercises', () {
     final session = LiveActivitySession(
       startedAt: DateTime(2026),
@@ -104,6 +125,30 @@ void main() {
     test('is zero for a session with no sets logged yet', () {
       final session = LiveActivitySession(startedAt: DateTime(2026));
       expect(session.totalVolumeKg, 0);
+    });
+  });
+
+  group('LiveActivitySession.totalReps', () {
+    test('sums reps across every set, counting a set with no weight too', () {
+      final session = LiveActivitySession(
+        startedAt: DateTime(2026),
+        exercises: const [
+          ActivityExercise(
+            exerciseId: 1,
+            sets: [
+              ActivitySet(weightKg: 100, reps: 5),
+              ActivitySet(reps: 12),
+              ActivitySet(weightKg: 20),
+            ],
+          ),
+        ],
+      );
+
+      expect(session.totalReps, 5 + 12);
+    });
+
+    test('is zero for a session with no sets logged yet', () {
+      expect(LiveActivitySession(startedAt: DateTime(2026)).totalReps, 0);
     });
   });
 

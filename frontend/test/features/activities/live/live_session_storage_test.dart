@@ -75,6 +75,18 @@ void main() {
     expect(exercise.sets.single.rpe, 7.5);
   });
 
+  test('isSaved/savedActivityId/savedTitle survive a round trip too', () {
+    final saved = session.copyWith(savedActivityId: 42, savedTitle: 'Leg day');
+
+    final restored = PersistedLiveSession.fromJson(
+      PersistedLiveSession(session: saved, ownerId: 3).toJson(),
+    ).session;
+
+    expect(restored.isSaved, isTrue);
+    expect(restored.savedActivityId, 42);
+    expect(restored.savedTitle, 'Leg day');
+  });
+
   test('PrefsLiveSessionStorage writes, reads back and clears', () async {
     SharedPreferences.setMockInitialValues({});
     const storage = PrefsLiveSessionStorage();

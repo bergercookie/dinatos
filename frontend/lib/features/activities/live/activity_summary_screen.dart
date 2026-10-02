@@ -11,6 +11,7 @@ import '../../../core/design_tokens.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/responsive_body.dart';
 import '../../../models/activity.dart';
+import '../../../models/muscle_group.dart';
 import '../../exercises/exercises_providers.dart';
 import '../../exercises/exercises_repository.dart';
 import '../activities_providers.dart';
@@ -19,6 +20,16 @@ import 'elapsed_timer.dart';
 import 'live_session.dart';
 import 'muscle_radar_chart.dart';
 import 'muscle_volume.dart';
+
+/// A plain-language "chest, shoulders, triceps" from a muscle-emphasis map
+/// -- the same data the radar chart plots, read out as the handful of
+/// muscles that got the most volume, for a person who just wants the
+/// answer in words rather than reading a chart.
+String _describeMainMuscles(Map<MuscleGroup, double> volumes) {
+  if (volumes.isEmpty) return 'None yet';
+  final sorted = volumes.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+  return sorted.take(3).map((entry) => entry.key.label).join(', ');
+}
 
 class _NewRecord {
   const _NewRecord({required this.exerciseName, required this.description});
@@ -50,7 +61,7 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
   void initState() {
     super.initState();
     final session = ref.read(liveActivityProvider);
-    if (session != null) {
+    if (session != null && !session.isSaved) {
       _titleController.text = 'Workout on ${DateFormat.yMMMd().format(session.startedAt)}';
       _recordsFuture = _loadNewRecords(session);
     }
@@ -123,14 +134,22 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
     );
     try {
       final saved = await ref.read(activitiesRepositoryProvider).create(activity);
-      ref.read(liveActivityProvider.notifier).discard();
       ref.invalidate(activityListProvider);
-      if (mounted) context.go('/activities/${saved.id}');
+      if (mounted) {
+        ref
+            .read(liveActivityProvider.notifier)
+            .markSaved(activityId: saved.id!, title: saved.title);
+      }
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _done() {
+    ref.read(liveActivityProvider.notifier).discard();
+    context.go('/activities');
   }
 
   @override
@@ -145,9 +164,11 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
 
     final exercisesAsync = ref.watch(exerciseListProvider);
     final endedAt = session.endedAt ?? DateTime.now();
+    final savedActivityId = session.savedActivityId;
+    final savedTitle = session.savedTitle;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Workout summary')),
+      appBar: AppBar(title: Text(savedActivityId != null ? 'Workout saved' : 'Workout summary')),
       body: ResponsiveBody(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -157,10 +178,13 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
             AppSpacing.xxl,
           ),
           children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
+            if (savedTitle != null)
+              Text(savedTitle, style: Theme.of(context).textTheme.headlineSmall)
+            else
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
@@ -182,6 +206,26 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: _SummaryStat(
+                    icon: Icons.checklist_rounded,
+                    label: 'Sets',
+                    value: '${session.totalSets}',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _SummaryStat(
+                    icon: Icons.repeat_rounded,
+                    label: 'Reps',
+                    value: '${session.totalReps}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               '${DateFormat.yMMMd().add_Hm().format(session.startedAt)} '
               '– ${DateFormat.Hm().format(endedAt)}',
@@ -198,61 +242,90 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
                     const SizedBox(height: AppSpacing.md),
                     AsyncValueView(
                       value: exercisesAsync,
-                      builder: (context, catalog) => MuscleRadarChart(
-                        volumes: computeMuscleVolumes(session.exercises, catalog),
-                      ),
+                      builder: (context, catalog) {
+                        final volumes = computeMuscleVolumes(session.exercises, catalog);
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            MuscleRadarChart(volumes: volumes),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Main muscles: ${_describeMainMuscles(volumes)}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('New records', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
-            FutureBuilder<List<_NewRecord>>(
-              future: _recordsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.all(AppSpacing.md),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                final records = snapshot.data ?? [];
-                if (records.isEmpty) {
-                  return Text(
-                    'No new records this time — keep at it.',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  );
-                }
-                return Column(
-                  children: records
-                      .map(
-                        (record) => Card(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.emoji_events,
-                              color: Theme.of(context).colorScheme.tertiary,
+            // Null only when this widget was (re)mounted onto an already-
+            // saved session (e.g. a browser back button) -- the moment to
+            // show new records is right after saving, within that same
+            // mounted instance, where `_recordsFuture` is always set below.
+            if (_recordsFuture != null) ...[
+              Text('New records', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              FutureBuilder<List<_NewRecord>>(
+                future: _recordsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final records = snapshot.data ?? [];
+                  if (records.isEmpty) {
+                    return Text(
+                      'No new records this time — keep at it.',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    );
+                  }
+                  return Column(
+                    children: records
+                        .map(
+                          (record) => Card(
+                            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.emoji_events,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
+                              title: Text(record.exerciseName),
+                              subtitle: Text(record.description),
                             ),
-                            title: Text(record.exerciseName),
-                            subtitle: Text(record.description),
                           ),
-                        ),
-                      )
-                      .toList(),
-                );
-              },
-            ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: AppSpacing.md),
               ErrorBanner(message: _error!),
             ],
             const SizedBox(height: AppSpacing.xl),
-            FilledButton(
-              onPressed: _submitting ? null : () => _save(session),
-              child: const Text('Save workout'),
-            ),
+            if (savedActivityId == null)
+              FilledButton(
+                onPressed: _submitting ? null : () => _save(session),
+                child: const Text('Save workout'),
+              )
+            else ...[
+              FilledButton(onPressed: _done, child: const Text('Done')),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton(
+                onPressed: () {
+                  ref.read(liveActivityProvider.notifier).discard();
+                  context.go('/activities/$savedActivityId');
+                },
+                child: const Text('View activity'),
+              ),
+            ],
           ],
         ),
       ),

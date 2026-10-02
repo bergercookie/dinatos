@@ -17,6 +17,8 @@ class LiveActivitySession {
     this.exercises = const [],
     DateTime? clockOrigin,
     this.pausedAt,
+    this.savedActivityId,
+    this.savedTitle,
   }) : clockOrigin = clockOrigin ?? startedAt;
 
   /// When the workout actually began -- what gets saved as the activity's
@@ -43,9 +45,28 @@ class LiveActivitySession {
   final DateTime? endedAt;
   final List<ActivityExercise> exercises;
 
+  /// Non-null once `POST /activities` has actually succeeded for this
+  /// session -- tracked on the session itself, not as local screen state,
+  /// so the summary screen can't be reached again (a browser back button, a
+  /// restart right after saving) still showing an enabled "Save workout"
+  /// and double-posting the same workout as a second activity. Cleared only
+  /// by [LiveActivityNotifier.discard], same as everything else here.
+  final int? savedActivityId;
+  final String? savedTitle;
+
+  bool get isSaved => savedActivityId != null;
+
   /// How many sets have been logged so far, across every exercise -- sets are
   /// added as they're performed, so each one counts as completed.
   int get totalSets => exercises.fold<int>(0, (sum, exercise) => sum + exercise.sets.length);
+
+  /// Sum of reps across every set logged so far, regardless of weight --
+  /// distinct from [totalVolumeKg], which is zero for a set with no weight
+  /// tracked (e.g. bodyweight work) even though real reps were done.
+  int get totalReps => exercises.fold<int>(
+    0,
+    (sum, exercise) => sum + exercise.sets.fold<int>(0, (setSum, set) => setSum + (set.reps ?? 0)),
+  );
 
   /// Sum of weight x reps across every set logged so far -- sets missing
   /// either value (an exercise that doesn't track one, or one not filled in
@@ -69,12 +90,16 @@ class LiveActivitySession {
     DateTime? clockOrigin,
     DateTime? pausedAt,
     bool clearPausedAt = false,
+    int? savedActivityId,
+    String? savedTitle,
   }) => LiveActivitySession(
     startedAt: startedAt,
     endedAt: endedAt ?? this.endedAt,
     exercises: exercises ?? this.exercises,
     clockOrigin: clockOrigin ?? this.clockOrigin,
     pausedAt: clearPausedAt ? null : (pausedAt ?? this.pausedAt),
+    savedActivityId: savedActivityId ?? this.savedActivityId,
+    savedTitle: savedTitle ?? this.savedTitle,
   );
 }
 
@@ -162,6 +187,14 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
     final current = state;
     if (current == null) return;
     state = current.copyWith(endedAt: DateTime.now());
+  }
+
+  /// Records that this session was actually saved as activity [activityId]
+  /// -- see [LiveActivitySession.savedActivityId].
+  void markSaved({required int activityId, required String title}) {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(savedActivityId: activityId, savedTitle: title);
   }
 
   /// Clears the session -- after it's been saved, or if the person backs out

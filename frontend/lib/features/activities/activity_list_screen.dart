@@ -11,6 +11,7 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import 'activities_providers.dart';
 import 'live/live_session.dart';
+import 'widgets/training_calendar_card.dart';
 
 class ActivityListScreen extends ConsumerWidget {
   const ActivityListScreen({super.key});
@@ -74,10 +75,12 @@ class ActivityListScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   AppSpacing.xxl,
                 ),
-                itemCount: data.length,
+                // +1 for the calendar/streak card, pinned above the list itself.
+                itemCount: data.length + 1,
                 separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) {
-                  final activity = data[index];
+                  if (index == 0) return TrainingCalendarCard(activities: data);
+                  final activity = data[index - 1];
                   return AppListCard(
                     leading: const AppIconAvatar(icon: Icons.history_rounded),
                     title: activity.title,
