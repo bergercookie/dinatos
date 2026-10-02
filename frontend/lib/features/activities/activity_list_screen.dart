@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
+import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
@@ -51,6 +52,9 @@ class ActivityListScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: activities.whenOrNull(
+        data: (data) => CountFooter(count: data.length, singular: 'activity', plural: 'activities'),
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(

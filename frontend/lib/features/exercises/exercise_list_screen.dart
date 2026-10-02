@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api_exception.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
+import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise.dart';
@@ -52,6 +53,13 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
         onPressed: () => context.go('/exercises/new'),
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar: state.loading || state.error != null && state.items.isEmpty
+          ? null
+          : CountFooter(
+              count: state.total,
+              singular: searching ? 'matching exercise' : 'exercise',
+              plural: searching ? 'matching exercises' : 'exercises',
+            ),
       body: ResponsiveBody(
         child: RefreshIndicator(
           onRefresh: () => ref.read(exercisePagingProvider.notifier).refresh(),

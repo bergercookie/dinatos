@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
+import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/routine.dart';
@@ -23,6 +24,9 @@ class RoutineListScreen extends ConsumerWidget {
         tooltip: 'New routine',
         onPressed: () => context.go('/routines/new'),
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: routines.whenOrNull(
+        data: (data) => CountFooter(count: data.length, singular: 'routine'),
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(
