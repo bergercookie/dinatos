@@ -53,6 +53,20 @@ async def test_bootstrap_default_exercises_infers_tracking_flags_by_category(
     assert await tracking("Ankle Circles") == (False, False, False, True)
 
 
+async def test_bootstrap_default_exercises_seeds_muscle_groups(db: AsyncSession) -> None:
+    await bootstrap_default_exercises(db)
+
+    result = await db.execute(select(Exercise).where(Exercise.name == "Barbell Deadlift"))
+    exercise = result.scalar_one()
+    assert exercise.primary_muscles
+    assert exercise.secondary_muscles
+    entry = next(
+        e for e in load_free_exercise_db() if e["name"] == "Barbell Deadlift"
+    )
+    assert exercise.primary_muscles == entry["primaryMuscles"]
+    assert exercise.secondary_muscles == entry["secondaryMuscles"]
+
+
 async def test_bootstrap_default_exercises_is_a_noop_with_any_existing_exercise(
     db: AsyncSession,
 ) -> None:

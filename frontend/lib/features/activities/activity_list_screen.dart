@@ -10,6 +10,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import 'activities_providers.dart';
+import 'live/live_session.dart';
 
 class ActivityListScreen extends ConsumerWidget {
   const ActivityListScreen({super.key});
@@ -21,10 +22,27 @@ class ActivityListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'New activity',
-        onPressed: () => context.go('/activities/new'),
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'start-live-workout',
+            tooltip: 'Start an interactive session as you work out',
+            onPressed: () {
+              ref.read(liveActivityProvider.notifier).start();
+              context.go('/activities/live');
+            },
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Start workout'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FloatingActionButton(
+            heroTag: 'log-past-activity',
+            tooltip: 'Log a past activity',
+            onPressed: () => context.go('/activities/new'),
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(

@@ -154,6 +154,71 @@ async def test_delete_missing_exercise_is_404(client: AsyncClient) -> None:
     assert response.status_code == 404
 
 
+async def test_create_exercise_accepts_muscle_tags(client: AsyncClient) -> None:
+    response = await client.post(
+        "/exercises",
+        json={
+            "name": "Cable Fly",
+            "primary_muscles": ["chest"],
+            "secondary_muscles": ["shoulders", "triceps"],
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["primary_muscles"] == ["chest"]
+    assert body["secondary_muscles"] == ["shoulders", "triceps"]
+
+
+async def test_create_exercise_defaults_muscle_tags_to_empty(client: AsyncClient) -> None:
+    response = await client.post("/exercises", json={"name": "Squat (Barbell)"})
+    assert response.status_code == 201
+    body = response.json()
+    assert body["primary_muscles"] == []
+    assert body["secondary_muscles"] == []
+
+
+async def test_exercise_records_reflects_the_callers_best_sets(client: AsyncClient) -> None:
+    exercise_id = (await client.post("/exercises", json={"name": "Squat (Barbell)"})).json()["id"]
+
+    response = await client.get(f"/exercises/{exercise_id}/records")
+    assert response.status_code == 200
+    assert response.json() == {"max_weight_kg": None, "max_reps": None}
+
+    await client.post(
+        "/activities",
+        json={
+            "title": "Session 1",
+            "started_at": "2026-09-01T10:00:00Z",
+            "exercises": [
+                {
+                    "exercise_id": exercise_id,
+                    "sets": [
+                        {"weight_kg": 60, "reps": 8},
+                        {"weight_kg": 80, "reps": 3},
+                    ],
+                }
+            ],
+        },
+    )
+    await client.post(
+        "/activities",
+        json={
+            "title": "Session 2",
+            "started_at": "2026-09-08T10:00:00Z",
+            "exercises": [{"exercise_id": exercise_id, "sets": [{"weight_kg": 70, "reps": 10}]}],
+        },
+    )
+
+    response = await client.get(f"/exercises/{exercise_id}/records")
+    assert response.status_code == 200
+    assert response.json() == {"max_weight_kg": 80.0, "max_reps": 10}
+
+
+async def test_exercise_records_is_404_for_a_missing_exercise(client: AsyncClient) -> None:
+    response = await client.get("/exercises/999/records")
+    assert response.status_code == 404
+
+
 async def test_get_exercise_tutorial(client: AsyncClient) -> None:
     created = await client.post("/exercises", json={"name": "Squat (Barbell)"})
     exercise_id = created.json()["id"]

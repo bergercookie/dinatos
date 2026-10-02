@@ -25,6 +25,14 @@ Response<Map<String, dynamic>> _exerciseResponse(int id, String name, {required 
 
 void main() {
   testWidgets('a built-in exercise renders read-only, with no delete action', (tester) async {
+    // Tall enough that the whole form (now with the muscle-tag fields too)
+    // fits without scrolling -- otherwise the ListView's sliver only builds
+    // what's within its viewport/cache extent, and a widget further down
+    // (like the Save button below) simply isn't in the tree to find yet.
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     final dio = MockDio();
     when(() => dio.get<Map<String, dynamic>>('/exercises/1'))
         .thenAnswer((_) async => _exerciseResponse(1, 'Squat (Barbell)', isCustom: false));
@@ -49,7 +57,7 @@ void main() {
     expect(find.byTooltip('Delete exercise'), findsNothing);
     expect(find.widgetWithText(FilledButton, 'Save'), findsNothing);
 
-    final nameField = tester.widget<TextFormField>(find.byType(TextFormField));
+    final nameField = tester.widget<TextFormField>(find.byType(TextFormField).first);
     expect(nameField.enabled, isFalse);
     for (final checkbox in tester.widgetList<CheckboxListTile>(find.byType(CheckboxListTile))) {
       expect(checkbox.onChanged, isNull);
@@ -57,6 +65,10 @@ void main() {
   });
 
   testWidgets('a custom exercise stays editable, with a delete action', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     final dio = MockDio();
     when(() => dio.get<Map<String, dynamic>>('/exercises/2'))
         .thenAnswer((_) async => _exerciseResponse(2, 'My Custom Move', isCustom: true));
@@ -74,7 +86,7 @@ void main() {
     expect(find.byTooltip('Delete exercise'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
 
-    final nameField = tester.widget<TextFormField>(find.byType(TextFormField));
+    final nameField = tester.widget<TextFormField>(find.byType(TextFormField).first);
     expect(nameField.enabled, isTrue);
     for (final checkbox in tester.widgetList<CheckboxListTile>(find.byType(CheckboxListTile))) {
       expect(checkbox.onChanged, isNotNull);

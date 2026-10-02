@@ -79,6 +79,29 @@ async def test_an_activity_cannot_reference_another_users_routine(
     assert response.status_code == 404
 
 
+async def test_exercise_records_are_not_visible_to_another_user(
+    anonymous_client: AsyncClient,
+) -> None:
+    token_a = await _register_and_login(anonymous_client, "a@example.com")
+    token_b = await _register_and_login(anonymous_client, "b@example.com")
+
+    exercise_id = (
+        await _as(anonymous_client, token_a).post("/exercises", json={"name": "Squat (Barbell)"})
+    ).json()["id"]
+    await _as(anonymous_client, token_a).post(
+        "/activities",
+        json={
+            "title": "A's session",
+            "started_at": "2026-01-01T10:00:00Z",
+            "exercises": [{"exercise_id": exercise_id, "sets": [{"weight_kg": 100, "reps": 5}]}],
+        },
+    )
+
+    response = await _as(anonymous_client, token_b).get(f"/exercises/{exercise_id}/records")
+    assert response.status_code == 200
+    assert response.json() == {"max_weight_kg": None, "max_reps": None}
+
+
 async def test_measurements_are_not_visible_to_another_user(anonymous_client: AsyncClient) -> None:
     token_a = await _register_and_login(anonymous_client, "a@example.com")
     token_b = await _register_and_login(anonymous_client, "b@example.com")
