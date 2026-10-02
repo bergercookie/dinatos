@@ -70,7 +70,9 @@ packages = ["src/dinatos_backend"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 # Coverage is on by default so a plain `pytest` enforces the same gate as CI.
-addopts = "-v --cov --cov-report=term-missing"
+# The HTML report (htmlcov/, gitignored) is written on every run so CI can
+# upload it as an artifact from the same run that enforces the gate.
+addopts = "-v --cov --cov-report=term-missing --cov-report=html"
 filterwarnings = [
     # Our own warnings are bugs; third-party deprecations are not ours to fix.
     "error",

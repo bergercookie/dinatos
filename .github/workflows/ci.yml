@@ -32,6 +32,15 @@ jobs:
         # (and mcp_server's own) virtualenv has to exist before the hooks start.
         run: just install
       - run: just check
+      # pytest writes backend/htmlcov/ on every run (see addopts in
+      # backend/pyproject.toml); `if: always()` keeps the report when the
+      # coverage gate itself is what failed.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-html
+          path: backend/htmlcov/
+          if-no-files-found: ignore
 
   migrations:
     # Separate from `check`: this needs Docker (for testcontainers) and its
@@ -63,7 +72,18 @@ jobs:
           channel: stable
       - uses: extractions/setup-just@v4
       - run: just frontend::install
-      - run: just frontend::check
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends lcov
+      # `check` minus its plain `test`: `coverage` runs the same suite with
+      # --coverage, so this doesn't run it twice.
+      - run: just frontend::check-format
+      - run: just frontend::analyze
+      - run: just frontend::coverage
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-html
+          path: frontend/coverage/html/
+          if-no-files-found: ignore
 
   screenshots:
     # The heaviest combination of the lot: the Flutter SDK (to build the

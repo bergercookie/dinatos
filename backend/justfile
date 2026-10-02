@@ -16,9 +16,9 @@ install:
 test *args:
     uv run pytest {{args}}
 
-# The suite plus a browsable HTML report.
+# The suite, then point at the browsable HTML report (pytest writes it on every run; see addopts in pyproject.toml).
 coverage *args:
-    uv run pytest --cov-report=html {{args}}
+    uv run pytest {{args}}
     @echo "HTML report: backend/htmlcov/index.html"
 
 # Every pre-commit hook over the whole tree: ruff, mypy, tach, file hygiene.
