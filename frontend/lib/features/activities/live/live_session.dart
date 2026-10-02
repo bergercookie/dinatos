@@ -14,6 +14,10 @@ class LiveActivitySession {
   final DateTime? endedAt;
   final List<ActivityExercise> exercises;
 
+  /// How many sets have been logged so far, across every exercise -- sets are
+  /// added as they're performed, so each one counts as completed.
+  int get totalSets => exercises.fold<int>(0, (sum, exercise) => sum + exercise.sets.length);
+
   /// Sum of weight x reps across every set logged so far -- sets missing
   /// either value (an exercise that doesn't track one, or one not filled in
   /// yet) contribute 0, same convention `_subtitle`-style summaries elsewhere

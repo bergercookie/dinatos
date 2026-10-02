@@ -67,6 +67,20 @@ void main() {
     });
   });
 
+  test('totalSets counts every set across all exercises', () {
+    final session = LiveActivitySession(
+      startedAt: DateTime(2026),
+      exercises: const [
+        ActivityExercise(exerciseId: 1, sets: [ActivitySet(reps: 5), ActivitySet(reps: 5)]),
+        ActivityExercise(exerciseId: 2, sets: [ActivitySet(reps: 8)]),
+        ActivityExercise(exerciseId: 3),
+      ],
+    );
+
+    expect(session.totalSets, 3);
+    expect(LiveActivitySession(startedAt: DateTime(2026)).totalSets, 0);
+  });
+
   group('LiveActivitySession.totalVolumeKg', () {
     test('sums weight x reps across every set, skipping any with a value missing', () {
       final session = LiveActivitySession(

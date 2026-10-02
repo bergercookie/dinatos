@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../models/equipment.dart';
 import '../../models/exercise.dart';
+import '../../models/muscle_group.dart';
 
-/// Opens a search-filterable picker over [exercises] and resolves with the
-/// chosen [Exercise], or null if dismissed without picking one -- replaces
-/// scrolling an unfiltered menu to find one exercise among the whole catalog.
+/// Opens a picker over [exercises] and resolves with the chosen [Exercise],
+/// or null if dismissed without picking one -- replaces scrolling an
+/// unfiltered menu to find one exercise among the whole catalog. Narrows by
+/// name search, by the muscles an exercise trains (primary or secondary), and
+/// by equipment; within one filter any selected value matches, across
+/// filters all must.
 Future<Exercise?> showExercisePicker(BuildContext context, {required List<Exercise> exercises}) {
   return showModalBottomSheet<Exercise>(
     context: context,
@@ -29,6 +34,49 @@ class _ExercisePickerSheet extends StatefulWidget {
 class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
   final _searchController = TextEditingController();
   String _query = '';
+  final Set<MuscleGroup> _muscles = {};
+  final Set<Equipment> _equipment = {};
+
+  bool _matches(Exercise e, String query) {
+    if (query.isNotEmpty && !e.name.toLowerCase().contains(query)) return false;
+    if (_muscles.isNotEmpty &&
+        !e.primaryMuscles.any(_muscles.contains) &&
+        !e.secondaryMuscles.any(_muscles.contains)) {
+      return false;
+    }
+    if (_equipment.isNotEmpty && !_equipment.contains(e.equipment)) return false;
+    return true;
+  }
+
+  Widget _chipRow<T>(String label, List<T> values, Set<T> selected, String Function(T) labelOf) {
+    return Row(
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final value in values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xs),
+                    child: FilterChip(
+                      label: Text(labelOf(value)),
+                      selected: selected.contains(value),
+                      onSelected: (on) => setState(() {
+                        on ? selected.add(value) : selected.remove(value);
+                      }),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
@@ -39,9 +87,7 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? widget.exercises
-        : widget.exercises.where((e) => e.name.toLowerCase().contains(query)).toList();
+    final filtered = widget.exercises.where((e) => _matches(e, query)).toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -71,13 +117,16 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
                 ),
                 onChanged: (value) => setState(() => _query = value),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.sm),
+              _chipRow('Muscle', MuscleGroup.values, _muscles, (m) => m.label),
+              _chipRow('Equipment', Equipment.values, _equipment, (e) => e.label),
+              const SizedBox(height: AppSpacing.sm),
               Expanded(
                 child: filtered.isEmpty
                     ? const EmptyState(
                         icon: Icons.search_off_rounded,
                         title: 'No matching exercises',
-                        message: 'Try a different search term.',
+                        message: 'Try a different search term or clear a filter.',
                       )
                     : ListView.separated(
                         controller: scrollController,

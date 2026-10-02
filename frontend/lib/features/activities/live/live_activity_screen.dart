@@ -97,6 +97,17 @@ class LiveActivityScreen extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _StatTile(
+                    icon: Icons.checklist_rounded,
+                    label: 'Sets done',
+                    value: Text(
+                      '${session.totalSets}',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _StatTile(
                     icon: Icons.fitness_center,
                     label: 'Volume lifted',
                     value: Text(
