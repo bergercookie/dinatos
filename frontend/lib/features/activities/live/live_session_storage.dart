@@ -21,6 +21,8 @@ class PersistedLiveSession {
     'ended_at': session.endedAt?.toUtc().toIso8601String(),
     'clock_origin': session.clockOrigin.toUtc().toIso8601String(),
     'paused_at': session.pausedAt?.toUtc().toIso8601String(),
+    'saved_activity_id': session.savedActivityId,
+    'saved_title': session.savedTitle,
     // `ActivityExercise.toJson` is exactly the shape wanted here (no server ids).
     'exercises': session.exercises.map((e) => e.toJson()).toList(),
   };
@@ -38,6 +40,8 @@ class PersistedLiveSession {
         endedAt: time('ended_at'),
         clockOrigin: time('clock_origin'),
         pausedAt: time('paused_at'),
+        savedActivityId: json['saved_activity_id'] as int?,
+        savedTitle: json['saved_title'] as String?,
         exercises: (json['exercises'] as List<dynamic>)
             .map((e) => _exerciseFromJson(e as Map<String, dynamic>))
             .toList(),
