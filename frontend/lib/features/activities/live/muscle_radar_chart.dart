@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/design_tokens.dart';
+import '../../../models/muscle_group.dart';
 
 const _maxAxes = 6;
 
@@ -17,9 +18,9 @@ const _maxAxes = 6;
 class MuscleRadarChart extends StatelessWidget {
   const MuscleRadarChart({super.key, required this.volumes});
 
-  /// Muscle name -> accumulated volume. Values are relative to each other,
+  /// Muscle group -> accumulated volume. Values are relative to each other,
   /// not an absolute unit the chart displays.
-  final Map<String, double> volumes;
+  final Map<MuscleGroup, double> volumes;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,7 @@ class MuscleRadarChart extends StatelessWidget {
 class _MuscleBarList extends StatelessWidget {
   const _MuscleBarList({required this.entries});
 
-  final List<MapEntry<String, double>> entries;
+  final List<MapEntry<MuscleGroup, double>> entries;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +77,7 @@ class _MuscleBarList extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 96,
-                  child: Text(_titleCase(entry.key), style: Theme.of(context).textTheme.bodySmall),
+                  child: Text(entry.key.label, style: Theme.of(context).textTheme.bodySmall),
                 ),
                 Expanded(
                   child: ClipRRect(
@@ -106,7 +107,7 @@ class _RadarPainter extends CustomPainter {
     required this.strokeColor,
   });
 
-  final List<MapEntry<String, double>> entries;
+  final List<MapEntry<MuscleGroup, double>> entries;
   final Color gridColor;
   final Color labelColor;
   final Color fillColor;
@@ -152,7 +153,7 @@ class _RadarPainter extends CustomPainter {
 
       final labelPoint = _axisPoint(center, radius + 16, i, axisCount);
       textPainter.text = TextSpan(
-        text: _titleCase(entries[i].key),
+        text: entries[i].key.label,
         style: TextStyle(color: labelColor, fontSize: 11),
       );
       textPainter.layout();
@@ -198,6 +199,3 @@ class _RadarPainter extends CustomPainter {
         oldDelegate.strokeColor != strokeColor;
   }
 }
-
-String _titleCase(String value) =>
-    value.isEmpty ? value : value[0].toUpperCase() + value.substring(1);

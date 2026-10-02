@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_tutorial.dart';
+import '../../models/muscle_group.dart';
 import 'exercises_repository.dart';
 
 final exerciseSearchProvider = StateProvider<String>((ref) => '');
@@ -94,11 +96,7 @@ class ExercisePagingNotifier extends StateNotifier<ExercisePageState> {
 
   Future<void> _load({required bool reset}) async {
     final requestId = ++_requestId;
-    state = state.copyWith(
-      loading: reset,
-      loadingMore: !reset,
-      clearError: true,
-    );
+    state = state.copyWith(loading: reset, loadingMore: !reset, clearError: true);
     try {
       final page = await _repository.listPage(
         search: state.search,
@@ -130,21 +128,35 @@ class ExercisePagingNotifier extends StateNotifier<ExercisePageState> {
 }
 
 final exercisePagingProvider =
-    StateNotifierProvider.autoDispose<
-      ExercisePagingNotifier,
-      ExercisePageState
-    >((ref) {
+    StateNotifierProvider.autoDispose<ExercisePagingNotifier, ExercisePageState>((ref) {
       return ExercisePagingNotifier(ref.watch(exercisesRepositoryProvider));
     });
 
-final exerciseProvider = FutureProvider.autoDispose.family<Exercise, int>((
-  ref,
-  id,
-) {
+final exerciseProvider = FutureProvider.autoDispose.family<Exercise, int>((ref, id) {
   return ref.watch(exercisesRepositoryProvider).get(id);
 });
 
-final exerciseTutorialProvider = FutureProvider.autoDispose
-    .family<ExerciseTutorial?, int>((ref, id) {
-      return ref.watch(exercisesRepositoryProvider).getTutorial(id);
-    });
+final exerciseTutorialProvider = FutureProvider.autoDispose.family<ExerciseTutorial?, int>((
+  ref,
+  id,
+) {
+  return ref.watch(exercisesRepositoryProvider).getTutorial(id);
+});
+
+/// Exercises that train a given muscle (primary or secondary) -- backs the
+/// modal an activity's muscle chips open (see `ExerciseFilterSheet`).
+final exercisesByMuscleProvider = FutureProvider.autoDispose.family<List<Exercise>, MuscleGroup>((
+  ref,
+  muscle,
+) {
+  return ref.watch(exercisesRepositoryProvider).list(muscle: muscle);
+});
+
+/// Exercises performed with a given piece of equipment -- backs the modal
+/// an activity's equipment chip opens (see `ExerciseFilterSheet`).
+final exercisesByEquipmentProvider = FutureProvider.autoDispose.family<List<Exercise>, Equipment>((
+  ref,
+  equipment,
+) {
+  return ref.watch(exercisesRepositoryProvider).list(equipment: equipment);
+});

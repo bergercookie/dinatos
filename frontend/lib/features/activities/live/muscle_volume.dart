@@ -1,5 +1,6 @@
 import '../../../models/activity.dart';
 import '../../../models/exercise.dart';
+import '../../../models/muscle_group.dart';
 
 /// How much a set's volume (weight x reps, or just rep count when no weight
 /// is tracked) counts toward a *secondary* muscle, relative to a primary
@@ -15,9 +16,12 @@ const secondaryMuscleWeight = 0.5;
 /// exercise missing from [catalog] (shouldn't normally happen -- it would
 /// mean the picker offered an id the catalog no longer has) contributes
 /// nothing rather than throwing.
-Map<String, double> computeMuscleVolumes(List<ActivityExercise> exercises, List<Exercise> catalog) {
+Map<MuscleGroup, double> computeMuscleVolumes(
+  List<ActivityExercise> exercises,
+  List<Exercise> catalog,
+) {
   final catalogById = {for (final exercise in catalog) exercise.id: exercise};
-  final volumes = <String, double>{};
+  final volumes = <MuscleGroup, double>{};
 
   for (final activityExercise in exercises) {
     final exercise = catalogById[activityExercise.exerciseId];

@@ -1,6 +1,7 @@
 import 'package:dinatos_frontend/features/activities/live/muscle_volume.dart';
 import 'package:dinatos_frontend/models/activity.dart';
 import 'package:dinatos_frontend/models/exercise.dart';
+import 'package:dinatos_frontend/models/muscle_group.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -10,8 +11,8 @@ void main() {
         const Exercise(
           id: 1,
           name: 'Bench Press',
-          primaryMuscles: ['chest'],
-          secondaryMuscles: ['triceps'],
+          primaryMuscles: [MuscleGroup.chest],
+          secondaryMuscles: [MuscleGroup.triceps],
         ),
       ];
       final exercises = [
@@ -20,14 +21,14 @@ void main() {
 
       final volumes = computeMuscleVolumes(exercises, catalog);
 
-      expect(volumes['chest'], 500);
-      expect(volumes['triceps'], 250);
+      expect(volumes[MuscleGroup.chest], 500);
+      expect(volumes[MuscleGroup.triceps], 250);
     });
 
     test('accumulates volume across multiple sets and exercises sharing a muscle', () {
       final catalog = [
-        const Exercise(id: 1, name: 'Bench Press', primaryMuscles: ['chest']),
-        const Exercise(id: 2, name: 'Cable Fly', primaryMuscles: ['chest']),
+        const Exercise(id: 1, name: 'Bench Press', primaryMuscles: [MuscleGroup.chest]),
+        const Exercise(id: 2, name: 'Cable Fly', primaryMuscles: [MuscleGroup.chest]),
       ];
       final exercises = [
         const ActivityExercise(
@@ -39,12 +40,12 @@ void main() {
 
       final volumes = computeMuscleVolumes(exercises, catalog);
 
-      expect(volumes['chest'], 500 + 640 + 240);
+      expect(volumes[MuscleGroup.chest], 500 + 640 + 240);
     });
 
     test('falls back to rep count alone for a set with no weight tracked', () {
       final catalog = [
-        const Exercise(id: 1, name: 'Pull-up', primaryMuscles: ['lats']),
+        const Exercise(id: 1, name: 'Pull-up', primaryMuscles: [MuscleGroup.lats]),
       ];
       final exercises = [
         const ActivityExercise(exerciseId: 1, sets: [ActivitySet(reps: 10)]),
@@ -52,12 +53,12 @@ void main() {
 
       final volumes = computeMuscleVolumes(exercises, catalog);
 
-      expect(volumes['lats'], 10);
+      expect(volumes[MuscleGroup.lats], 10);
     });
 
     test('ignores a set with no reps logged yet', () {
       final catalog = [
-        const Exercise(id: 1, name: 'Squat', primaryMuscles: ['quadriceps']),
+        const Exercise(id: 1, name: 'Squat', primaryMuscles: [MuscleGroup.quadriceps]),
       ];
       final exercises = [
         const ActivityExercise(exerciseId: 1, sets: [ActivitySet(weightKg: 60)]),

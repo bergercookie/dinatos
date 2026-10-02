@@ -266,12 +266,10 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
         for (var i = 0; i < _exercises.length; i++)
           ActivityExerciseCard(
             exercise: _exercises[i],
-            exerciseName: exercisesAsync.valueOrNull
-                ?.firstWhere(
-                  (e) => e.id == _exercises[i].exerciseId,
-                  orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
-                )
-                .name,
+            catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
+              (e) => e.id == _exercises[i].exerciseId,
+              orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
+            ),
             onChanged: (updated) => _updateExerciseAt(i, updated),
             onRemove: () => _removeExerciseAt(i),
           ),

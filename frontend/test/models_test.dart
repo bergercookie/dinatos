@@ -1,6 +1,9 @@
 import 'package:dinatos_frontend/models/activity.dart';
+import 'package:dinatos_frontend/models/equipment.dart';
+import 'package:dinatos_frontend/models/exercise.dart';
 import 'package:dinatos_frontend/models/exercise_tutorial.dart';
 import 'package:dinatos_frontend/models/hevy_import_result.dart';
+import 'package:dinatos_frontend/models/muscle_group.dart';
 import 'package:dinatos_frontend/models/set_type.dart';
 import 'package:dinatos_frontend/models/routine.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +110,79 @@ void main() {
 
       expect(tutorial.equipment, isNull);
       expect(tutorial.gifUrls, isEmpty);
+    });
+  });
+
+  group('Exercise', () {
+    test('parses the backend\'s equipment/muscle fields', () {
+      final exercise = Exercise.fromJson({
+        'id': 1,
+        'name': 'Barbell Deadlift',
+        'tracks_weight': true,
+        'tracks_reps': true,
+        'tracks_distance': false,
+        'tracks_duration': false,
+        'is_custom': false,
+        'equipment': 'barbell',
+        'primary_muscles': ['lower_back'],
+        'secondary_muscles': ['glutes', 'hamstrings'],
+      });
+
+      expect(exercise.equipment, Equipment.barbell);
+      expect(exercise.primaryMuscles, [MuscleGroup.lowerBack]);
+      expect(exercise.secondaryMuscles, [MuscleGroup.glutes, MuscleGroup.hamstrings]);
+    });
+
+    test('a null equipment and empty muscle lists round-trip as such', () {
+      final exercise = Exercise.fromJson({
+        'id': 2,
+        'name': 'Plank',
+        'tracks_weight': false,
+        'tracks_reps': false,
+        'tracks_distance': false,
+        'tracks_duration': true,
+        'is_custom': true,
+        'equipment': null,
+        'primary_muscles': <String>[],
+        'secondary_muscles': <String>[],
+      });
+
+      expect(exercise.equipment, isNull);
+      expect(exercise.primaryMuscles, isEmpty);
+      expect(exercise.secondaryMuscles, isEmpty);
+    });
+
+    test('toJson() sends the wire-cased equipment/muscle values back', () {
+      const exercise = Exercise(
+        name: 'Barbell Deadlift',
+        equipment: Equipment.eZCurlBar,
+        primaryMuscles: [MuscleGroup.lowerBack],
+        secondaryMuscles: [MuscleGroup.middleBack],
+      );
+
+      final body = exercise.toJson();
+
+      expect(body['equipment'], 'e_z_curl_bar');
+      expect(body['primary_muscles'], ['lower_back']);
+      expect(body['secondary_muscles'], ['middle_back']);
+    });
+  });
+
+  group('MuscleGroup/Equipment', () {
+    test('every member round-trips through toJson/fromJson', () {
+      for (final muscle in MuscleGroup.values) {
+        expect(MuscleGroup.fromJson(muscle.toJson()), muscle);
+      }
+      for (final equipment in Equipment.values) {
+        expect(Equipment.fromJson(equipment.toJson()), equipment);
+      }
+    });
+
+    test('the wire value matches the backend\'s snake_case spelling', () {
+      expect(MuscleGroup.lowerBack.toJson(), 'lower_back');
+      expect(MuscleGroup.middleBack.toJson(), 'middle_back');
+      expect(Equipment.bodyOnly.toJson(), 'body_only');
+      expect(Equipment.eZCurlBar.toJson(), 'e_z_curl_bar');
     });
   });
 

@@ -131,12 +131,10 @@ class LiveActivityScreen extends ConsumerWidget {
             for (var i = 0; i < session.exercises.length; i++)
               ActivityExerciseCard(
                 exercise: session.exercises[i],
-                exerciseName: exercisesAsync.valueOrNull
-                    ?.firstWhere(
-                      (e) => e.id == session.exercises[i].exerciseId,
-                      orElse: () => Exercise(name: '#${session.exercises[i].exerciseId}'),
-                    )
-                    .name,
+                catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
+                  (e) => e.id == session.exercises[i].exerciseId,
+                  orElse: () => Exercise(name: '#${session.exercises[i].exerciseId}'),
+                ),
                 onChanged: (updated) =>
                     ref.read(liveActivityProvider.notifier).updateExerciseAt(i, updated),
                 onRemove: () => ref.read(liveActivityProvider.notifier).removeExerciseAt(i),

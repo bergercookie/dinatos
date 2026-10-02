@@ -1,13 +1,14 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from dinatos_backend.api.deps import get_current_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
-from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
 from dinatos_backend.models.user import User
 from dinatos_backend.schemas.exercise import (
     ExerciseCreate,
@@ -28,12 +29,25 @@ router = APIRouter(
 
 logger = logging.getLogger(__name__)
 
+# `muscles` is a relationship, not a plain column -- without eager-loading it
+# up front, the response model's `primary_muscles`/`secondary_muscles`
+# properties (which read it) would trigger an implicit lazy load while
+# FastAPI serializes the response, outside of any `await`, which raises
+# `MissingGreenlet` under the async engine rather than silently working the
+# way a sync session would.
+_WITH_MUSCLES = selectinload(Exercise.muscles)
+
 
 async def _get_or_404(db: AsyncSession, exercise_id: int) -> Exercise:
-    exercise = await db.get(Exercise, exercise_id)
+    exercise = await db.get(Exercise, exercise_id, options=[_WITH_MUSCLES])
     if exercise is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "exercise not found")
     return exercise
+
+
+async def _refresh_with_muscles(db: AsyncSession, exercise: Exercise) -> None:
+    await db.refresh(exercise)
+    await db.refresh(exercise, attribute_names=["muscles"])
 
 
 def _ensure_custom(exercise: Exercise) -> None:
@@ -46,10 +60,28 @@ def _ensure_custom(exercise: Exercise) -> None:
         )
 
 
+def _muscle_rows(
+    primary_muscles: list[MuscleGroup], secondary_muscles: list[MuscleGroup]
+) -> list[ExerciseMuscle]:
+    """Primary wins when the same muscle is listed as both -- `ExerciseMuscle`
+    only allows one row per (exercise, muscle) (see its unique constraint),
+    and a muscle someone marked primary shouldn't be demoted by also
+    appearing in their secondary list.
+    """
+    primary_muscles = list(dict.fromkeys(primary_muscles))
+    secondary_muscles = list(dict.fromkeys(secondary_muscles))
+    secondary_muscles = [muscle for muscle in secondary_muscles if muscle not in primary_muscles]
+    return [ExerciseMuscle(muscle=muscle, is_primary=True) for muscle in primary_muscles] + [
+        ExerciseMuscle(muscle=muscle, is_primary=False) for muscle in secondary_muscles
+    ]
+
+
 @router.get("", response_model=list[ExerciseRead])
 async def list_exercises(
     response: Response,
     search: str | None = None,
+    muscle: MuscleGroup | None = None,
+    equipment: Equipment | None = None,
     limit: int | None = Query(None, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -57,6 +89,11 @@ async def list_exercises(
     """List exercises, optionally filtered by a case-insensitive name search --
     this backs the watch-sync picker's search box, and the exercises list
     screen, and the routine/activity exercise pickers.
+
+    `muscle`/`equipment` back the "which exercises train this muscle" /
+    "which exercises use this equipment" lookups the frontend offers from
+    an exercise's own muscle/equipment chips -- `muscle` matches either a
+    primary or secondary muscle, since both count as "trains this muscle".
 
     `limit`/`offset` are opt-in: the pickers omit them and get every matching
     row in one shot, exactly as before pagination existed, since they need
@@ -67,9 +104,13 @@ async def list_exercises(
     response body's shape -- a bare array -- never changes for callers that
     don't ask for a page.
     """
-    query = select(Exercise).order_by(Exercise.name)
+    query = select(Exercise).order_by(Exercise.name).options(_WITH_MUSCLES)
     if search:
         query = query.where(Exercise.name.ilike(f"%{search}%"))
+    if muscle is not None:
+        query = query.where(Exercise.muscles.any(ExerciseMuscle.muscle == muscle))
+    if equipment is not None:
+        query = query.where(Exercise.equipment == equipment)
     total = await db.scalar(select(func.count()).select_from(query.subquery()))
     response.headers["X-Total-Count"] = str(total or 0)
     if limit is not None:
@@ -80,13 +121,18 @@ async def list_exercises(
 
 @router.post("", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
 async def create_exercise(payload: ExerciseCreate, db: AsyncSession = Depends(get_db)) -> Exercise:
+    data = payload.model_dump()
+    primary_muscles = data.pop("primary_muscles")
+    secondary_muscles = data.pop("secondary_muscles")
     # is_custom is never accepted from the client (see ExerciseCreate) --
     # anything created through this endpoint is by definition someone's own
     # exercise, never part of the shipped catalog.
-    exercise = Exercise(**payload.model_dump(), is_custom=True)
+    exercise = Exercise(
+        **data, is_custom=True, muscles=_muscle_rows(primary_muscles, secondary_muscles)
+    )
     db.add(exercise)
     await db.commit()
-    await db.refresh(exercise)
+    await _refresh_with_muscles(db, exercise)
     return exercise
 
 
@@ -164,10 +210,31 @@ async def update_exercise(
 ) -> Exercise:
     exercise = await _get_or_404(db, exercise_id)
     _ensure_custom(exercise)
-    for field_name, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    # Popped out rather than `setattr` like every other field: `muscles` is
+    # a relationship, not a plain column, so it's replaced wholesale below
+    # instead -- but only when at least one of the two lists was actually
+    # given, so an update that doesn't mention muscles at all leaves them
+    # untouched.
+    primary_muscles = data.pop("primary_muscles", None)
+    secondary_muscles = data.pop("secondary_muscles", None)
+    for field_name, value in data.items():
         setattr(exercise, field_name, value)
+    if primary_muscles is not None or secondary_muscles is not None:
+        rows = _muscle_rows(
+            primary_muscles if primary_muscles is not None else exercise.primary_muscles,
+            secondary_muscles if secondary_muscles is not None else exercise.secondary_muscles,
+        )
+        # Not just `exercise.muscles = rows`: when a muscle carries over
+        # unchanged, the new row and the old row it's replacing share the
+        # same (exercise, muscle) unique constraint, and the unit of work
+        # can flush the insert before the delete it's paired with -- an
+        # explicit delete, flushed first, avoids that ordering trip.
+        await db.execute(delete(ExerciseMuscle).where(ExerciseMuscle.exercise_id == exercise.id))
+        await db.flush()
+        exercise.muscles = rows
     await db.commit()
-    await db.refresh(exercise)
+    await _refresh_with_muscles(db, exercise)
     return exercise
 
 
