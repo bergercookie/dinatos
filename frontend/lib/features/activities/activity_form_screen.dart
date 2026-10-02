@@ -16,6 +16,7 @@ import '../exercises/exercises_providers.dart';
 import '../routines/routines_providers.dart';
 import 'activities_providers.dart';
 import 'activities_repository.dart';
+import 'live/muscle_distribution_card.dart';
 import 'widgets/activity_exercise_card.dart';
 
 /// Create when [activityId] is null, otherwise edit (and `PUT`-replace) that
@@ -260,6 +261,12 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
             },
           ),
         ],
+        const SizedBox(height: 16),
+        MuscleDistributionCard(
+          exercises: _exercises,
+          catalog: exercisesAsync,
+          showSetCount: true,
+        ),
         const SizedBox(height: 16),
         Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),

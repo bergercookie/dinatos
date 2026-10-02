@@ -11,8 +11,7 @@ import '../../exercises/exercises_providers.dart';
 import '../widgets/activity_exercise_card.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
-import 'muscle_radar_chart.dart';
-import 'muscle_volume.dart';
+import 'muscle_distribution_card.dart';
 
 /// The interactive "I'm at the gym right now" workflow -- in contrast to
 /// [ActivityFormScreen]'s after-the-fact log entry, sets are added one at a
@@ -210,24 +209,7 @@ class LiveActivityScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Muscles targeted', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.md),
-                    AsyncValueView(
-                      value: exercisesAsync,
-                      builder: (context, catalog) => MuscleRadarChart(
-                        volumes: computeMuscleVolumes(session.exercises, catalog),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            MuscleDistributionCard(exercises: session.exercises, catalog: exercisesAsync),
             const SizedBox(height: AppSpacing.lg),
             Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),

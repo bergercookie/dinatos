@@ -7,9 +7,11 @@ import '../../core/async_value_view.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
+import '../activities/live/muscle_distribution_card.dart';
 import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import 'routines_providers.dart';
@@ -160,6 +162,12 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
           maxLines: 2,
         ),
         const SizedBox(height: 16),
+        MuscleDistributionCard(
+          exercises: _exercises.map(_asActivityExercise).toList(),
+          catalog: exercisesAsync,
+          showSetCount: true,
+        ),
+        const SizedBox(height: 16),
         Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         for (var i = 0; i < _exercises.length; i++)
@@ -199,6 +207,18 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
     );
   }
 }
+
+/// A routine's planned sets, shaped as an activity's so the shared muscle
+/// distribution can score them. A set with no target reps still counts as
+/// one unit of work: a routine being built is mostly sets with no targets
+/// filled in yet, and it should still show which muscles it hits.
+ActivityExercise _asActivityExercise(RoutineExercise exercise) => ActivityExercise(
+  exerciseId: exercise.exerciseId,
+  sets: [
+    for (final set in exercise.sets)
+      ActivitySet(weightKg: set.targetWeightKg, reps: set.targetReps ?? 1),
+  ],
+);
 
 class _RoutineExerciseCard extends StatelessWidget {
   const _RoutineExerciseCard({
