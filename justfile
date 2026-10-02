@@ -40,6 +40,27 @@ lint:
 hooks:
     uvx pre-commit install
 
+# ---------------------------------------------------------------- releases
+
+# Create and push the next patch tag (v0.1.8 -> v0.1.9), which triggers release.yml; `just release dry` only prints it.
+release mode="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git fetch --tags --quiet origin
+    latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+    if [ -z "$latest" ]; then
+        echo "No existing vX.Y.Z tag found" >&2
+        exit 1
+    fi
+    IFS=. read -r major minor patch <<< "${latest#v}"
+    next="v${major}.${minor}.$((patch + 1))"
+    echo "Latest tag: $latest -> new tag: $next (at $(git rev-parse --short HEAD))"
+    if [ "{{ mode }}" = "dry" ]; then
+        exit 0
+    fi
+    git tag -a "$next" -m "Release $next"
+    git push origin "$next"
+
 # ------------------------------------------------------------ development
 
 # Run Postgres, the backend, and the frontend together -- the fastest path to a working app in a browser (needs .env; see .env.example).
