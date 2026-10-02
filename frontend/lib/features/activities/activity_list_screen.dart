@@ -22,27 +22,31 @@ class ActivityListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'start-live-workout',
-            tooltip: 'Start an interactive session as you work out',
-            onPressed: () {
-              ref.read(liveActivityProvider.notifier).start();
-              context.go('/activities/live');
-            },
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start workout'),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          FloatingActionButton(
-            heroTag: 'log-past-activity',
-            tooltip: 'Log a past activity',
-            onPressed: () => context.go('/activities/new'),
-            child: const Icon(Icons.add),
-          ),
-        ],
+      floatingActionButton: IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'start-live-workout',
+              tooltip: 'Start an interactive session as you work out',
+              onPressed: () {
+                ref.read(liveActivityProvider.notifier).start();
+                context.go('/activities/live');
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start workout'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            FloatingActionButton.extended(
+              heroTag: 'log-past-activity',
+              tooltip: 'Log a past activity',
+              onPressed: () => context.go('/activities/new'),
+              icon: const Icon(Icons.add),
+              label: const Text('Log activity'),
+            ),
+          ],
+        ),
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(
