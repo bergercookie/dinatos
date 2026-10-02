@@ -56,6 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _submitting = true;
@@ -109,6 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         enabled: !ApiConfig.isFixedToServingOrigin,
                         decoration: const InputDecoration(labelText: 'Server URL'),
                         keyboardType: TextInputType.url,
+                        onFieldSubmitted: (_) => _submit(),
                         validator: (value) => (value == null || value.trim().isEmpty)
                             ? 'Server URL is required'
                             : null,
@@ -126,6 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _emailController,
                         decoration: const InputDecoration(labelText: 'Email'),
                         keyboardType: TextInputType.emailAddress,
+                        onFieldSubmitted: (_) => _submit(),
                         autofillHints: const [AutofillHints.username, AutofillHints.email],
                         validator: (value) =>
                             (value == null || value.isEmpty) ? 'Email is required' : null,
