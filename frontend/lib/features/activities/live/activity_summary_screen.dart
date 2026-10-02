@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/api_exception.dart';
-import '../../../core/async_value_view.dart';
 import '../../../core/design_tokens.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/responsive_body.dart';
@@ -18,8 +17,7 @@ import '../activities_providers.dart';
 import '../activities_repository.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
-import 'muscle_radar_chart.dart';
-import 'muscle_volume.dart';
+import 'muscle_distribution_card.dart';
 
 /// A plain-language "chest, shoulders, triceps" from a muscle-emphasis map
 /// -- the same data the radar chart plots, read out as the handful of
@@ -232,33 +230,12 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Muscles targeted', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.md),
-                    AsyncValueView(
-                      value: exercisesAsync,
-                      builder: (context, catalog) {
-                        final volumes = computeMuscleVolumes(session.exercises, catalog);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            MuscleRadarChart(volumes: volumes),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Main muscles: ${_describeMainMuscles(volumes)}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+            MuscleDistributionCard(
+              exercises: session.exercises,
+              catalog: exercisesAsync,
+              footerBuilder: (context, volumes) => Text(
+                'Main muscles: ${_describeMainMuscles(volumes)}',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
