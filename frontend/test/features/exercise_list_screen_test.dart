@@ -19,42 +19,31 @@ Map<String, dynamic> _exercise(int id, String name) => {
   'is_custom': true,
 };
 
-Response<List<dynamic>> _page(List<Map<String, dynamic>> items, int total) =>
-    Response(
-      requestOptions: RequestOptions(path: '/exercises'),
-      statusCode: 200,
-      data: items,
-      headers: Headers.fromMap({
-        'x-total-count': [total.toString()],
-      }),
-    );
+Response<List<dynamic>> _page(List<Map<String, dynamic>> items, int total) => Response(
+  requestOptions: RequestOptions(path: '/exercises'),
+  statusCode: 200,
+  data: items,
+  headers: Headers.fromMap({
+    'x-total-count': [total.toString()],
+  }),
+);
 
 /// Stubs `GET /exercises` for every `limit`/`offset`/`search` combination the
 /// screen might request, dispatching to [pages] by `(search, offset)` so
 /// each test only has to describe what each page of results actually is.
-void _stubPages(
-  MockDio dio,
-  Map<(String?, int), List<Map<String, dynamic>>> pages,
-  int total,
-) {
-  when(
-    () => dio.get<List<dynamic>>(
-      '/exercises',
-      queryParameters: any(named: 'queryParameters'),
-    ),
-  ).thenAnswer((invocation) async {
-    final params = invocation.namedArguments[#queryParameters] as Map;
-    final search = params['search'] as String?;
-    final offset = params['offset'] as int;
-    final items = pages[(search, offset)] ?? [];
-    return _page(items, total);
-  });
+void _stubPages(MockDio dio, Map<(String?, int), List<Map<String, dynamic>>> pages, int total) {
+  when(() => dio.get<List<dynamic>>('/exercises', queryParameters: any(named: 'queryParameters')))
+      .thenAnswer((invocation) async {
+        final params = invocation.namedArguments[#queryParameters] as Map;
+        final search = params['search'] as String?;
+        final offset = params['offset'] as int;
+        final items = pages[(search, offset)] ?? [];
+        return _page(items, total);
+      });
 }
 
 void main() {
-  testWidgets('loads the first page and fetches the next one on scroll', (
-    tester,
-  ) async {
+  testWidgets('loads the first page and fetches the next one on scroll', (tester) async {
     final dio = MockDio();
     final firstPage = List.generate(
       exercisePageSize,
@@ -66,9 +55,7 @@ void main() {
       (null, exercisePageSize): secondPage,
     }, exercisePageSize + 1);
 
-    final container = ProviderContainer(
-      overrides: [dioProvider.overrideWithValue(dio)],
-    );
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
     addTearDown(container.dispose);
 
     await tester.pumpWidget(
@@ -88,40 +75,35 @@ void main() {
     expect(find.text('Last Exercise'), findsOneWidget);
   });
 
-  testWidgets(
-    'debounces the search box instead of refetching on every keystroke',
-    (tester) async {
-      final dio = MockDio();
-      _stubPages(dio, {
-        (null, 0): [_exercise(1, 'Squat')],
-        ('bench', 0): [_exercise(2, 'Bench Press')],
-      }, 1);
+  testWidgets('debounces the search box instead of refetching on every keystroke', (tester) async {
+    final dio = MockDio();
+    _stubPages(dio, {
+      (null, 0): [_exercise(1, 'Squat')],
+      ('bench', 0): [_exercise(2, 'Bench Press')],
+    }, 1);
 
-      final container = ProviderContainer(
-        overrides: [dioProvider.overrideWithValue(dio)],
-      );
-      addTearDown(container.dispose);
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: ExerciseListScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Squat'), findsOneWidget);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ExerciseListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Squat'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'bench');
-      await tester.pump(const Duration(milliseconds: 100));
-      // Still well within the debounce window -- no refetch, and the old
-      // results are still on screen.
-      expect(find.text('Squat'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'bench');
+    await tester.pump(const Duration(milliseconds: 100));
+    // Still well within the debounce window -- no refetch, and the old
+    // results are still on screen.
+    expect(find.text('Squat'), findsOneWidget);
 
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Bench Press'), findsOneWidget);
-      expect(find.text('Squat'), findsNothing);
-    },
-  );
+    expect(find.text('Bench Press'), findsOneWidget);
+    expect(find.text('Squat'), findsNothing);
+  });
 }

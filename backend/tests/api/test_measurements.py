@@ -70,7 +70,5 @@ async def test_update_measurement(client: AsyncClient) -> None:
 
 
 async def test_update_missing_measurement_is_404(client: AsyncClient) -> None:
-    response = await client.put(
-        "/measurements/999", json={"measured_at": "2026-01-01T00:00:00Z"}
-    )
+    response = await client.put("/measurements/999", json={"measured_at": "2026-01-01T00:00:00Z"})
     assert response.status_code == 404

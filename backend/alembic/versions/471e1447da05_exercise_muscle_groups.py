@@ -20,15 +20,11 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column(
         "exercises",
-        sa.Column(
-            "primary_muscles", sa.JSON(), server_default=sa.text("'[]'"), nullable=False
-        ),
+        sa.Column("primary_muscles", sa.JSON(), server_default=sa.text("'[]'"), nullable=False),
     )
     op.add_column(
         "exercises",
-        sa.Column(
-            "secondary_muscles", sa.JSON(), server_default=sa.text("'[]'"), nullable=False
-        ),
+        sa.Column("secondary_muscles", sa.JSON(), server_default=sa.text("'[]'"), nullable=False),
     )
 
     # Backfill the shipped catalog's own muscle lists -- same source
