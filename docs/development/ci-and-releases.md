@@ -33,6 +33,25 @@ docs-serve` to also serve it on `http://127.0.0.1:8000` while you edit) uses
 the exact same `-W --keep-going` Sphinx invocation, so a broken cross-link
 or toctree entry fails the same way locally as it would in CI.
 
+## Nightly releases
+
+`.github/workflows/nightly.yml` runs daily (02:17 UTC, or manually via
+`workflow_dispatch`, which can `force` a release). If `main` has no commits
+since the previous nightly it does nothing; otherwise it calls
+`release.yml` (via `workflow_call`) to publish a GitHub **prerelease** with
+the same Docker image, `.deb`/AppImage and APK.
+
+- **Tag**: `nightly-YYYYMMDD`, not `v<version>.nightly`. A `v*` tag would
+  trigger `release.yml` as a stable release, would sort next to real
+  versions, and a tag pushed with `GITHUB_TOKEN` can't start a workflow
+  anyway -- hence `workflow_call`.
+- **Version string** in the packages: `<newest v* tag, else pyproject
+  version>-nightly.YYYYMMDD`.
+- **Docker**: tagged with that version and the moving `nightly` tag;
+  `latest` only ever follows stable releases.
+- Only the 14 newest nightly releases (and their tags) are kept. Old
+  nightly images on GHCR are not pruned.
+
 ## Cutting a release
 
 There's no `just` recipe for "cut a release" -- pushing a `v*` tag (e.g.
