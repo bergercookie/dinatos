@@ -210,7 +210,13 @@ Both providers implement the same `TutorialProvider` protocol
 (`backend/src/dinatos_backend/services/tutorials/base.py`), so adding a
 third is a new adapter, not a rewrite;
 `services.tutorials.get_tutorial_provider` picks one based on whether
-`workoutx_api_key` is set.
+`workoutx_api_key` is set. WorkoutX is wrapped in a
+`FallbackTutorialProvider` (`services/tutorials/fallback.py`): if it fails
+(a bad or expired key, a quota error, an outage) or has no match for an
+exercise, the bundled free-exercise-db answers instead, so opting in can't
+leave exercises without a tutorial. The failure is logged as a warning on
+the server. The tutorial response's `source` field says which provider
+answered, and the app shows it under the images with a "?" tooltip.
 
 Every lookup is wrapped in an in-memory cache
 (`services/tutorials/cache.py`) that lives only for the process's lifetime
