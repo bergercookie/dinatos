@@ -176,6 +176,7 @@ void main() {
     // on a short test viewport -- the screen is deliberately scrollable for
     // exactly that case (see login_screen.dart), so scroll it into view
     // first rather than assuming it's already on-screen.
+    await tester.pump();
     await tester.ensureVisible(find.text("Don't have an account? Register"));
     await tester.tap(find.text("Don't have an account? Register"));
     await tester.pumpAndSettle();
@@ -183,5 +184,43 @@ void main() {
     expect(find.text('register-screen'), findsOneWidget);
     expect(await storage.read(), 'https://changed.example.com');
     expect(container.read(serverUrlProvider), 'https://changed.example.com');
+  });
+
+  group('registration link', () {
+    MockDio dioWithAuthConfig({required bool registrationEnabled}) {
+      final dio = stubbedFailingDio();
+      when(() => dio.get<Map<String, dynamic>>('/auth/config')).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/auth/config'),
+          statusCode: 200,
+          data: {'registration_enabled': registrationEnabled},
+        ),
+      );
+      return dio;
+    }
+
+    Future<void> pumpLogin(WidgetTester tester, MockDio dio) async {
+      final container = ProviderContainer(overrides: _overrides(dio: dio));
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: LoginScreen()),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('is shown when the server allows registration', (tester) async {
+      await pumpLogin(tester, dioWithAuthConfig(registrationEnabled: true));
+
+      expect(find.text("Don't have an account? Register"), findsOneWidget);
+    });
+
+    testWidgets('is hidden when the server has registration disabled', (tester) async {
+      await pumpLogin(tester, dioWithAuthConfig(registrationEnabled: false));
+
+      expect(find.text("Don't have an account? Register"), findsNothing);
+    });
   });
 }

@@ -85,6 +85,7 @@ class ProfileScreen extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider);
     final profileAsync = ref.watch(profileProvider);
     final email = authState is AuthAuthenticated ? authState.user.email : null;
+    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
 
     return Scaffold(
       appBar: AppBar(
@@ -102,7 +103,12 @@ class ProfileScreen extends ConsumerWidget {
           value: profileAsync,
           onRetry: () => ref.invalidate(profileProvider),
           builder: (context, profile) =>
-              _ProfileForm(email: email, profile: profile, serverUrl: ref.watch(serverUrlProvider)),
+              _ProfileForm(
+            email: email,
+            isAdmin: isAdmin,
+            profile: profile,
+            serverUrl: ref.watch(serverUrlProvider),
+          ),
         ),
       ),
     );
@@ -110,9 +116,15 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 class _ProfileForm extends ConsumerStatefulWidget {
-  const _ProfileForm({required this.email, required this.profile, required this.serverUrl});
+  const _ProfileForm({
+    required this.email,
+    required this.isAdmin,
+    required this.profile,
+    required this.serverUrl,
+  });
 
   final String? email;
+  final bool isAdmin;
   final Profile profile;
   final String serverUrl;
 
@@ -200,6 +212,19 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
+        if (widget.isAdmin) ...[
+          const _SectionHeader('Administration'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.manage_accounts_outlined),
+              title: const Text('Manage users'),
+              subtitle: const Text('View accounts and add new ones'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => context.go('/profile/admin'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
         const _SectionHeader('Data'),
         Card(
           child: Column(

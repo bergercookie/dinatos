@@ -43,6 +43,7 @@ services:
         condition: service_healthy
     environment:
       DINATOS_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dinatos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dinatos}
+      DINATOS_ALLOW_REGISTRATION: ${DINATOS_ALLOW_REGISTRATION:-true}
       DINATOS_ADMIN_EMAIL: ${DINATOS_ADMIN_EMAIL:-}
       DINATOS_ADMIN_PASSWORD: ${DINATOS_ADMIN_PASSWORD:-}
     ports:

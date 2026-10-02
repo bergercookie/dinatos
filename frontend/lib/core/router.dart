@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/activities/activity_form_screen.dart';
+import '../features/admin/admin_screen.dart';
 import '../features/activities/activity_list_screen.dart';
 import '../features/activities/live/activity_summary_screen.dart';
 import '../features/activities/live/live_activity_screen.dart';
@@ -147,6 +148,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'import-hevy',
                     builder: (context, state) => const HevyImportScreen(),
                   ),
+                  GoRoute(path: 'admin', builder: (context, state) => const AdminScreen()),
                 ],
               ),
             ],

@@ -13,6 +13,7 @@ from dinatos_backend import __version__
 from dinatos_backend.api.lifespan import lifespan
 from dinatos_backend.api.routers import (
     activities,
+    admin,
     auth,
     exercises,
     imports,
@@ -30,15 +31,16 @@ app = FastAPI(
         "The Dinatos REST API.\n\n"
         "Everything except `GET /health` needs an "
         "`Authorization: Bearer <token>` header. Call `POST /auth/register` or "
-        "`POST /auth/login` to get one -- those two, and only those two, work "
-        "without it (`/auth/me` and `/auth/logout` are themselves "
-        "authenticated).\n\n"
+        "`POST /auth/login` to get one -- those two, plus `GET /auth/config`, "
+        "work without it (`/auth/me` and `/auth/logout` are themselves "
+        "authenticated). `/admin/*` additionally needs an admin account.\n\n"
         "This is a self-hosted service: `/docs` (this page), `/redoc` and the "
         "raw `/openapi.json` are served by the same app, so they are only "
         "reachable to whoever can already reach the API itself."
     ),
     openapi_tags=[
         {"name": "auth", "description": "Registration, login and session revocation."},
+        {"name": "admin", "description": "Account administration (admins only)."},
         {"name": "exercises", "description": "The exercise catalog, shared by every user."},
         {"name": "routines", "description": "Routine templates: exercises and sets, no dates."},
         {"name": "activities", "description": "Logged instances of a workout, actually performed."},
@@ -59,6 +61,7 @@ app.add_middleware(
     expose_headers=["X-Total-Count"],
 )
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(exercises.router)
 app.include_router(routines.router)
 app.include_router(activities.router)

@@ -10,6 +10,7 @@ import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
+import 'auth_config_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -151,18 +152,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             )
                           : const Text('Log in'),
                     ),
-                    TextButton(
-                      // Commits a changed server field before leaving, the
-                      // same as "Log in" -- register() runs against whatever
-                      // this screen's field says, not whatever the app
-                      // started up pointed at, so it has to be applied
-                      // whichever way the person leaves this screen.
-                      onPressed: () async {
-                        await _commitSettingsIfChanged();
-                        if (context.mounted) context.go('/register');
-                      },
-                      child: const Text("Don't have an account? Register"),
-                    ),
+                    // Hidden until the server says registration is open (and
+                    // while it's still being asked): an admin creates
+                    // accounts under Profile > Administration instead.
+                    if (ref.watch(registrationEnabledProvider).valueOrNull ?? false)
+                      TextButton(
+                        // Commits a changed server field before leaving, the
+                        // same as "Log in" -- register() runs against whatever
+                        // this screen's field says, not whatever the app
+                        // started up pointed at, so it has to be applied
+                        // whichever way the person leaves this screen.
+                        onPressed: () async {
+                          await _commitSettingsIfChanged();
+                          if (context.mounted) context.go('/register');
+                        },
+                        child: const Text("Don't have an account? Register"),
+                      ),
                   ],
                 ),
               ),

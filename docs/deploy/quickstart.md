@@ -39,8 +39,9 @@ DINATOS_ADMIN_PASSWORD=change-me
 
 Without `DINATOS_ADMIN_EMAIL`/`DINATOS_ADMIN_PASSWORD` set, the first
 account anyone registers (from a client app's Register screen, or
-`POST /auth/register` directly) becomes the instance's admin instead --
-nothing beyond that is currently admin-gated.
+`POST /auth/register` directly) becomes the instance's admin instead.
+Admins can create further accounts from **Profile → Administration**. To
+stop anyone else self-registering, set `DINATOS_ALLOW_REGISTRATION=false`.
 
 See [Configuration reference](configuration.md) for every other setting.
 
