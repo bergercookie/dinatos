@@ -10,13 +10,13 @@ import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import '../../models/exercise.dart';
-import '../../models/set_type.dart';
 import '../../models/routine.dart';
 import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import '../routines/routines_providers.dart';
 import 'activities_providers.dart';
 import 'activities_repository.dart';
+import 'widgets/activity_exercise_card.dart';
 
 /// Create when [activityId] is null, otherwise edit (and `PUT`-replace) that
 /// activity's exercises and sets as a whole -- the same full-replace shape
@@ -264,7 +264,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
         Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         for (var i = 0; i < _exercises.length; i++)
-          _ActivityExerciseCard(
+          ActivityExerciseCard(
             exercise: _exercises[i],
             exerciseName: exercisesAsync.valueOrNull
                 ?.firstWhere(
@@ -312,128 +312,4 @@ Future<DateTime?> _pickDateTime(BuildContext context, DateTime initial) async {
   final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
   if (time == null) return null;
   return DateTime(date.year, date.month, date.day, time.hour, time.minute);
-}
-
-class _ActivityExerciseCard extends StatelessWidget {
-  const _ActivityExerciseCard({
-    required this.exercise,
-    required this.exerciseName,
-    required this.onChanged,
-    required this.onRemove,
-  });
-
-  final ActivityExercise exercise;
-  final String? exerciseName;
-  final ValueChanged<ActivityExercise> onChanged;
-  final VoidCallback onRemove;
-
-  void _addSet() {
-    onChanged(exercise.copyWith(sets: [...exercise.sets, const ActivitySet()]));
-  }
-
-  void _removeSetAt(int index) {
-    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..removeAt(index)));
-  }
-
-  void _updateSetAt(int index, ActivitySet updated) {
-    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..[index] = updated));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    exerciseName ?? '#${exercise.exerciseId}',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Remove exercise',
-                  icon: const Icon(Icons.close),
-                  onPressed: onRemove,
-                ),
-              ],
-            ),
-            for (var i = 0; i < exercise.sets.length; i++)
-              _ActivitySetRow(
-                index: i,
-                set: exercise.sets[i],
-                onChanged: (updated) => _updateSetAt(i, updated),
-                onRemove: () => _removeSetAt(i),
-              ),
-            TextButton.icon(
-              onPressed: _addSet,
-              icon: const Icon(Icons.add),
-              label: const Text('Add set'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivitySetRow extends StatelessWidget {
-  const _ActivitySetRow({
-    required this.index,
-    required this.set,
-    required this.onChanged,
-    required this.onRemove,
-  });
-
-  final int index;
-  final ActivitySet set;
-  final ValueChanged<ActivitySet> onChanged;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('${index + 1}.'),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.weightKg?.toString(),
-            decoration: const InputDecoration(labelText: 'kg', isDense: true),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (value) => onChanged(set.copyWith(weightKg: double.tryParse(value))),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.reps?.toString(),
-            decoration: const InputDecoration(labelText: 'reps', isDense: true),
-            keyboardType: TextInputType.number,
-            onChanged: (value) => onChanged(set.copyWith(reps: int.tryParse(value))),
-          ),
-        ),
-        const SizedBox(width: 8),
-        DropdownButton<SetType>(
-          value: set.setType,
-          items: SetType.values
-              .map((type) => DropdownMenuItem(value: type, child: Text(type.name)))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) onChanged(set.copyWith(setType: value));
-          },
-        ),
-        IconButton(
-          tooltip: 'Remove set',
-          icon: const Icon(Icons.close, size: 18),
-          onPressed: onRemove,
-        ),
-      ],
-    );
-  }
 }

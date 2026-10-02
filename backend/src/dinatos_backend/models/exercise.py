@@ -1,4 +1,4 @@
-from sqlalchemy import String
+from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from dinatos_backend.models.base import Base, TimestampMixin
@@ -19,6 +19,15 @@ class Exercise(Base, TimestampMixin):
     router's create endpoint, a Hevy import) is a person adding their own.
     Editing or deleting a row is only ever allowed while this is True -- see
     `api.routers.exercises`.
+
+    `primary_muscles`/`secondary_muscles` use the same free-text muscle
+    names as `services.tutorials.base.ExerciseTutorial` (indeed, the shipped
+    catalog's values come straight from the same vendored
+    `free_exercise_db.json` entry -- see `services.exercise`) rather than a
+    closed enum: a per-exercise tag list has no need for a native DB enum
+    type (and the migration-downgrade footguns that come with one -- see
+    AGENTS.md), and keeping the taxonomy open lets a person's own custom
+    exercise use whatever muscle name they like.
     """
 
     __tablename__ = "exercises"
@@ -30,3 +39,5 @@ class Exercise(Base, TimestampMixin):
     tracks_distance: Mapped[bool] = mapped_column(default=False)
     tracks_duration: Mapped[bool] = mapped_column(default=False)
     is_custom: Mapped[bool] = mapped_column(default=True)
+    primary_muscles: Mapped[list[str]] = mapped_column(JSON, default=list)
+    secondary_muscles: Mapped[list[str]] = mapped_column(JSON, default=list)

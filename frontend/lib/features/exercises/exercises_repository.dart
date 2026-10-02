@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_exception.dart';
 import '../../core/dio_provider.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_records.dart';
 import '../../models/exercise_tutorial.dart';
 
 final exercisesRepositoryProvider = Provider<ExercisesRepository>((ref) {
@@ -33,13 +34,9 @@ class ExercisesRepository {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/exercises',
-        queryParameters: search != null && search.isNotEmpty
-            ? {'search': search}
-            : null,
+        queryParameters: search != null && search.isNotEmpty ? {'search': search} : null,
       );
-      return response.data!
-          .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return response.data!.map((e) => Exercise.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }
@@ -49,11 +46,7 @@ class ExercisesRepository {
   /// unlike [list], this always passes `limit`/`offset`, so the backend
   /// slices the result and reports the true (pre-slice) count via the
   /// `X-Total-Count` header instead of returning everything in one shot.
-  Future<ExercisePage> listPage({
-    String? search,
-    required int limit,
-    required int offset,
-  }) async {
+  Future<ExercisePage> listPage({String? search, required int limit, required int offset}) async {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/exercises',
@@ -66,9 +59,7 @@ class ExercisesRepository {
       final items = response.data!
           .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
           .toList();
-      final total = int.parse(
-        response.headers.value('x-total-count') ?? '${items.length}',
-      );
+      final total = int.parse(response.headers.value('x-total-count') ?? '${items.length}');
       return ExercisePage(items: items, total: total);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
@@ -86,10 +77,7 @@ class ExercisesRepository {
 
   Future<Exercise> create(Exercise exercise) async {
     try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/exercises',
-        data: exercise.toJson(),
-      );
+      final response = await _dio.post<Map<String, dynamic>>('/exercises', data: exercise.toJson());
       return Exercise.fromJson(response.data!);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
@@ -114,12 +102,22 @@ class ExercisesRepository {
   /// reach the provider, a network error) still throws.
   Future<ExerciseTutorial?> getTutorial(int id) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '/exercises/$id/tutorial',
-      );
+      final response = await _dio.get<Map<String, dynamic>>('/exercises/$id/tutorial');
       return ExerciseTutorial.fromJson(response.data!);
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// This caller's own best weight/reps ever logged for this exercise --
+  /// what the live workout summary compares a session's best set against to
+  /// flag a new personal record.
+  Future<ExerciseRecords> getRecords(int id) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/exercises/$id/records');
+      return ExerciseRecords.fromJson(response.data!);
+    } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }
   }

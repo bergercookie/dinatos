@@ -6,10 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.api.deps import get_current_user
 from dinatos_backend.db import get_db
+from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.user import User
 from dinatos_backend.schemas.exercise import (
     ExerciseCreate,
     ExerciseRead,
+    ExerciseRecordsRead,
     ExerciseTutorialRead,
     ExerciseUpdate,
 )
@@ -128,6 +131,31 @@ async def get_exercise_tutorial(
     if tutorial is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no tutorial available for this exercise")
     return tutorial
+
+
+@router.get("/{exercise_id}/records", response_model=ExerciseRecordsRead)
+async def get_exercise_records(
+    exercise_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ExerciseRecordsRead:
+    """The caller's own all-time best weight and best reps for this exercise,
+    across every past `ActivitySet` logged against it (any past activity,
+    not just one) -- what a live-recording session's end-of-workout summary
+    compares its own best set against to flag a new personal record. Scoped
+    to `user.id` the same way `activities.list_activities` is, so one
+    account's bests never leak into another's.
+    """
+    await _get_or_404(db, exercise_id)
+    result = await db.execute(
+        select(func.max(ActivitySet.weight_kg), func.max(ActivitySet.reps))
+        .select_from(ActivitySet)
+        .join(ActivityExercise, ActivitySet.activity_exercise_id == ActivityExercise.id)
+        .join(Activity, ActivityExercise.activity_id == Activity.id)
+        .where(Activity.owner_id == user.id, ActivityExercise.exercise_id == exercise_id)
+    )
+    max_weight_kg, max_reps = result.one()
+    return ExerciseRecordsRead(max_weight_kg=max_weight_kg, max_reps=max_reps)
 
 
 @router.patch("/{exercise_id}", response_model=ExerciseRead)

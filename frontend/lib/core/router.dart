@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../features/activities/activity_form_screen.dart';
 import '../features/activities/activity_list_screen.dart';
+import '../features/activities/live/activity_summary_screen.dart';
+import '../features/activities/live/live_activity_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/docs/api_docs_screen.dart';
@@ -104,6 +106,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ActivityListScreen(),
                 routes: [
                   GoRoute(path: 'new', builder: (context, state) => const ActivityFormScreen()),
+                  GoRoute(path: 'live', builder: (context, state) => const LiveActivityScreen()),
+                  GoRoute(
+                    path: 'live/summary',
+                    builder: (context, state) => const ActivitySummaryScreen(),
+                  ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) =>

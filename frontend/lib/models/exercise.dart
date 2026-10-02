@@ -7,6 +7,8 @@ class Exercise {
     this.tracksDistance = false,
     this.tracksDuration = false,
     this.isCustom = true,
+    this.primaryMuscles = const [],
+    this.secondaryMuscles = const [],
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
@@ -17,6 +19,8 @@ class Exercise {
     tracksDistance: json['tracks_distance'] as bool,
     tracksDuration: json['tracks_duration'] as bool,
     isCustom: json['is_custom'] as bool,
+    primaryMuscles: (json['primary_muscles'] as List<dynamic>? ?? const []).cast<String>(),
+    secondaryMuscles: (json['secondary_muscles'] as List<dynamic>? ?? const []).cast<String>(),
   );
 
   final int? id;
@@ -32,6 +36,14 @@ class Exercise {
   /// this.
   final bool isCustom;
 
+  /// Free-text muscle names (the shipped catalog's come from the same
+  /// vendored dataset `ExerciseTutorialRead` does) -- what the live
+  /// workout screen's muscle-emphasis radar chart groups logged sets by.
+  /// Secondary muscles count for half the volume a primary one does; see
+  /// `features/activities/live/muscle_volume.dart`.
+  final List<String> primaryMuscles;
+  final List<String> secondaryMuscles;
+
   /// The subset of fields the create/update endpoints accept -- `id` and
   /// `isCustom` are both server-assigned, never sent back.
   Map<String, dynamic> toJson() => {
@@ -40,5 +52,7 @@ class Exercise {
     'tracks_reps': tracksReps,
     'tracks_distance': tracksDistance,
     'tracks_duration': tracksDuration,
+    'primary_muscles': primaryMuscles,
+    'secondary_muscles': secondaryMuscles,
   };
 }

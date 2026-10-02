@@ -26,6 +26,8 @@ class ExerciseFormScreen extends ConsumerStatefulWidget {
 class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _primaryMusclesController = TextEditingController();
+  final _secondaryMusclesController = TextEditingController();
   bool _tracksWeight = true;
   bool _tracksReps = true;
   bool _tracksDistance = false;
@@ -50,13 +52,20 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
     _tracksDistance = exercise.tracksDistance;
     _tracksDuration = exercise.tracksDuration;
     _isCustom = exercise.isCustom;
+    _primaryMusclesController.text = exercise.primaryMuscles.join(', ');
+    _secondaryMusclesController.text = exercise.secondaryMuscles.join(', ');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _primaryMusclesController.dispose();
+    _secondaryMusclesController.dispose();
     super.dispose();
   }
+
+  static List<String> _parseMuscles(String value) =>
+      value.split(',').map((m) => m.trim()).where((m) => m.isNotEmpty).toList();
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -70,6 +79,8 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
       tracksReps: _tracksReps,
       tracksDistance: _tracksDistance,
       tracksDuration: _tracksDuration,
+      primaryMuscles: _parseMuscles(_primaryMusclesController.text),
+      secondaryMuscles: _parseMuscles(_secondaryMusclesController.text),
     );
     final repository = ref.read(exercisesRepositoryProvider);
     try {
@@ -187,6 +198,26 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
             onChanged: readOnly
                 ? null
                 : (value) => setState(() => _tracksDuration = value ?? false),
+          ),
+          const SizedBox(height: 16),
+          Text('Muscles targeted', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Comma-separated, e.g. "chest, shoulders" -- feeds the live workout '
+            "screen's muscle-emphasis chart.",
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _primaryMusclesController,
+            decoration: const InputDecoration(labelText: 'Primary muscles'),
+            enabled: !readOnly,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _secondaryMusclesController,
+            decoration: const InputDecoration(labelText: 'Secondary muscles'),
+            enabled: !readOnly,
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.md),
