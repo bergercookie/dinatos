@@ -1,12 +1,30 @@
 import 'package:dinatos_frontend/features/exercises/exercise_picker.dart';
+import 'package:dinatos_frontend/models/equipment.dart';
 import 'package:dinatos_frontend/models/exercise.dart';
+import 'package:dinatos_frontend/models/muscle_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _exercises = [
-  Exercise(id: 1, name: 'Bench Press'),
-  Exercise(id: 2, name: 'Squat'),
-  Exercise(id: 3, name: 'Deadlift'),
+  Exercise(
+    id: 1,
+    name: 'Bench Press',
+    equipment: Equipment.barbell,
+    primaryMuscles: [MuscleGroup.chest],
+    secondaryMuscles: [MuscleGroup.triceps],
+  ),
+  Exercise(
+    id: 2,
+    name: 'Squat',
+    equipment: Equipment.barbell,
+    primaryMuscles: [MuscleGroup.quadriceps],
+  ),
+  Exercise(
+    id: 3,
+    name: 'Dumbbell Curl',
+    equipment: Equipment.dumbbell,
+    primaryMuscles: [MuscleGroup.biceps],
+  ),
 ];
 
 Future<Exercise?> _open(WidgetTester tester) async {
@@ -28,13 +46,30 @@ Future<Exercise?> _open(WidgetTester tester) async {
   return picked;
 }
 
+/// The chip rows scroll horizontally and build lazily, so a chip far along
+/// the row has to be scrolled into view before it can be tapped. [row] is 0
+/// for the muscle row, 1 for the equipment row.
+Future<void> _tapChip(WidgetTester tester, int row, String label) async {
+  final chip = find.widgetWithText(FilterChip, label);
+  final rows = find.byWidgetPredicate((w) => w is ListView && w.scrollDirection == Axis.horizontal);
+  await tester.scrollUntilVisible(
+    chip,
+    100,
+    scrollable: find.descendant(of: rows.at(row), matching: find.byType(Scrollable)),
+  );
+  await tester.ensureVisible(chip);
+  await tester.pump();
+  await tester.tap(chip);
+  await tester.pump();
+}
+
 void main() {
   testWidgets('lists every exercise with no search term entered', (tester) async {
     await _open(tester);
 
     expect(find.text('Bench Press'), findsOneWidget);
     expect(find.text('Squat'), findsOneWidget);
-    expect(find.text('Deadlift'), findsOneWidget);
+    expect(find.text('Dumbbell Curl'), findsOneWidget);
   });
 
   testWidgets('typing a search term filters down to matching exercises', (tester) async {
@@ -45,7 +80,7 @@ void main() {
 
     expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Bench Press'), findsNothing);
-    expect(find.text('Deadlift'), findsNothing);
+    expect(find.text('Dumbbell Curl'), findsNothing);
   });
 
   testWidgets('a search term matching nothing shows an empty state', (tester) async {
@@ -78,5 +113,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(picked?.name, 'Squat');
+  });
+
+  testWidgets('filtering by muscle matches primary and secondary muscles', (tester) async {
+    await _open(tester);
+
+    await _tapChip(tester, 0, 'Triceps');
+    await tester.pump();
+
+    expect(find.text('Bench Press'), findsOneWidget);
+    expect(find.text('Squat'), findsNothing);
+    expect(find.text('Dumbbell Curl'), findsNothing);
+  });
+
+  testWidgets('filtering by equipment narrows the list, and combines with muscle', (tester) async {
+    await _open(tester);
+
+    await _tapChip(tester, 1, 'Barbell');
+    await tester.pump();
+    expect(find.text('Bench Press'), findsOneWidget);
+    expect(find.text('Squat'), findsOneWidget);
+    expect(find.text('Dumbbell Curl'), findsNothing);
+
+    await _tapChip(tester, 0, 'Quadriceps');
+    await tester.pump();
+    expect(find.text('Squat'), findsOneWidget);
+    expect(find.text('Bench Press'), findsNothing);
   });
 }
