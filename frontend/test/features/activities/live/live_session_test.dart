@@ -106,4 +106,46 @@ void main() {
       expect(session.totalVolumeKg, 0);
     });
   });
+
+  group('stopwatch', () {
+    test('setClock() sets the reading and runs; pauseClock/resumeClock freeze and continue', () {
+      final notifier = LiveActivityNotifier()..start();
+
+      notifier.setClock(const Duration(minutes: 10));
+      var clock = notifier.state!.clockElapsedAt(DateTime.now());
+      expect(clock, greaterThanOrEqualTo(const Duration(minutes: 10)));
+      expect(clock, lessThan(const Duration(minutes: 10, seconds: 5)));
+      expect(notifier.state!.isPaused, isFalse);
+
+      notifier.pauseClock();
+      expect(notifier.state!.isPaused, isTrue);
+      final frozen = notifier.state!.clockElapsedAt(DateTime.now().add(const Duration(hours: 1)));
+      expect(frozen, lessThan(const Duration(minutes: 10, seconds: 5)));
+
+      notifier.resumeClock();
+      expect(notifier.state!.isPaused, isFalse);
+      clock = notifier.state!.clockElapsedAt(DateTime.now());
+      expect(clock, lessThan(const Duration(minutes: 10, seconds: 5)));
+    });
+
+    test('resetClock() zeroes and un-pauses, without moving startedAt', () {
+      final notifier = LiveActivityNotifier()..start();
+      final startedAt = notifier.state!.startedAt;
+      notifier.setClock(const Duration(minutes: 30));
+      notifier.pauseClock();
+
+      notifier.resetClock();
+
+      expect(notifier.state!.isPaused, isFalse);
+      expect(notifier.state!.clockElapsedAt(DateTime.now()), lessThan(const Duration(seconds: 5)));
+      expect(notifier.state!.startedAt, startedAt);
+    });
+
+    test('setClock() while paused resumes counting', () {
+      final notifier = LiveActivityNotifier()..start();
+      notifier.pauseClock();
+      notifier.setClock(const Duration(minutes: 1));
+      expect(notifier.state!.isPaused, isFalse);
+    });
+  });
 }

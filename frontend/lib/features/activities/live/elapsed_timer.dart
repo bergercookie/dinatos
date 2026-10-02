@@ -27,8 +27,23 @@ class _ElapsedTimerState extends State<ElapsedTimer> {
   @override
   void initState() {
     super.initState();
+    _syncTimer();
+  }
+
+  @override
+  void didUpdateWidget(ElapsedTimer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // `until` flipping between null and a value (a stopwatch being paused
+    // or resumed) must start/stop the tick, not just change what build() reads.
+    _syncTimer();
+  }
+
+  void _syncTimer() {
     if (widget.until == null) {
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+      _timer ??= Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    } else {
+      _timer?.cancel();
+      _timer = null;
     }
   }
 
@@ -51,4 +66,22 @@ String formatElapsed(Duration elapsed) {
   final minutes = clamped.inMinutes.remainder(60).toString().padLeft(2, '0');
   final seconds = clamped.inSeconds.remainder(60).toString().padLeft(2, '0');
   return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+}
+
+/// Parses what a person types to set the stopwatch: `h:mm:ss`, `m:ss`, or a
+/// bare number of minutes. Returns null for anything else (empty, negative,
+/// seconds/minutes >= 60 in a multi-part form, non-numeric).
+Duration? parseElapsed(String input) {
+  final parts = input.trim().split(':');
+  if (parts.isEmpty || parts.length > 3) return null;
+  final numbers = <int>[];
+  for (final part in parts) {
+    final n = int.tryParse(part.trim());
+    if (n == null || n < 0) return null;
+    numbers.add(n);
+  }
+  if (numbers.length == 1) return Duration(minutes: numbers[0]);
+  if (numbers.skip(1).any((n) => n >= 60)) return null;
+  if (numbers.length == 2) return Duration(minutes: numbers[0], seconds: numbers[1]);
+  return Duration(hours: numbers[0], minutes: numbers[1], seconds: numbers[2]);
 }

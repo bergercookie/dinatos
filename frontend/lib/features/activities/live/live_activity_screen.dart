@@ -37,6 +37,93 @@ class LiveActivityScreen extends ConsumerWidget {
     return confirmed ?? false;
   }
 
+  Future<void> _showStopwatchControls(BuildContext context, WidgetRef ref) async {
+    final notifier = ref.read(liveActivityProvider.notifier);
+    final action = await showModalBottomSheet<_StopwatchAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final paused = ref.read(liveActivityProvider)?.isPaused ?? false;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(paused ? Icons.play_arrow : Icons.pause),
+                title: Text(paused ? 'Resume' : 'Pause'),
+                onTap: () => Navigator.pop(context, _StopwatchAction.togglePause),
+              ),
+              ListTile(
+                leading: const Icon(Icons.restart_alt),
+                title: const Text('Reset to 00:00'),
+                onTap: () => Navigator.pop(context, _StopwatchAction.reset),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Set time...'),
+                onTap: () => Navigator.pop(context, _StopwatchAction.setTime),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    switch (action) {
+      case _StopwatchAction.togglePause:
+        final paused = ref.read(liveActivityProvider)?.isPaused ?? false;
+        paused ? notifier.resumeClock() : notifier.pauseClock();
+      case _StopwatchAction.reset:
+        notifier.resetClock();
+      case _StopwatchAction.setTime:
+        if (!context.mounted) return;
+        final elapsed = await _askForTime(context);
+        if (elapsed != null) notifier.setClock(elapsed);
+      case null:
+        break;
+    }
+  }
+
+  Future<Duration?> _askForTime(BuildContext context) {
+    final controller = TextEditingController();
+    return showDialog<Duration>(
+      context: context,
+      builder: (context) {
+        String? error;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void submit() {
+              final parsed = parseElapsed(controller.text);
+              if (parsed == null) {
+                setState(() => error = 'Use m:ss, h:mm:ss or minutes');
+              } else {
+                Navigator.pop(context, parsed);
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Set time'),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.datetime,
+                decoration: InputDecoration(
+                  labelText: 'Elapsed time',
+                  hintText: '12:30',
+                  errorText: error,
+                ),
+                onSubmitted: (_) => submit(),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                TextButton(onPressed: submit, child: const Text('Set')),
+              ],
+            );
+          },
+        );
+      },
+    ).whenComplete(controller.dispose);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(liveActivityProvider);
@@ -88,10 +175,14 @@ class LiveActivityScreen extends ConsumerWidget {
                   child: _StatTile(
                     icon: Icons.timer_outlined,
                     label: 'Time',
+                    // `until: pausedAt` freezes the display while paused.
                     value: ElapsedTimer(
-                      since: session.startedAt,
+                      since: session.clockOrigin,
+                      until: session.pausedAt,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
+                    trailingIcon: session.isPaused ? Icons.pause_circle_outline : null,
+                    onTap: () => _showStopwatchControls(context, ref),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -181,32 +272,50 @@ class LiveActivityScreen extends ConsumerWidget {
   }
 }
 
+enum _StopwatchAction { togglePause, reset, setTime }
+
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.label, required this.value});
+  const _StatTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onTap,
+    this.trailingIcon,
+  });
 
   final IconData icon;
   final String label;
   final Widget value;
+  final VoidCallback? onTap;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.xs),
-                Text(label, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            value,
-          ],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(label, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                  if (trailingIcon != null) ...[
+                    const SizedBox(width: AppSpacing.xs),
+                    Icon(trailingIcon, size: 16, color: scheme.onSurfaceVariant),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              value,
+            ],
+          ),
         ),
       ),
     );
