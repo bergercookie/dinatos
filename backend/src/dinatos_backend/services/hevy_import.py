@@ -30,6 +30,7 @@ from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.routine import SetType
 from dinatos_backend.schemas.imports import HevyMeasurementImportResult, HevyWorkoutImportResult
+from dinatos_backend.services.hevy_exercise_match import CatalogMatcher
 
 # Hevy writes the same logical timestamp two different ways depending on which
 # app the export came from: the Android export uses "1 Jan 2026, 08:00"
@@ -165,11 +166,18 @@ async def _get_or_create_exercises(
                 flags["tracks_distance"] |= set_row.distance_km is not None
                 flags["tracks_duration"] |= set_row.duration_seconds is not None
 
+    # A person's own exercise of exactly this name wins; otherwise Hevy's
+    # built-ins are matched, best-effort, to the seeded catalog (see
+    # `hevy_exercise_match`) so an import doesn't duplicate what's already
+    # there. Only what matches neither is created.
+    catalog = await db.execute(select(Exercise).where(Exercise.is_custom.is_(False)))
+    matcher = CatalogMatcher(list(catalog.scalars()))
+
     created = 0
     by_name: dict[str, Exercise] = {}
     for name, flags in observed.items():
         result = await db.execute(select(Exercise).where(Exercise.name == name))
-        exercise = result.scalar_one_or_none()
+        exercise = result.scalar_one_or_none() or matcher.match(name)
         if exercise is None:
             exercise = Exercise(name=name, **flags)
             db.add(exercise)
