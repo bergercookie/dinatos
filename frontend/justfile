@@ -17,6 +17,15 @@ install:
 test *args:
     flutter test {{args}}
 
+# Minimum overall line coverage (percent) `coverage` enforces; raise it as tests are added.
+min_coverage := "50"
+
+# The suite with coverage, failing below min_coverage: coverage/lcov.info, plus a browsable HTML report in coverage/html/ if `genhtml` (apt: lcov) is installed.
+coverage *args:
+    flutter test --coverage {{args}}
+    if command -v genhtml >/dev/null; then genhtml coverage/lcov.info --output-directory coverage/html --quiet && echo "HTML report: frontend/coverage/html/index.html"; else echo "genhtml not found; install lcov for the HTML report"; fi
+    awk -F: '/^LF:/{t+=$2} /^LH:/{h+=$2} END{p=100*h/t; printf "Line coverage: %.2f%% (%d/%d), minimum {{min_coverage}}%%\n", p, h, t; exit (p < {{min_coverage}})}' coverage/lcov.info
+
 # Static analysis (the Dart analyzer, configured by analysis_options.yaml).
 analyze:
     flutter analyze
