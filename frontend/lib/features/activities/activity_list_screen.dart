@@ -19,6 +19,8 @@ class ActivityListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activities = ref.watch(activityListProvider);
     final dateFormat = DateFormat.yMMMd().add_Hm();
+    final liveSession = ref.watch(liveActivityProvider);
+    final hasLiveWorkout = liveSession != null && liveSession.endedAt == null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -31,11 +33,12 @@ class ActivityListScreen extends ConsumerWidget {
               heroTag: 'start-live-workout',
               tooltip: 'Start an interactive session as you work out',
               onPressed: () {
-                ref.read(liveActivityProvider.notifier).start();
+                // Never clobber a workout already under way -- resume it.
+                if (!hasLiveWorkout) ref.read(liveActivityProvider.notifier).start();
                 context.go('/activities/live');
               },
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Start workout'),
+              label: Text(hasLiveWorkout ? 'Resume workout' : 'Start workout'),
             ),
             const SizedBox(height: AppSpacing.sm),
             FloatingActionButton.extended(

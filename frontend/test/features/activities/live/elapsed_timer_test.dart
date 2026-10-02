@@ -15,4 +15,18 @@ void main() {
       expect(formatElapsed(const Duration(seconds: -5)), '00:00');
     });
   });
+
+  group('parseElapsed', () {
+    test('accepts m:ss, h:mm:ss and bare minutes', () {
+      expect(parseElapsed('12:30'), const Duration(minutes: 12, seconds: 30));
+      expect(parseElapsed('1:02:03'), const Duration(hours: 1, minutes: 2, seconds: 3));
+      expect(parseElapsed(' 45 '), const Duration(minutes: 45));
+    });
+
+    test('rejects junk, negatives and out-of-range parts', () {
+      for (final bad in ['', 'abc', '-5', '1:75', '1:2:3:4', '1::3']) {
+        expect(parseElapsed(bad), isNull, reason: bad);
+      }
+    });
+  });
 }

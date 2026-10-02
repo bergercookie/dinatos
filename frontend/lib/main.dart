@@ -10,6 +10,9 @@ import 'core/router.dart';
 import 'core/server_url_provider.dart';
 import 'core/server_url_storage.dart';
 import 'core/theme.dart';
+import 'features/activities/live/live_session.dart';
+import 'features/activities/live/live_session_storage.dart';
+import 'features/activities/live/live_workout_notification.dart';
 
 /// A catch-all route so this renders regardless of the browser's current
 /// URL -- see the `AuthUnknown` branch below for why that matters.
@@ -30,9 +33,13 @@ Future<void> main() async {
   // build-time default that then flips underneath it a moment later.
   final storedServerUrl = await ServerUrlStorage().read();
   final storedAllowInsecureTls = await InsecureTlsStorage().read();
+  const liveSessionStorage = PrefsLiveSessionStorage();
+  final restoredLiveSession = await liveSessionStorage.read();
   runApp(
     ProviderScope(
       overrides: [
+        liveSessionStorageProvider.overrideWithValue(liveSessionStorage),
+        restoredLiveSessionProvider.overrideWithValue(restoredLiveSession),
         if (storedServerUrl != null) serverUrlProvider.overrideWith((ref) => storedServerUrl),
         allowInsecureTlsProvider.overrideWith((ref) => storedAllowInsecureTls),
       ],
@@ -48,6 +55,7 @@ class DinatosApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
     final router = ref.watch(routerProvider);
+    ref.watch(liveWorkoutNotificationSyncProvider);
 
     if (authState is AuthUnknown) {
       // A plain `MaterialApp(home: ...)` here (Navigator 1.0) throws "Could
