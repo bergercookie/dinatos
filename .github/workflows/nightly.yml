@@ -1,0 +1,78 @@
+name: Nightly
+
+# Once a day, cut a prerelease of main -- but only if main has moved since
+# the previous nightly. The tag is `nightly-YYYYMMDD`, deliberately outside
+# the `v*` namespace: it never triggers release.yml's tag trigger, never
+# competes with real versions for "latest", and sorts by date on its own.
+# The packaged version is `<base>-nightly.YYYYMMDD`, where <base> is the
+# newest stable `v*` tag (or backend/pyproject.toml's version before the
+# first one) -- see `docs/development/ci-and-releases.md`.
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Release even if main has no new commits since the last nightly
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      tag: ${{ steps.check.outputs.tag }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: check
+        env:
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          tag="nightly-$(date -u +%Y%m%d)"
+          last="$(git tag --list 'nightly-*' --sort=-creatordate | head -n1)"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists"; changed=false
+          elif [ "$FORCE" != "true" ] && [ -n "$last" ] \
+               && [ "$(git rev-parse "$last^{commit}")" = "$(git rev-parse HEAD)" ]; then
+            echo "No commits since $last"; changed=false
+          else
+            changed=true
+          fi
+          base="$(git tag --list 'v*' --sort=-v:refname | head -n1)"
+          base="${base#v}"
+          base="${base:-$(sed -n 's/^version = "\(.*\)"/\1/p' backend/pyproject.toml | head -n1)}"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$base-nightly.${tag#nightly-}" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.check.outputs.tag }}
+      version: ${{ needs.check.outputs.version }}
+      prerelease: true
+    secrets: inherit
+
+  prune:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep the 14 newest nightly releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' \
+            | grep '^nightly-' | sort -r | tail -n +15 \
+            | xargs -r -n1 gh release delete --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes

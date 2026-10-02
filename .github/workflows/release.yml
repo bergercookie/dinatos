@@ -4,10 +4,29 @@ name: Release
 # push to main, unlike ci.yml. `version` computes the release version once
 # so every other job (and the GitHub Release itself) uses the exact same
 # string, rather than each re-deriving it from the tag independently.
+#
+# Also callable (`workflow_call`) from nightly.yml, which cuts a dated
+# prerelease; a tag pushed with the default GITHUB_TOKEN never triggers
+# another workflow, so nightly.yml can't just push a tag and rely on the
+# trigger above.
 on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag the GitHub Release is created at (created if missing)
+        type: string
+        required: true
+      version:
+        description: Package version; defaults to the tag without its leading "v"
+        type: string
+        default: ''
+      prerelease:
+        description: Mark the GitHub Release as a prerelease and skip the Docker `latest` tag
+        type: boolean
+        default: false
 
 permissions:
   contents: write # to create the GitHub Release
@@ -24,7 +43,10 @@ jobs:
         # rejects it outright); the Docker tag and GitHub Release both use
         # the same stripped form too, so every artifact in one release
         # agrees on a single version string.
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+          VERSION: ${{ inputs.version }}
+        run: echo "version=${VERSION:-${TAG#v}}" >> "$GITHUB_OUTPUT"
 
   docker:
     needs: version
@@ -51,9 +73,10 @@ jobs:
           # linux/arm64 here if that ever changes; it needs QEMU
           # (docker/setup-qemu-action) too, not just another platform string.
           platforms: linux/amd64
+          # `latest` only moves on a stable release; nightlies move `nightly`.
           tags: |
             ghcr.io/${{ github.repository_owner }}/dinatos:${{ needs.version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/dinatos:latest
+            ghcr.io/${{ github.repository_owner }}/dinatos:${{ inputs.prerelease && 'nightly' || 'latest' }}
 
   android-apk:
     needs: version
@@ -125,6 +148,9 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ inputs.prerelease || false }}
           name: Dinatos ${{ needs.version.outputs.version }}
           files: artifacts/*
           body: |
