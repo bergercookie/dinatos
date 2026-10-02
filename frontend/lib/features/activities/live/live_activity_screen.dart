@@ -6,6 +6,7 @@ import '../../../core/async_value_view.dart';
 import '../../../core/design_tokens.dart';
 import '../../../core/widgets/responsive_body.dart';
 import '../../../models/exercise.dart';
+import '../../exercises/exercise_picker.dart';
 import '../../exercises/exercises_providers.dart';
 import '../widgets/activity_exercise_card.dart';
 import 'elapsed_timer.dart';
@@ -142,21 +143,15 @@ class LiveActivityScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
             AsyncValueView(
               value: exercisesAsync,
-              builder: (context, allExercises) => MenuAnchor(
-                builder: (context, controller, child) => OutlinedButton.icon(
-                  onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add exercise'),
-                ),
-                menuChildren: allExercises
-                    .map(
-                      (exercise) => MenuItemButton(
-                        onPressed: () =>
-                            ref.read(liveActivityProvider.notifier).addExercise(exercise.id!),
-                        child: Text(exercise.name),
-                      ),
-                    )
-                    .toList(),
+              builder: (context, allExercises) => OutlinedButton.icon(
+                onPressed: () async {
+                  final exercise = await showExercisePicker(context, exercises: allExercises);
+                  if (exercise != null) {
+                    ref.read(liveActivityProvider.notifier).addExercise(exercise.id!);
+                  }
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add exercise'),
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
