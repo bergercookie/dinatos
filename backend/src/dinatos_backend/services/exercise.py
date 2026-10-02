@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.config import get_settings
-from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
 from dinatos_backend.services.tutorials.free_exercise_db import load_free_exercise_db
 
 
@@ -33,6 +33,37 @@ def _infer_tracking(category: str, force: str | None) -> tuple[bool, bool, bool,
     return (True, True, False, False)
 
 
+def _normalize(raw: str) -> str:
+    """The dataset's own spelling ("e-z curl bar", "lower back") to the
+    `MuscleGroup`/`Equipment` enum member spelling (spaces/hyphens can't
+    appear in a Python identifier) -- see those enums' docstrings.
+    """
+    return raw.strip().lower().replace(" ", "_").replace("-", "_")
+
+
+def _equipment(raw: str | None) -> Equipment | None:
+    return Equipment(_normalize(raw)) if raw else None
+
+
+def _muscles(raw: list[str]) -> list[MuscleGroup]:
+    return [MuscleGroup(_normalize(entry)) for entry in raw]
+
+
+def exercise_muscles(primary_raw: list[str], secondary_raw: list[str]) -> list[ExerciseMuscle]:
+    """A handful of the vendored dataset's own entries list the same muscle
+    in both `primaryMuscles` and `secondaryMuscles` (e.g. "Clean and
+    Press"'s `shoulders`) -- a dataset quirk, not a meaningful "trains this
+    muscle twice", and `ExerciseMuscle`'s (exercise, muscle) uniqueness
+    means inserting both would violate it. Primary wins on overlap, so a
+    muscle this exercise most works never gets demoted to secondary.
+    """
+    primary_muscles = _muscles(primary_raw)
+    secondary_muscles = [m for m in _muscles(secondary_raw) if m not in primary_muscles]
+    return [ExerciseMuscle(muscle=muscle, is_primary=True) for muscle in primary_muscles] + [
+        ExerciseMuscle(muscle=muscle, is_primary=False) for muscle in secondary_muscles
+    ]
+
+
 def _default_exercises() -> Iterator[dict[str, Any]]:
     for entry in load_free_exercise_db():
         tracks_weight, tracks_reps, tracks_distance, tracks_duration = _infer_tracking(
@@ -45,8 +76,8 @@ def _default_exercises() -> Iterator[dict[str, Any]]:
             "tracks_distance": tracks_distance,
             "tracks_duration": tracks_duration,
             "is_custom": False,
-            "primary_muscles": entry["primaryMuscles"],
-            "secondary_muscles": entry["secondaryMuscles"],
+            "equipment": _equipment(entry.get("equipment")),
+            "muscles": exercise_muscles(entry["primaryMuscles"], entry["secondaryMuscles"]),
         }
 
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/activity.dart';
+import '../../../models/exercise.dart';
 import '../../../models/set_type.dart';
+import '../../exercises/exercise_filter_sheet.dart';
 
 /// One exercise's card within an activity being built up -- its name, its
 /// sets so far (weight/reps/set-type), and controls to add/remove either.
@@ -12,13 +14,17 @@ class ActivityExerciseCard extends StatelessWidget {
   const ActivityExerciseCard({
     super.key,
     required this.exercise,
-    required this.exerciseName,
+    required this.catalogExercise,
     required this.onChanged,
     required this.onRemove,
   });
 
   final ActivityExercise exercise;
-  final String? exerciseName;
+
+  /// The full catalog `Exercise` this activity exercise points at -- `null`
+  /// only while the catalog is still loading. Carries the equipment/muscle
+  /// metadata the chips below are built from, not just the name.
+  final Exercise? catalogExercise;
   final ValueChanged<ActivityExercise> onChanged;
   final VoidCallback onRemove;
 
@@ -47,7 +53,7 @@ class ActivityExerciseCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    exerciseName ?? '#${exercise.exerciseId}',
+                    catalogExercise?.name ?? '#${exercise.exerciseId}',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -58,6 +64,7 @@ class ActivityExerciseCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (catalogExercise != null) _ExerciseMetadataChips(exercise: catalogExercise!),
             for (var i = 0; i < exercise.sets.length; i++)
               ActivitySetRow(
                 index: i,
@@ -73,6 +80,68 @@ class ActivityExerciseCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The equipment and muscle chips under an activity exercise's title --
+/// each one tappable, opening a sheet of every other exercise that uses
+/// that equipment or trains that muscle (see `ExerciseFilterSheet`), so a
+/// chip answers "what else works this" rather than merely labeling the
+/// exercise it's on.
+class _ExerciseMetadataChips extends StatelessWidget {
+  const _ExerciseMetadataChips({required this.exercise});
+
+  final Exercise exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    final equipment = exercise.equipment;
+    if (equipment == null && exercise.primaryMuscles.isEmpty && exercise.secondaryMuscles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          if (equipment != null)
+            _MetadataChip(
+              label: equipment.label,
+              onTap: () => ExerciseFilterSheet.showForEquipment(context, equipment),
+            ),
+          for (final muscle in exercise.primaryMuscles)
+            _MetadataChip(
+              label: muscle.label,
+              onTap: () => ExerciseFilterSheet.showForMuscle(context, muscle),
+            ),
+          for (final muscle in exercise.secondaryMuscles)
+            _MetadataChip(
+              label: muscle.label,
+              muted: true,
+              onTap: () => ExerciseFilterSheet.showForMuscle(context, muscle),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetadataChip extends StatelessWidget {
+  const _MetadataChip({required this.label, required this.onTap, this.muted = false});
+
+  final String label;
+  final VoidCallback onTap;
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      labelStyle: muted ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant) : null,
+      onPressed: onTap,
     );
   }
 }

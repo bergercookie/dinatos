@@ -154,27 +154,116 @@ async def test_delete_missing_exercise_is_404(client: AsyncClient) -> None:
     assert response.status_code == 404
 
 
-async def test_create_exercise_accepts_muscle_tags(client: AsyncClient) -> None:
+async def test_create_exercise_with_equipment_and_muscles(client: AsyncClient) -> None:
     response = await client.post(
         "/exercises",
         json={
             "name": "Cable Fly",
+            "equipment": "cable",
             "primary_muscles": ["chest"],
             "secondary_muscles": ["shoulders", "triceps"],
         },
     )
+
     assert response.status_code == 201
     body = response.json()
+    assert body["equipment"] == "cable"
     assert body["primary_muscles"] == ["chest"]
-    assert body["secondary_muscles"] == ["shoulders", "triceps"]
+    assert set(body["secondary_muscles"]) == {"shoulders", "triceps"}
+
+    response = await client.get(f"/exercises/{body['id']}")
+    assert response.json()["equipment"] == "cable"
 
 
-async def test_create_exercise_defaults_muscle_tags_to_empty(client: AsyncClient) -> None:
+async def test_create_exercise_without_equipment_or_muscles_defaults_to_empty(
+    client: AsyncClient,
+) -> None:
     response = await client.post("/exercises", json={"name": "Squat (Barbell)"})
+
     assert response.status_code == 201
     body = response.json()
+    assert body["equipment"] is None
     assert body["primary_muscles"] == []
     assert body["secondary_muscles"] == []
+
+
+async def test_create_exercise_a_muscle_listed_as_both_counts_as_primary(
+    client: AsyncClient,
+) -> None:
+    """The same muscle can't be stored as both primary and secondary (see
+    `ExerciseMuscle`'s unique constraint) -- primary wins on overlap.
+    """
+    response = await client.post(
+        "/exercises",
+        json={
+            "name": "Clean and Press",
+            "primary_muscles": ["shoulders"],
+            "secondary_muscles": ["shoulders", "triceps"],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["primary_muscles"] == ["shoulders"]
+    assert body["secondary_muscles"] == ["triceps"]
+
+
+async def test_update_exercise_muscles(client: AsyncClient) -> None:
+    created = await client.post(
+        "/exercises", json={"name": "Squat (Barbell)", "primary_muscles": ["quadriceps"]}
+    )
+    exercise_id = created.json()["id"]
+
+    response = await client.patch(
+        f"/exercises/{exercise_id}",
+        json={"equipment": "barbell", "secondary_muscles": ["glutes"]},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["equipment"] == "barbell"
+    # primary_muscles wasn't mentioned in this update, so it's unchanged.
+    assert body["primary_muscles"] == ["quadriceps"]
+    assert body["secondary_muscles"] == ["glutes"]
+
+
+async def test_update_exercise_can_clear_equipment(client: AsyncClient) -> None:
+    created = await client.post(
+        "/exercises", json={"name": "Deadlift (Barbell)", "equipment": "barbell"}
+    )
+    exercise_id = created.json()["id"]
+
+    response = await client.patch(f"/exercises/{exercise_id}", json={"equipment": None})
+
+    assert response.status_code == 200
+    assert response.json()["equipment"] is None
+
+
+async def test_list_exercises_filters_by_equipment(client: AsyncClient) -> None:
+    await client.post("/exercises", json={"name": "Squat (Barbell)", "equipment": "barbell"})
+    await client.post("/exercises", json={"name": "Squat (Dumbbell)", "equipment": "dumbbell"})
+
+    response = await client.get("/exercises", params={"equipment": "barbell"})
+
+    assert response.status_code == 200
+    names = [item["name"] for item in response.json()]
+    assert names == ["Squat (Barbell)"]
+
+
+async def test_list_exercises_filters_by_muscle_matching_either_primary_or_secondary(
+    client: AsyncClient,
+) -> None:
+    await client.post(
+        "/exercises", json={"name": "Squat (Barbell)", "primary_muscles": ["quadriceps"]}
+    )
+    await client.post("/exercises", json={"name": "Leg Press", "secondary_muscles": ["quadriceps"]})
+    await client.post("/exercises", json={"name": "Bench Press", "primary_muscles": ["chest"]})
+
+    response = await client.get("/exercises", params={"muscle": "quadriceps"})
+
+    assert response.status_code == 200
+    names = {item["name"] for item in response.json()}
+    assert names == {"Squat (Barbell)", "Leg Press"}
 
 
 async def test_exercise_records_reflects_the_callers_best_sets(client: AsyncClient) -> None:

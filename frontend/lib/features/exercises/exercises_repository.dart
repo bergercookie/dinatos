@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/dio_provider.dart';
+import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_records.dart';
 import '../../models/exercise_tutorial.dart';
+import '../../models/muscle_group.dart';
 
 final exercisesRepositoryProvider = Provider<ExercisesRepository>((ref) {
   return ExercisesRepository(ref.watch(dioProvider));
@@ -30,11 +32,15 @@ class ExercisesRepository {
 
   final Dio _dio;
 
-  Future<List<Exercise>> list({String? search}) async {
+  Future<List<Exercise>> list({String? search, MuscleGroup? muscle, Equipment? equipment}) async {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/exercises',
-        queryParameters: search != null && search.isNotEmpty ? {'search': search} : null,
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (muscle != null) 'muscle': muscle.toJson(),
+          if (equipment != null) 'equipment': equipment.toJson(),
+        },
       );
       return response.data!.map((e) => Exercise.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (error) {

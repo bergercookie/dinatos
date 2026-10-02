@@ -8,7 +8,9 @@ import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/info_banner.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../../models/equipment.dart';
 import '../../models/exercise.dart';
+import '../../models/muscle_group.dart';
 import 'exercises_providers.dart';
 import 'exercises_repository.dart';
 
@@ -26,13 +28,14 @@ class ExerciseFormScreen extends ConsumerStatefulWidget {
 class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _primaryMusclesController = TextEditingController();
-  final _secondaryMusclesController = TextEditingController();
   bool _tracksWeight = true;
   bool _tracksReps = true;
   bool _tracksDistance = false;
   bool _tracksDuration = false;
   bool _isCustom = true;
+  Equipment? _equipment;
+  Set<MuscleGroup> _primaryMuscles = {};
+  Set<MuscleGroup> _secondaryMuscles = {};
   bool _submitting = false;
   String? _error;
   bool _loadedInitialValues = false;
@@ -52,20 +55,16 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
     _tracksDistance = exercise.tracksDistance;
     _tracksDuration = exercise.tracksDuration;
     _isCustom = exercise.isCustom;
-    _primaryMusclesController.text = exercise.primaryMuscles.join(', ');
-    _secondaryMusclesController.text = exercise.secondaryMuscles.join(', ');
+    _equipment = exercise.equipment;
+    _primaryMuscles = exercise.primaryMuscles.toSet();
+    _secondaryMuscles = exercise.secondaryMuscles.toSet();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _primaryMusclesController.dispose();
-    _secondaryMusclesController.dispose();
     super.dispose();
   }
-
-  static List<String> _parseMuscles(String value) =>
-      value.split(',').map((m) => m.trim()).where((m) => m.isNotEmpty).toList();
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -79,8 +78,9 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
       tracksReps: _tracksReps,
       tracksDistance: _tracksDistance,
       tracksDuration: _tracksDuration,
-      primaryMuscles: _parseMuscles(_primaryMusclesController.text),
-      secondaryMuscles: _parseMuscles(_secondaryMusclesController.text),
+      equipment: _equipment,
+      primaryMuscles: _primaryMuscles.toList(),
+      secondaryMuscles: _secondaryMuscles.toList(),
     );
     final repository = ref.read(exercisesRepositoryProvider);
     try {
@@ -200,24 +200,29 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
                 : (value) => setState(() => _tracksDuration = value ?? false),
           ),
           const SizedBox(height: 16),
-          Text('Muscles targeted', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text(
-            'Comma-separated, e.g. "chest, shoulders" -- feeds the live workout '
-            "screen's muscle-emphasis chart.",
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+          DropdownButtonFormField<Equipment?>(
+            initialValue: _equipment,
+            decoration: const InputDecoration(labelText: 'Equipment'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('None')),
+              for (final equipment in Equipment.values)
+                DropdownMenuItem(value: equipment, child: Text(equipment.label)),
+            ],
+            onChanged: readOnly ? null : (value) => setState(() => _equipment = value),
           ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _primaryMusclesController,
-            decoration: const InputDecoration(labelText: 'Primary muscles'),
+          const SizedBox(height: 16),
+          Text('Primary muscles', style: Theme.of(context).textTheme.titleMedium),
+          _MuscleChipSelector(
+            selected: _primaryMuscles,
             enabled: !readOnly,
+            onChanged: (muscles) => setState(() => _primaryMuscles = muscles),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _secondaryMusclesController,
-            decoration: const InputDecoration(labelText: 'Secondary muscles'),
+          const SizedBox(height: 16),
+          Text('Secondary muscles', style: Theme.of(context).textTheme.titleMedium),
+          _MuscleChipSelector(
+            selected: _secondaryMuscles,
             enabled: !readOnly,
+            onChanged: (muscles) => setState(() => _secondaryMuscles = muscles),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.md),
@@ -232,6 +237,41 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A `Wrap` of toggleable `FilterChip`s over every `MuscleGroup` -- used
+/// once for primary muscles and once for secondary. The two selectors are
+/// independent; a muscle picked in both is resolved server-side (primary
+/// wins, see `dinatos_backend`'s `_muscle_rows`), not pre-empted here.
+class _MuscleChipSelector extends StatelessWidget {
+  const _MuscleChipSelector({
+    required this.selected,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final Set<MuscleGroup> selected;
+  final bool enabled;
+  final ValueChanged<Set<MuscleGroup>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        for (final muscle in MuscleGroup.values)
+          FilterChip(
+            label: Text(muscle.label),
+            selected: selected.contains(muscle),
+            onSelected: enabled
+                ? (value) =>
+                      onChanged(value ? ({...selected, muscle}) : (selected.difference({muscle})))
+                : null,
+          ),
+      ],
     );
   }
 }

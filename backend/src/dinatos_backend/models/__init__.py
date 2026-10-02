@@ -6,7 +6,7 @@ rely on that.
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.base import Base, TimestampMixin
-from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.profile import UnitSystem, UserProfile
@@ -20,9 +20,12 @@ __all__ = [
     "AuthSession",
     "Base",
     "BodyMeasurement",
+    "Equipment",
     "Exercise",
+    "ExerciseMuscle",
     "HevyImportKind",
     "HevyImportRecord",
+    "MuscleGroup",
     "Routine",
     "RoutineExercise",
     "RoutineSet",

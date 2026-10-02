@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
+from dinatos_backend.models.exercise import Equipment, MuscleGroup
+
 
 class ExerciseBase(BaseModel):
     name: str
@@ -7,8 +9,9 @@ class ExerciseBase(BaseModel):
     tracks_reps: bool = True
     tracks_distance: bool = False
     tracks_duration: bool = False
-    primary_muscles: list[str] = []
-    secondary_muscles: list[str] = []
+    equipment: Equipment | None = None
+    primary_muscles: list[MuscleGroup] = []
+    secondary_muscles: list[MuscleGroup] = []
 
 
 class ExerciseCreate(ExerciseBase):
@@ -21,8 +24,9 @@ class ExerciseUpdate(BaseModel):
     tracks_reps: bool | None = None
     tracks_distance: bool | None = None
     tracks_duration: bool | None = None
-    primary_muscles: list[str] | None = None
-    secondary_muscles: list[str] | None = None
+    equipment: Equipment | None = None
+    primary_muscles: list[MuscleGroup] | None = None
+    secondary_muscles: list[MuscleGroup] | None = None
 
 
 class ExerciseRead(ExerciseBase):
@@ -50,6 +54,12 @@ class ExerciseRecordsRead(BaseModel):
 class ExerciseTutorialRead(BaseModel):
     """Mirrors `services.tutorials.base.ExerciseTutorial` -- whichever
     provider produced it (see `source`), the shape is the same either way.
+
+    Deliberately untyped (`str`), unlike `Exercise`'s own `equipment`/
+    `primary_muscles`/`secondary_muscles`: this is third-party tutorial-
+    provider content, not persisted, and a provider's vocabulary (see
+    `services.tutorials.workoutx`) doesn't necessarily line up with the
+    vendored dataset `MuscleGroup`/`Equipment` were built from.
     """
 
     model_config = ConfigDict(from_attributes=True)

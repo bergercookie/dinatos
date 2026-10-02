@@ -1,3 +1,6 @@
+import 'equipment.dart';
+import 'muscle_group.dart';
+
 class Exercise {
   const Exercise({
     this.id,
@@ -7,6 +10,7 @@ class Exercise {
     this.tracksDistance = false,
     this.tracksDuration = false,
     this.isCustom = true,
+    this.equipment,
     this.primaryMuscles = const [],
     this.secondaryMuscles = const [],
   });
@@ -19,8 +23,13 @@ class Exercise {
     tracksDistance: json['tracks_distance'] as bool,
     tracksDuration: json['tracks_duration'] as bool,
     isCustom: json['is_custom'] as bool,
-    primaryMuscles: (json['primary_muscles'] as List<dynamic>? ?? const []).cast<String>(),
-    secondaryMuscles: (json['secondary_muscles'] as List<dynamic>? ?? const []).cast<String>(),
+    equipment: json['equipment'] != null ? Equipment.fromJson(json['equipment'] as String) : null,
+    primaryMuscles: (json['primary_muscles'] as List<dynamic>? ?? const [])
+        .map((muscle) => MuscleGroup.fromJson(muscle as String))
+        .toList(),
+    secondaryMuscles: (json['secondary_muscles'] as List<dynamic>? ?? const [])
+        .map((muscle) => MuscleGroup.fromJson(muscle as String))
+        .toList(),
   );
 
   final int? id;
@@ -36,13 +45,14 @@ class Exercise {
   /// this.
   final bool isCustom;
 
-  /// Free-text muscle names (the shipped catalog's come from the same
-  /// vendored dataset `ExerciseTutorialRead` does) -- what the live
-  /// workout screen's muscle-emphasis radar chart groups logged sets by.
-  /// Secondary muscles count for half the volume a primary one does; see
-  /// `features/activities/live/muscle_volume.dart`.
-  final List<String> primaryMuscles;
-  final List<String> secondaryMuscles;
+  final Equipment? equipment;
+
+  /// A fixed, closed vocabulary (not free text) for what this exercise
+  /// trains -- what the live workout screen's muscle-emphasis radar chart
+  /// groups logged sets by. Secondary muscles count for half the volume a
+  /// primary one does; see `features/activities/live/muscle_volume.dart`.
+  final List<MuscleGroup> primaryMuscles;
+  final List<MuscleGroup> secondaryMuscles;
 
   /// The subset of fields the create/update endpoints accept -- `id` and
   /// `isCustom` are both server-assigned, never sent back.
@@ -52,7 +62,8 @@ class Exercise {
     'tracks_reps': tracksReps,
     'tracks_distance': tracksDistance,
     'tracks_duration': tracksDuration,
-    'primary_muscles': primaryMuscles,
-    'secondary_muscles': secondaryMuscles,
+    'equipment': equipment?.toJson(),
+    'primary_muscles': primaryMuscles.map((muscle) => muscle.toJson()).toList(),
+    'secondary_muscles': secondaryMuscles.map((muscle) => muscle.toJson()).toList(),
   };
 }
