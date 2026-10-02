@@ -27,8 +27,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
     // Fires a bit before the true end so the next page is usually already
     // loading by the time a person scrolls into view of the last item.
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >
-          _scrollController.position.maxScrollExtent - 400) {
+      if (_scrollController.position.pixels > _scrollController.position.maxScrollExtent - 400) {
         ref.read(exercisePagingProvider.notifier).loadMore();
       }
     });
@@ -59,12 +58,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  0,
-                ),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
                 child: TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(
@@ -72,8 +66,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
                     prefixIcon: Icon(Icons.search_rounded),
                     isDense: true,
                   ),
-                  onChanged: (value) =>
-                      ref.read(exercisePagingProvider.notifier).setSearch(value),
+                  onChanged: (value) => ref.read(exercisePagingProvider.notifier).setSearch(value),
                 ),
               ),
               Expanded(child: _buildBody(context, state, searching: searching)),
@@ -84,11 +77,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
     );
   }
 
-  Widget _buildBody(
-    BuildContext context,
-    ExercisePageState state, {
-    required bool searching,
-  }) {
+  Widget _buildBody(BuildContext context, ExercisePageState state, {required bool searching}) {
     if (state.loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -110,8 +99,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               FilledButton.tonal(
-                onPressed: () =>
-                    ref.read(exercisePagingProvider.notifier).refresh(),
+                onPressed: () => ref.read(exercisePagingProvider.notifier).refresh(),
                 child: const Text('Retry'),
               ),
             ],
@@ -121,19 +109,18 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
     }
     if (state.items.isEmpty) {
       return EmptyState(
-        icon: searching
-            ? Icons.search_off_rounded
-            : Icons.fitness_center_rounded,
+        icon: searching ? Icons.search_off_rounded : Icons.fitness_center_rounded,
         title: searching ? 'No matching exercises' : 'No exercises yet',
-        message: searching ? 'Try a different search term.' : 'Add the exercises you train so you can build routines around them.',
+        message: searching
+            ? 'Try a different search term.'
+            : 'Add the exercises you train so you can build routines around them.',
         actionLabel: searching ? null : 'Add exercise',
         onAction: searching ? null : () => context.go('/exercises/new'),
       );
     }
     // +1 for a trailing loading/end-of-list row, whenever there's something
     // to say about it (more to load, or a load-more error).
-    final showFooter =
-        state.hasMore || state.loadingMore || state.error != null;
+    final showFooter = state.hasMore || state.loadingMore || state.error != null;
     return ListView.separated(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(
@@ -143,8 +130,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
         AppSpacing.xxl,
       ),
       itemCount: state.items.length + (showFooter ? 1 : 0),
-      separatorBuilder: (context, index) =>
-          const SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         if (index >= state.items.length) {
           return _ListFooter(state: state);
@@ -153,12 +139,8 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
         return AppListCard(
           leading: AppIconAvatar(
             icon: exercise.isCustom ? Icons.fitness_center_rounded : Icons.verified_rounded,
-            background: exercise.isCustom
-                ? null
-                : Theme.of(context).colorScheme.secondaryContainer,
-            color: exercise.isCustom
-                ? null
-                : Theme.of(context).colorScheme.onSecondaryContainer,
+            background: exercise.isCustom ? null : Theme.of(context).colorScheme.secondaryContainer,
+            color: exercise.isCustom ? null : Theme.of(context).colorScheme.onSecondaryContainer,
           ),
           title: exercise.name,
           subtitle: _TrackedChips(exercise: exercise),
@@ -186,8 +168,7 @@ class _ListFooter extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Center(
           child: TextButton.icon(
-            onPressed: () =>
-                ref.read(exercisePagingProvider.notifier).loadMore(),
+            onPressed: () => ref.read(exercisePagingProvider.notifier).loadMore(),
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Retry'),
           ),
