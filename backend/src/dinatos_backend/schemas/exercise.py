@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 from dinatos_backend.models.exercise import Equipment, MuscleGroup
+from dinatos_backend.models.routine import SetType
 
 
 class ExerciseBase(BaseModel):
@@ -49,6 +52,29 @@ class ExerciseRecordsRead(BaseModel):
 
     max_weight_kg: float | None
     max_reps: int | None
+
+
+class ExerciseHistorySet(BaseModel):
+    set_type: SetType
+    weight_kg: float | None
+    reps: int | None
+    distance_km: float | None
+    duration_seconds: int | None
+    rpe: float | None
+
+
+class ExerciseHistoryEntry(BaseModel):
+    """One past session's worth of an exercise: every set the caller logged
+    against it in a single activity (an exercise appearing twice in one
+    activity -- e.g. in two supersets -- is merged into one entry). What the
+    live workout's "last time" hint, the overload suggestion and the progress
+    chart are all computed from, client-side.
+    """
+
+    activity_id: int
+    activity_title: str
+    started_at: datetime
+    sets: list[ExerciseHistorySet]
 
 
 class ExerciseTutorialRead(BaseModel):

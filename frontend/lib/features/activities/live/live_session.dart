@@ -4,6 +4,8 @@ import '../../../core/auth/auth_notifier.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../models/activity.dart';
 import '../../../models/routine.dart';
+import '../../../models/superset.dart';
+import '../../../models/uid.dart';
 import 'live_session_storage.dart';
 
 /// An in-progress (or just-finished, not yet saved) live workout -- built up
@@ -20,6 +22,7 @@ class LiveActivitySession {
     this.pausedAt,
     this.savedActivityId,
     this.savedTitle,
+    this.pendingTitle,
     this.routineId,
     this.routineName,
   }) : clockOrigin = clockOrigin ?? startedAt;
@@ -64,6 +67,14 @@ class LiveActivitySession {
 
   bool get isSaved => savedActivityId != null;
 
+  /// Non-null after a save attempt that got no HTTP response at all (a dropped
+  /// connection, a timeout): the server may or may not have stored the
+  /// workout, so the retry must send exactly what the first attempt did. The
+  /// backend treats a request with the same title, start and end as the same
+  /// save replayed -- which only works if the title is not edited in between.
+  /// Persisted with the session, so it survives the app being killed.
+  final String? pendingTitle;
+
   /// How many sets have been logged so far, across every exercise -- sets are
   /// added as they're performed, so each one counts as completed.
   int get totalSets => exercises.fold<int>(0, (sum, exercise) => sum + exercise.sets.length);
@@ -100,6 +111,8 @@ class LiveActivitySession {
     bool clearPausedAt = false,
     int? savedActivityId,
     String? savedTitle,
+    String? pendingTitle,
+    bool clearPendingTitle = false,
   }) => LiveActivitySession(
     startedAt: startedAt,
     endedAt: endedAt ?? this.endedAt,
@@ -108,6 +121,7 @@ class LiveActivitySession {
     pausedAt: clearPausedAt ? null : (pausedAt ?? this.pausedAt),
     savedActivityId: savedActivityId ?? this.savedActivityId,
     savedTitle: savedTitle ?? this.savedTitle,
+    pendingTitle: clearPendingTitle ? null : (pendingTitle ?? this.pendingTitle),
     routineId: routineId,
     routineName: routineName,
   );
@@ -153,11 +167,14 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
       exercises: [
         for (final exercise in routine.exercises)
           ActivityExercise(
+            uid: nextUid(),
             exerciseId: exercise.exerciseId,
+            supersetGroup: exercise.supersetGroup,
             notes: exercise.notes,
             sets: [
               for (final set in exercise.sets)
                 ActivitySet(
+                  uid: nextUid(),
                   setType: set.setType,
                   weightKg: set.targetWeightKg,
                   reps: set.targetReps,
@@ -176,15 +193,29 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
     state = current.copyWith(
       exercises: [
         ...current.exercises,
-        ActivityExercise(exerciseId: exerciseId),
+        ActivityExercise(uid: nextUid(), exerciseId: exerciseId),
       ],
     );
   }
 
-  void removeExerciseAt(int index) {
+  void removeExerciseAt(int index) =>
+      _editExercises((e) => removeItem(e, index, activitySupersets));
+
+  /// Puts the exercise at [index] and the next one in one superset.
+  void linkExerciseWithNext(int index) =>
+      _editExercises((e) => linkWithNext(e, index, activitySupersets));
+
+  /// Takes the exercise at [index] out of its superset.
+  void unlinkExercise(int index) => _editExercises((e) => unlink(e, index, activitySupersets));
+
+  /// Moves the exercise at [from] to [to].
+  void moveExercise(int from, int to) =>
+      _editExercises((e) => moveItem(e, from, to, activitySupersets));
+
+  void _editExercises(List<ActivityExercise> Function(List<ActivityExercise>) edit) {
     final current = state;
     if (current == null) return;
-    state = current.copyWith(exercises: List.of(current.exercises)..removeAt(index));
+    state = current.copyWith(exercises: edit(current.exercises));
   }
 
   void updateExerciseAt(int index, ActivityExercise updated) {
@@ -233,7 +264,27 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
   void markSaved({required int activityId, required String title}) {
     final current = state;
     if (current == null) return;
-    state = current.copyWith(savedActivityId: activityId, savedTitle: title);
+    state = current.copyWith(
+      savedActivityId: activityId,
+      savedTitle: title,
+      clearPendingTitle: true,
+    );
+  }
+
+  /// Records that a save attempt under [title] may have reached the server --
+  /// see [LiveActivitySession.pendingTitle].
+  void markSaveUncertain(String title) {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(pendingTitle: title);
+  }
+
+  /// The server definitely did not store the workout (it answered with an
+  /// error), so the title is free to change again.
+  void clearSaveUncertainty() {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(clearPendingTitle: true);
   }
 
   /// Clears the session -- after it's been saved, or if the person backs out

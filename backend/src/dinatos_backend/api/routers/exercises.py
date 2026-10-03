@@ -13,9 +13,12 @@ from dinatos_backend.api.deps import (
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
+from dinatos_backend.models.routine import SetType
 from dinatos_backend.models.user import User
 from dinatos_backend.schemas.exercise import (
     ExerciseCreate,
+    ExerciseHistoryEntry,
+    ExerciseHistorySet,
     ExerciseRead,
     ExerciseRecordsRead,
     ExerciseTutorialRead,
@@ -218,10 +221,11 @@ async def get_exercise_records(
 ) -> ExerciseRecordsRead:
     """The caller's own all-time best weight and best reps for this exercise,
     across every past `ActivitySet` logged against it (any past activity,
-    not just one) -- what a live-recording session's end-of-workout summary
-    compares its own best set against to flag a new personal record. Scoped
-    to `user.id` the same way `activities.list_activities` is, so one
-    account's bests never leak into another's.
+    not just one) -- what a live-recording session compares its own sets
+    against to flag a new personal record. Warm-up sets never count: a
+    20-rep warm-up isn't a rep record. Scoped to `user.id` the same way
+    `activities.list_activities` is, so one account's bests never leak into
+    another's.
     """
     await _get_or_404(db, exercise_id)
     result = await db.execute(
@@ -229,10 +233,58 @@ async def get_exercise_records(
         .select_from(ActivitySet)
         .join(ActivityExercise, ActivitySet.activity_exercise_id == ActivityExercise.id)
         .join(Activity, ActivityExercise.activity_id == Activity.id)
-        .where(Activity.owner_id == user.id, ActivityExercise.exercise_id == exercise_id)
+        .where(
+            Activity.owner_id == user.id,
+            ActivityExercise.exercise_id == exercise_id,
+            ActivitySet.set_type != SetType.warmup,
+        )
     )
     max_weight_kg, max_reps = result.one()
     return ExerciseRecordsRead(max_weight_kg=max_weight_kg, max_reps=max_reps)
+
+
+@router.get("/{exercise_id}/history", response_model=list[ExerciseHistoryEntry])
+async def get_exercise_history(
+    exercise_id: int,
+    limit: int = Query(default=20, ge=1, le=1000),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ExerciseHistoryEntry]:
+    """The caller's own past sessions of this exercise, newest first, at most
+    `limit` of them (one entry per activity). Scoped to `user.id`, like
+    `/records` above.
+    """
+    await _get_or_404(db, exercise_id)
+    result = await db.execute(
+        select(Activity)
+        .join(ActivityExercise, ActivityExercise.activity_id == Activity.id)
+        .where(Activity.owner_id == user.id, ActivityExercise.exercise_id == exercise_id)
+        .options(selectinload(Activity.exercises).selectinload(ActivityExercise.sets))
+        .order_by(Activity.started_at.desc(), Activity.id.desc())
+        .distinct()
+        .limit(limit)
+    )
+    return [
+        ExerciseHistoryEntry(
+            activity_id=activity.id,
+            activity_title=activity.title,
+            started_at=activity.started_at,
+            sets=[
+                ExerciseHistorySet(
+                    set_type=item.set_type,
+                    weight_kg=item.weight_kg,
+                    reps=item.reps,
+                    distance_km=item.distance_km,
+                    duration_seconds=item.duration_seconds,
+                    rpe=item.rpe,
+                )
+                for performed in activity.exercises
+                if performed.exercise_id == exercise_id
+                for item in performed.sets
+            ],
+        )
+        for activity in result.scalars().unique()
+    ]
 
 
 @router.patch("/{exercise_id}", response_model=ExerciseRead)

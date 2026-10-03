@@ -1,23 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/design_tokens.dart';
 import '../../../models/activity.dart';
 import '../../../models/equipment.dart';
 import '../../../models/exercise.dart';
+import '../../../models/exercise_history.dart';
+import '../../../models/exercise_records.dart';
 import '../../../models/set_type.dart';
+import '../../../models/uid.dart';
 import '../../exercises/exercise_filter_sheet.dart';
+import '../../progress/progression.dart';
+import 'plate_calculator.dart';
 
 /// One exercise's card within an activity being built up -- its name, its
-/// sets so far (weight/reps/set-type), and controls to add/remove either.
+/// sets so far (weight/reps/RPE/set-type), and controls to add/remove either.
 /// Shared by [ActivityFormScreen] (a whole activity, built then submitted
 /// once) and the live workout screen (sets added one at a time as they're
 /// actually performed) -- the editing surface is identical either way.
-class ActivityExerciseCard extends StatelessWidget {
+///
+/// The live screen additionally passes [history] (what was done last time,
+/// shown as hints and a suggestion for this time) and [records] (so a set
+/// that beats the all-time best gets a trophy). Superset and reordering
+/// controls appear in the options menu when their callbacks are given.
+class ActivityExerciseCard extends StatefulWidget {
   const ActivityExerciseCard({
     super.key,
     required this.exercise,
     required this.catalogExercise,
     required this.onChanged,
     required this.onRemove,
+    this.history,
+    this.records,
+    this.supersetLabel,
+    this.onLinkWithNext,
+    this.onUnlink,
+    this.onMoveUp,
+    this.onMoveDown,
+    this.onViewProgress,
   });
 
   final ActivityExercise exercise;
@@ -29,22 +50,102 @@ class ActivityExerciseCard extends StatelessWidget {
   final ValueChanged<ActivityExercise> onChanged;
   final VoidCallback onRemove;
 
+  /// Past sessions of this exercise, newest first; null while unknown (not
+  /// loaded yet, or the server couldn't be reached).
+  final List<ExerciseHistoryEntry>? history;
+
+  /// This exercise's all-time bests, null while unknown.
+  final ExerciseRecords? records;
+
+  /// "A", "B", ... when this exercise is part of a superset.
+  final String? supersetLabel;
+  final VoidCallback? onLinkWithNext;
+  final VoidCallback? onUnlink;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
+  final VoidCallback? onViewProgress;
+
+  @override
+  State<ActivityExerciseCard> createState() => _ActivityExerciseCardState();
+}
+
+enum _ExerciseAction { linkWithNext, unlink, moveUp, moveDown, viewProgress, toggleNotes }
+
+class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
+  late bool _showNotes = (widget.exercise.notes ?? '').isNotEmpty;
+
+  ActivityExercise get _exercise => widget.exercise;
+
   void _addSet() {
-    onChanged(exercise.copyWith(sets: [...exercise.sets, const ActivitySet()]));
+    widget.onChanged(
+      _exercise.copyWith(
+        sets: [
+          ..._exercise.sets,
+          ActivitySet(uid: nextUid()),
+        ],
+      ),
+    );
   }
 
   void _removeSetAt(int index) {
-    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..removeAt(index)));
+    widget.onChanged(_exercise.copyWith(sets: List.of(_exercise.sets)..removeAt(index)));
   }
 
   void _updateSetAt(int index, ActivitySet updated) {
-    onChanged(exercise.copyWith(sets: List.of(exercise.sets)..[index] = updated));
+    widget.onChanged(_exercise.copyWith(sets: List.of(_exercise.sets)..[index] = updated));
+  }
+
+  void _applySuggestion(OverloadSuggestion suggestion) {
+    widget.onChanged(
+      _exercise.copyWith(
+        sets: applySuggestion(
+          _exercise.sets,
+          suggestion,
+          newSet: () => ActivitySet(uid: nextUid()),
+        ),
+      ),
+    );
+  }
+
+  void _onAction(_ExerciseAction action) {
+    switch (action) {
+      case _ExerciseAction.linkWithNext:
+        widget.onLinkWithNext?.call();
+      case _ExerciseAction.unlink:
+        widget.onUnlink?.call();
+      case _ExerciseAction.moveUp:
+        widget.onMoveUp?.call();
+      case _ExerciseAction.moveDown:
+        widget.onMoveDown?.call();
+      case _ExerciseAction.viewProgress:
+        widget.onViewProgress?.call();
+      case _ExerciseAction.toggleNotes:
+        setState(() => _showNotes = !_showNotes);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final catalog = widget.catalogExercise;
+    final history = widget.history;
+    final last = history == null || history.isEmpty ? null : history.first;
+    final suggestion = suggestOverload(last);
+    final records = widget.records;
+    final recordFlags = records == null
+        ? const <SetRecord>[]
+        : detectSetRecords(_exercise.sets, records);
+    final inSuperset = widget.supersetLabel != null;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      // A superset's members are outlined, so the run reads as one block.
+      shape: inSuperset
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              side: BorderSide(color: scheme.primary, width: 1.5),
+            )
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -54,23 +155,86 @@ class ActivityExerciseCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    catalogExercise?.name ?? '#${exercise.exerciseId}',
+                    catalog?.name ?? '#${_exercise.exerciseId}',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
+                ),
+                if (inSuperset)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Chip(
+                      label: Text('Superset ${widget.supersetLabel}'),
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: scheme.primaryContainer,
+                      labelStyle: TextStyle(color: scheme.onPrimaryContainer, fontSize: 12),
+                      side: BorderSide.none,
+                    ),
+                  ),
+                PopupMenuButton<_ExerciseAction>(
+                  tooltip: 'Exercise options',
+                  onSelected: _onAction,
+                  itemBuilder: (context) => [
+                    if (widget.onLinkWithNext != null)
+                      const PopupMenuItem(
+                        value: _ExerciseAction.linkWithNext,
+                        child: Text('Superset with next exercise'),
+                      ),
+                    if (inSuperset && widget.onUnlink != null)
+                      const PopupMenuItem(
+                        value: _ExerciseAction.unlink,
+                        child: Text('Remove from superset'),
+                      ),
+                    if (widget.onMoveUp != null)
+                      const PopupMenuItem(value: _ExerciseAction.moveUp, child: Text('Move up')),
+                    if (widget.onMoveDown != null)
+                      const PopupMenuItem(
+                        value: _ExerciseAction.moveDown,
+                        child: Text('Move down'),
+                      ),
+                    if (widget.onViewProgress != null)
+                      const PopupMenuItem(
+                        value: _ExerciseAction.viewProgress,
+                        child: Text('View progress'),
+                      ),
+                    PopupMenuItem(
+                      value: _ExerciseAction.toggleNotes,
+                      child: Text(_showNotes ? 'Hide note' : 'Add note'),
+                    ),
+                  ],
                 ),
                 IconButton(
                   tooltip: 'Remove exercise',
                   icon: const Icon(Icons.close),
-                  onPressed: onRemove,
+                  onPressed: widget.onRemove,
                 ),
               ],
             ),
-            if (catalogExercise != null) _ExerciseMetadataChips(exercise: catalogExercise!),
-            for (var i = 0; i < exercise.sets.length; i++)
+            if (catalog != null) _ExerciseMetadataChips(exercise: catalog),
+            if (last != null)
+              _LastTimePanel(last: last, suggestion: suggestion, onUse: _applySuggestion),
+            if (_showNotes)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+                child: TextFormField(
+                  initialValue: _exercise.notes,
+                  decoration: const InputDecoration(labelText: 'Note', isDense: true),
+                  textCapitalization: TextCapitalization.sentences,
+                  minLines: 1,
+                  maxLines: 3,
+                  onChanged: (value) =>
+                      widget.onChanged(_exercise.copyWith(notes: value.isEmpty ? null : value)),
+                ),
+              ),
+            for (var i = 0; i < _exercise.sets.length; i++)
               ActivitySetRow(
+                key: ValueKey(
+                  itemKeyOf(uid: _exercise.sets[i].uid, id: _exercise.sets[i].id, index: i),
+                ),
                 index: i,
-                set: exercise.sets[i],
-                weightEnabled: catalogExercise?.equipment != Equipment.bodyOnly,
+                set: _exercise.sets[i],
+                previous: last != null && i < last.sets.length ? last.sets[i] : null,
+                record: i < recordFlags.length ? recordFlags[i] : null,
+                weightEnabled: catalog?.equipment != Equipment.bodyOnly,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -81,6 +245,61 @@ class ActivityExerciseCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// What was done last time, and (if there is one) what to try now with a
+/// button to fill it into the sets.
+class _LastTimePanel extends StatelessWidget {
+  const _LastTimePanel({required this.last, required this.suggestion, required this.onUse});
+
+  final ExerciseHistoryEntry last;
+  final OverloadSuggestion? suggestion;
+  final ValueChanged<OverloadSuggestion> onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final summary = describeSets(last.sets);
+    final suggestion = this.suggestion;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.history_rounded, size: 18, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Last time · ${DateFormat.MMMd().format(last.startedAt.toLocal())}'
+                  '${summary.isEmpty ? '' : ': $summary'}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (suggestion != null)
+                  Text(
+                    suggestion.advice,
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600),
+                  ),
+              ],
+            ),
+          ),
+          if (suggestion != null)
+            TextButton(
+              onPressed: () => onUse(suggestion),
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+              child: const Text('Use'),
+            ),
+        ],
       ),
     );
   }
@@ -148,6 +367,8 @@ class _MetadataChip extends StatelessWidget {
   }
 }
 
+enum _SetAction { plateCalculator, remove }
+
 class ActivitySetRow extends StatelessWidget {
   const ActivitySetRow({
     super.key,
@@ -156,56 +377,215 @@ class ActivitySetRow extends StatelessWidget {
     required this.onChanged,
     required this.onRemove,
     this.weightEnabled = true,
+    this.previous,
+    this.record,
   });
 
   final int index;
   final ActivitySet set;
+
+  /// The same-numbered set from the last session, shown as the fields' hints.
+  final ActivitySet? previous;
+
+  /// Which records this set set, if known; a trophy marks one.
+  final SetRecord? record;
 
   /// `false` for a body-weight exercise: there is no load to enter.
   final bool weightEnabled;
   final ValueChanged<ActivitySet> onChanged;
   final VoidCallback onRemove;
 
+  static String? _hint(num? value) => value == null ? null : formatKg(value.toDouble());
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('${index + 1}.'),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.weightKg?.toString(),
-            enabled: weightEnabled,
-            decoration: const InputDecoration(labelText: 'kg', isDense: true),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (value) => onChanged(set.copyWith(weightKg: double.tryParse(value))),
+    final scheme = Theme.of(context).colorScheme;
+    final record = this.record;
+    final previous = this.previous;
+    final floating = previous == null ? null : FloatingLabelBehavior.always;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 32,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${index + 1}.'),
+                if (set.setType != SetType.normal)
+                  Tooltip(
+                    message: set.setType.name,
+                    child: Text(
+                      set.setType.name[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ),
+                if (record != null && record.any)
+                  Tooltip(
+                    message: 'New personal record',
+                    child: Icon(Icons.emoji_events, size: 16, color: scheme.tertiary),
+                  ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.reps?.toString(),
-            decoration: const InputDecoration(labelText: 'reps', isDense: true),
-            keyboardType: TextInputType.number,
-            onChanged: (value) => onChanged(set.copyWith(reps: int.tryParse(value))),
+          Expanded(
+            flex: 3,
+            child: _NumberField(
+              value: set.weightKg,
+              label: 'kg',
+              hint: _hint(previous?.weightKg),
+              floating: floating,
+              enabled: weightEnabled,
+              decimal: true,
+              onChanged: (value) => onChanged(set.copyWith(weightKg: value)),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        DropdownButton<SetType>(
-          value: set.setType,
-          items: SetType.values
-              .map((type) => DropdownMenuItem(value: type, child: Text(type.name)))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) onChanged(set.copyWith(setType: value));
-          },
-        ),
-        IconButton(
-          tooltip: 'Remove set',
-          icon: const Icon(Icons.close, size: 18),
-          onPressed: onRemove,
-        ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: _NumberField(
+              value: set.reps?.toDouble(),
+              label: 'reps',
+              hint: _hint(previous?.reps),
+              floating: floating,
+              decimal: false,
+              onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: _NumberField(
+              value: set.rpe,
+              label: 'RPE',
+              hint: _hint(previous?.rpe),
+              floating: floating,
+              decimal: true,
+              // 1-10, in halves; anything else is a typo, not an effort.
+              validator: (value) => value < 1 || value > 10 ? '1–10' : null,
+              onChanged: (value) => onChanged(set.copyWith(rpe: value)),
+            ),
+          ),
+          PopupMenuButton<Object>(
+            tooltip: 'Set options',
+            onSelected: (value) {
+              if (value is SetType) {
+                onChanged(set.copyWith(setType: value));
+              } else if (value == _SetAction.plateCalculator) {
+                showPlateCalculator(context, targetKg: set.weightKg);
+              } else if (value == _SetAction.remove) {
+                onRemove();
+              }
+            },
+            itemBuilder: (context) => [
+              for (final type in SetType.values)
+                CheckedPopupMenuItem<Object>(
+                  value: type,
+                  checked: type == set.setType,
+                  child: Text(type.name),
+                ),
+              const PopupMenuDivider(),
+              if (weightEnabled)
+                const PopupMenuItem<Object>(
+                  value: _SetAction.plateCalculator,
+                  child: Text('Plate calculator'),
+                ),
+              const PopupMenuItem<Object>(value: _SetAction.remove, child: Text('Remove set')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A numeric text field bound to [value]: edits are parsed and reported
+/// through [onChanged] (null for an empty or unparseable field), and a change
+/// to [value] from outside -- a suggestion filled in -- is shown, which a
+/// plain `initialValue` would not.
+class _NumberField extends StatefulWidget {
+  const _NumberField({
+    required this.value,
+    required this.label,
+    required this.onChanged,
+    required this.decimal,
+    this.hint,
+    this.floating,
+    this.enabled = true,
+    this.validator,
+  });
+
+  final double? value;
+  final String label;
+  final String? hint;
+  final FloatingLabelBehavior? floating;
+  final bool enabled;
+  final bool decimal;
+
+  /// An error message for an entered value that is out of range, or null.
+  final String? Function(double value)? validator;
+  final ValueChanged<double?> onChanged;
+
+  @override
+  State<_NumberField> createState() => _NumberFieldState();
+}
+
+class _NumberFieldState extends State<_NumberField> {
+  late final _controller = TextEditingController(text: _format(widget.value));
+
+  static String _format(double? value) => value == null ? '' : formatKg(value);
+
+  /// What the model holds for [text]: the number it spells, or null if it is
+  /// empty, unparseable or rejected by the validator (flagged, not recorded).
+  double? _modelValueOf(String text) {
+    final parsed = widget.decimal ? double.tryParse(text) : int.tryParse(text)?.toDouble();
+    return parsed != null && widget.validator?.call(parsed) != null ? null : parsed;
+  }
+
+  @override
+  void didUpdateWidget(_NumberField old) {
+    super.didUpdateWidget(old);
+    // Only when the model moved away from what the field already says; while
+    // typing, the model follows the field, so this never fights the keyboard.
+    if (widget.value != _modelValueOf(_controller.text)) {
+      _controller.text = _format(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entered = double.tryParse(_controller.text);
+    final error = entered == null ? null : widget.validator?.call(entered);
+    return TextField(
+      controller: _controller,
+      enabled: widget.enabled,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        floatingLabelBehavior: widget.floating,
+        errorText: error,
+        isDense: true,
+      ),
+      keyboardType: TextInputType.numberWithOptions(decimal: widget.decimal),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(widget.decimal ? r'[0-9.]' : r'[0-9]')),
       ],
+      onChanged: (text) {
+        widget.onChanged(_modelValueOf(text));
+        // Show or clear the error even when the model value didn't change.
+        setState(() {});
+      },
     );
   }
 }

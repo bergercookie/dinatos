@@ -237,5 +237,103 @@ void main() {
       notifier.setClock(const Duration(minutes: 1));
       expect(notifier.state!.isPaused, isFalse);
     });
+
+    group('supersets', () {
+      LiveActivityNotifier withExercises(int count) {
+        final notifier = LiveActivityNotifier()..start();
+        for (var i = 1; i <= count; i++) {
+          notifier.addExercise(i);
+        }
+        return notifier;
+      }
+
+      List<int?> groups(LiveActivityNotifier n) =>
+          n.state!.exercises.map((e) => e.supersetGroup).toList();
+      List<int> order(LiveActivityNotifier n) =>
+          n.state!.exercises.map((e) => e.exerciseId).toList();
+
+      test('linking, unlinking and moving keep groups as runs of neighbours', () {
+        final notifier = withExercises(4);
+
+        notifier.linkExerciseWithNext(1);
+        expect(groups(notifier), [null, 1, 1, null]);
+
+        notifier.linkExerciseWithNext(2);
+        expect(groups(notifier), [null, 1, 1, 1]);
+
+        notifier.moveExercise(3, 0);
+        expect(order(notifier), [4, 1, 2, 3]);
+        // Exercise 4 left the run it was in, and a lone neighbour is no superset.
+        expect(groups(notifier), [null, null, 1, 1]);
+
+        notifier.unlinkExercise(2);
+        expect(groups(notifier), [null, null, null, null]);
+      });
+
+      test('removing one of a pair leaves the other alone', () {
+        final notifier = withExercises(3)..linkExerciseWithNext(0);
+        expect(groups(notifier), [1, 1, null]);
+
+        notifier.removeExerciseAt(1);
+
+        expect(order(notifier), [1, 3]);
+        expect(groups(notifier), [null, null]);
+      });
+
+      test('a routine superset starts the workout as one', () {
+        final notifier = LiveActivityNotifier()
+          ..startFromRoutine(
+            const Routine(
+              name: 'Upper',
+              exercises: [
+                RoutineExercise(exerciseId: 1, supersetGroup: 5),
+                RoutineExercise(exerciseId: 2, supersetGroup: 5),
+                RoutineExercise(exerciseId: 3),
+              ],
+            ),
+          );
+
+        expect(groups(notifier), [5, 5, null]);
+      });
+
+      test('they do nothing with no workout under way', () {
+        final notifier = LiveActivityNotifier();
+
+        notifier.linkExerciseWithNext(0);
+        notifier.unlinkExercise(0);
+        notifier.moveExercise(0, 1);
+        notifier.markSaveUncertain('x');
+        notifier.clearSaveUncertainty();
+
+        expect(notifier.state, isNull);
+      });
+    });
+
+    group('an uncertain save', () {
+      test('freezes the title until the server answers, and saving clears it', () {
+        final notifier = LiveActivityNotifier()..start();
+
+        notifier.markSaveUncertain('Push day');
+        expect(notifier.state!.pendingTitle, 'Push day');
+
+        notifier.clearSaveUncertainty();
+        expect(notifier.state!.pendingTitle, isNull);
+
+        notifier.markSaveUncertain('Push day');
+        notifier.markSaved(activityId: 3, title: 'Push day');
+        expect(notifier.state!.pendingTitle, isNull);
+        expect(notifier.state!.isSaved, isTrue);
+      });
+
+      test('survives other edits to the session', () {
+        final notifier = LiveActivityNotifier()..start();
+        notifier.markSaveUncertain('Push day');
+
+        notifier.addExercise(1);
+        notifier.finish();
+
+        expect(notifier.state!.pendingTitle, 'Push day');
+      });
+    });
   });
 }

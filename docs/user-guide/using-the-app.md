@@ -23,6 +23,11 @@ target number of sets/reps/weight for each. Saving replaces the whole thing
 as one unit -- there's no way to edit a single set within a saved routine
 without re-saving the routine itself.
 
+To do two exercises back-to-back, open the **⋮** menu on the first one and
+choose **Superset with next exercise** (you can build longer ones the same way).
+Supersets are outlined and labelled A, B, ...; the same menu moves an exercise
+up or down, or takes it out of its superset.
+
 Tap the **play** button on a routine in the Routines list to start a live
 workout pre-filled from it (its exercises and target sets, to adjust as you
 go). If a workout is already in progress you're asked whether to resume it or
@@ -41,6 +46,37 @@ An activity is what you actually did in the gym. Two ways to start one:
   doesn't match any saved plan.
 
 Saving an activity, like a routine, replaces the whole thing at once.
+
+### During a live workout
+
+Each exercise shows what you did **last time** and, once there is something to
+build on, a suggestion for this time -- add weight if every set hit its reps,
+otherwise aim for the best set's reps on all of them. **Use** fills it into the
+sets that are still empty. The weight and reps fields hint at the same set
+from last time.
+
+A trophy appears on a set that beats your all-time best weight for that
+exercise (warm-ups never count). Each set also has an optional **RPE** (how
+hard it was, 1-10), and the **⋮** next to it sets its type or opens the
+**plate calculator** -- which plates to put on each side of the bar for that
+weight (a 20 kg bar by default; change it for yours). The exercise's own **⋮**
+menu adds a note, and opens its **progress** page.
+
+### If you lose your connection
+
+Everything above except the hints works without one, and your workout is kept
+on the device as you go. If **Save workout** can't reach the server it says so
+and keeps the workout; a banner on every tab brings you back to it. Try again
+when you're online -- the title is locked after a failed attempt so a retry
+can't save the workout twice.
+
+## Progress
+
+The chart icon next to an exercise (Exercises tab, or **View progress** in its
+menu during a workout) shows how it is going over time: estimated one-rep
+max, heaviest set, volume or most reps per session, a suggestion for next
+time, and a note when your best is several sessions behind -- a nudge to try
+a lighter week, a different rep range, or more rest.
 
 ## Measurements
 

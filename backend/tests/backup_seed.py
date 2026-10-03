@@ -101,13 +101,18 @@ async def populate(
             "exercises": [
                 {
                     "exercise_id": bench,
+                    "superset_group": 1,
                     "notes": "pause on chest",
                     "sets": [
                         {"set_type": "warmup", "target_weight_kg": 40, "target_reps": 10},
                         {"set_type": "normal", "target_weight_kg": 80.5, "target_reps": 5},
                     ],
                 },
-                {"exercise_id": run, "sets": [{"target_distance_km": 0.2}]},
+                {
+                    "exercise_id": run,
+                    "superset_group": 1,
+                    "sets": [{"target_distance_km": 0.2}],
+                },
             ],
         },
     )

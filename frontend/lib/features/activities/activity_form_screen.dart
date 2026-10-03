@@ -11,6 +11,8 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import '../../models/exercise.dart';
 import '../../models/routine.dart';
+import '../../models/superset.dart';
+import '../../models/uid.dart';
 import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import '../routines/routines_providers.dart';
@@ -56,7 +58,8 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
     _startedAt = activity.startedAt.toLocal();
     _endedAt = activity.endedAt?.toLocal();
     _routineId = activity.routineId;
-    _exercises = List.of(activity.exercises);
+    // Repairs group numbers that aren't a run of neighbours (e.g. from an import).
+    _exercises = normalizeSupersets(activity.exercises, activitySupersets);
   }
 
   @override
@@ -73,11 +76,14 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
       _exercises = routine.exercises
           .map(
             (we) => ActivityExercise(
+              uid: nextUid(),
               exerciseId: we.exerciseId,
+              supersetGroup: we.supersetGroup,
               notes: we.notes,
               sets: we.sets
                   .map(
                     (s) => ActivitySet(
+                      uid: nextUid(),
                       setType: s.setType,
                       weightKg: s.targetWeightKg,
                       reps: s.targetReps,
@@ -101,11 +107,14 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
   }
 
   void _addExercise(Exercise exercise) {
-    setState(() => _exercises = [..._exercises, ActivityExercise(exerciseId: exercise.id!)]);
+    setState(
+      () =>
+          _exercises = [..._exercises, ActivityExercise(uid: nextUid(), exerciseId: exercise.id!)],
+    );
   }
 
   void _removeExerciseAt(int index) {
-    setState(() => _exercises = List.of(_exercises)..removeAt(index));
+    setState(() => _exercises = removeItem(_exercises, index, activitySupersets));
   }
 
   void _updateExerciseAt(int index, ActivityExercise updated) {
@@ -197,6 +206,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
   Widget _buildForm(BuildContext context) {
     final exercisesAsync = ref.watch(exerciseListProvider);
     final dateFormat = DateFormat.yMMMd().add_Hm();
+    final labels = supersetLabels([for (final e in _exercises) e.supersetGroup]);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -268,13 +278,27 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
         const SizedBox(height: 8),
         for (var i = 0; i < _exercises.length; i++)
           ActivityExerciseCard(
+            key: ValueKey(itemKeyOf(uid: _exercises[i].uid, id: _exercises[i].id, index: i)),
             exercise: _exercises[i],
             catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
               (e) => e.id == _exercises[i].exerciseId,
               orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
             ),
+            supersetLabel: labels[i],
             onChanged: (updated) => _updateExerciseAt(i, updated),
             onRemove: () => _removeExerciseAt(i),
+            onLinkWithNext: i + 1 < _exercises.length
+                ? () => setState(() => _exercises = linkWithNext(_exercises, i, activitySupersets))
+                : null,
+            onUnlink: () => setState(() => _exercises = unlink(_exercises, i, activitySupersets)),
+            onMoveUp: i > 0
+                ? () =>
+                      setState(() => _exercises = moveItem(_exercises, i, i - 1, activitySupersets))
+                : null,
+            onMoveDown: i + 1 < _exercises.length
+                ? () =>
+                      setState(() => _exercises = moveItem(_exercises, i, i + 1, activitySupersets))
+                : null,
           ),
         const SizedBox(height: 8),
         AsyncValueView(

@@ -170,10 +170,20 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
           ),
           title: exercise.name,
           subtitle: _TrackedChips(exercise: exercise),
-          trailing: IconButton(
-            tooltip: 'View tutorial',
-            icon: const Icon(Icons.play_circle_outline_rounded),
-            onPressed: () => context.go('/exercises/${exercise.id}/tutorial'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'View progress',
+                icon: const Icon(Icons.show_chart_rounded),
+                onPressed: () => context.go('/exercises/${exercise.id}/progress'),
+              ),
+              IconButton(
+                tooltip: 'View tutorial',
+                icon: const Icon(Icons.play_circle_outline_rounded),
+                onPressed: () => context.go('/exercises/${exercise.id}/tutorial'),
+              ),
+            ],
           ),
           onTap: () => context.go('/exercises/${exercise.id}/edit'),
         );

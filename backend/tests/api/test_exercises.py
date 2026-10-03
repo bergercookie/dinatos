@@ -469,3 +469,85 @@ async def test_workoutx_gif_rejects_a_malformed_id(client: AsyncClient) -> None:
     response = await client.get("/exercises/media/workoutx/a.b.gif")
 
     assert response.status_code == 404
+
+
+async def test_exercise_records_ignore_warmup_sets(client: AsyncClient) -> None:
+    exercise_id = (await client.post("/exercises", json={"name": "Squat (Barbell)"})).json()["id"]
+    await client.post(
+        "/activities",
+        json={
+            "title": "Session",
+            "started_at": "2026-09-01T10:00:00Z",
+            "exercises": [
+                {
+                    "exercise_id": exercise_id,
+                    "sets": [
+                        {"set_type": "warmup", "weight_kg": 200, "reps": 30},
+                        {"set_type": "normal", "weight_kg": 60, "reps": 8},
+                    ],
+                }
+            ],
+        },
+    )
+
+    response = await client.get(f"/exercises/{exercise_id}/records")
+    assert response.json() == {"max_weight_kg": 60.0, "max_reps": 8}
+
+
+async def test_exercise_history_lists_own_sessions_newest_first(client: AsyncClient) -> None:
+    exercise_id = (await client.post("/exercises", json={"name": "Squat (Barbell)"})).json()["id"]
+    other_id = (await client.post("/exercises", json={"name": "Leg Press"})).json()["id"]
+    assert (await client.get(f"/exercises/{exercise_id}/history")).json() == []
+
+    for day, weight in (("01", 60), ("08", 65), ("15", 70)):
+        await client.post(
+            "/activities",
+            json={
+                "title": f"Session {day}",
+                "started_at": f"2026-09-{day}T10:00:00Z",
+                "exercises": [
+                    {"exercise_id": exercise_id, "sets": [{"weight_kg": weight, "reps": 5}]},
+                    {"exercise_id": other_id, "sets": [{"weight_kg": 999, "reps": 1}]},
+                ],
+            },
+        )
+
+    response = await client.get(f"/exercises/{exercise_id}/history", params={"limit": 2})
+    assert response.status_code == 200
+    body = response.json()
+    assert [entry["activity_title"] for entry in body] == ["Session 15", "Session 08"]
+    assert body[0]["sets"] == [
+        {
+            "set_type": "normal",
+            "weight_kg": 70.0,
+            "reps": 5,
+            "distance_km": None,
+            "duration_seconds": None,
+            "rpe": None,
+        }
+    ]
+
+
+async def test_exercise_history_merges_an_exercise_logged_twice_in_one_activity(
+    client: AsyncClient,
+) -> None:
+    exercise_id = (await client.post("/exercises", json={"name": "Curl"})).json()["id"]
+    await client.post(
+        "/activities",
+        json={
+            "title": "Arms",
+            "started_at": "2026-09-01T10:00:00Z",
+            "exercises": [
+                {"exercise_id": exercise_id, "sets": [{"weight_kg": 10, "reps": 10}]},
+                {"exercise_id": exercise_id, "sets": [{"weight_kg": 12, "reps": 8}]},
+            ],
+        },
+    )
+
+    body = (await client.get(f"/exercises/{exercise_id}/history")).json()
+    assert len(body) == 1
+    assert [s["weight_kg"] for s in body[0]["sets"]] == [10.0, 12.0]
+
+
+async def test_exercise_history_is_404_for_a_missing_exercise(client: AsyncClient) -> None:
+    assert (await client.get("/exercises/999/history")).status_code == 404

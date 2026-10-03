@@ -129,3 +129,42 @@ async def test_delete_activity(client: AsyncClient) -> None:
 async def test_delete_missing_activity_is_404(client: AsyncClient) -> None:
     response = await client.delete("/activities/999")
     assert response.status_code == 404
+
+
+async def test_replayed_create_returns_the_existing_activity(client: AsyncClient) -> None:
+    """A live workout retried after a lost response must not be saved twice."""
+    exercise_id = await _create_exercise(client)
+    payload = {
+        "title": "Evening workout",
+        "started_at": "2026-09-24T21:13:00.123456Z",
+        "ended_at": "2026-09-24T21:54:00Z",
+        "exercises": [{"exercise_id": exercise_id, "sets": [{"weight_kg": 40, "reps": 10}]}],
+    }
+
+    first = await client.post("/activities", json=payload)
+    replay = await client.post("/activities", json=payload)
+
+    assert first.status_code == 201
+    assert replay.status_code == 200
+    assert replay.json()["id"] == first.json()["id"]
+    assert replay.json()["exercises"] == first.json()["exercises"]
+    assert len((await client.get("/activities")).json()) == 1
+
+
+async def test_creates_differing_in_title_or_start_are_not_replays(client: AsyncClient) -> None:
+    exercise_id = await _create_exercise(client)
+    base = {
+        "title": "Workout",
+        "started_at": "2026-09-24T21:13:00Z",
+        "exercises": [{"exercise_id": exercise_id, "sets": []}],
+    }
+    await client.post("/activities", json=base)
+
+    other_title = await client.post("/activities", json={**base, "title": "Other"})
+    other_start = await client.post(
+        "/activities", json={**base, "started_at": "2026-09-25T21:13:00Z"}
+    )
+
+    assert other_title.status_code == 201
+    assert other_start.status_code == 201
+    assert len((await client.get("/activities")).json()) == 3

@@ -33,6 +33,7 @@ class RoutineSetInput(BaseModel):
 
 class RoutineExerciseInput(BaseModel):
     exercise_id: int
+    superset_group: int | None = None
     notes: str | None = None
     sets: list[RoutineSetInput] = []
 

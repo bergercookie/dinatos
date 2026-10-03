@@ -24,6 +24,7 @@ class RoutineSetRead(RoutineSetBase):
 
 class RoutineExerciseBase(BaseModel):
     exercise_id: int
+    superset_group: int | None = None
     notes: str | None = None
 
 

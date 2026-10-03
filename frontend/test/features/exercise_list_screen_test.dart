@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../support/fakes.dart';
@@ -140,5 +141,39 @@ void main() {
     expect(requested.last, true);
     expect(find.text('Squat'), findsNothing);
     expect(find.text('My Lift'), findsOneWidget);
+  });
+
+  testWidgets('each exercise has a progress button that opens its progress page', (tester) async {
+    final dio = MockDio();
+    _stubPages(dio, {
+      (null, 0): [_exercise(7, 'Squat')],
+    }, 1);
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => const ExerciseListScreen()),
+        GoRoute(
+          path: '/exercises/:id/progress',
+          builder: (context, state) => Text('progress of ${state.pathParameters['id']}'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // The tutorial button is still there beside it.
+    expect(find.byTooltip('View tutorial'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('View progress'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('progress of 7'), findsOneWidget);
   });
 }

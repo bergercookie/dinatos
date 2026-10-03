@@ -140,6 +140,83 @@ saved routine" button copies a routine's exercises and target weights/reps
 into a new activity client-side -- convenience only, not an API relationship
 beyond the `routine_id` reference already stored on the created activity.
 
+## Finishing a workout without a connection
+
+A live workout is held in `liveActivityProvider` and written to disk on every
+change (`live_session_storage.dart`), so killing the app mid-workout loses
+nothing, and nothing about logging sets needs the server. What *does* use the
+server -- "last time" hints, suggestions, trophies, the end-of-workout record
+check -- is fetched in the background and simply absent when it fails: a
+missing hint is never an error and never blocks a set.
+
+Saving is the one thing that needs it, and the summary screen is built around
+that failing:
+
+- A failed save leaves the session where it is, on screen and on disk. The
+  summary says so and offers Save again. A workout that is finished but not
+  saved keeps a banner on every tab (`live_workout_banner.dart`), so there is
+  always a way back to that Save button after wandering off.
+- No HTTP status on the error means no response at all (dropped connection,
+  timeout): the server may have stored the workout. The retry has to be
+  recognisable as the same save, and the backend recognises it by title, start
+  and end (see [Retried saves](backend.md#retried-saves)) -- so after such a
+  failure the session records `pendingTitle` and the title field is locked to
+  it. The title would otherwise be the one thing the person could change
+  between attempts. `pendingTitle` is persisted with the session, so it
+  survives the app being killed between attempts, and is cleared by a
+  definite answer from the server (success, or an error with a status).
+- The end-of-workout record check needs the server too. When it fails the
+  summary says it could not check -- which is not the same as "no new
+  records" -- and offers a retry, but only before saving: afterwards the
+  server's "best" already includes this workout.
+
+`test/features/activities/live/activity_summary_screen_test.dart` drives these
+paths against a mocked `Dio`; the storage tests cover the kill-and-restore
+round trip through the real `SharedPreferences` path.
+
+## Supersets
+
+Exercises sharing a `supersetGroup` are done back-to-back. A group only means
+anything as a run of *adjacent* exercises, so every edit -- link with the next
+exercise, take one out, move, remove -- goes through `models/superset.dart`,
+which re-normalizes the list: each run of neighbours sharing a group has at
+least two members, and runs are numbered 1, 2, ... in order. That also repairs
+group numbers that arrive messy (a Hevy import reuses numbers, a restored
+backup may be anything) the first time such a list is edited. The helpers are
+generic over an accessor, so activities (live workout and the manual form) and
+routines share one implementation and one set of tests.
+
+Rows in these lists carry a `uid`, a process-local id (`models/uid.dart`,
+never sent anywhere) used as their widget key. Without it, removing or moving
+a set would leave a neighbour's `TextFormField` showing the old text, because
+`initialValue` is only read once; reordering exercises made that unavoidable,
+so rows are keyed, and the number fields sync their text to the model when it
+changes from outside (a suggestion being filled in).
+
+## What the live workout knows about past sessions
+
+`GET /exercises/{id}/history` feeds three things, all computed client-side in
+pure functions so they are unit-tested without a widget
+(`features/progress/progression.dart`):
+
+- **Last time** -- the previous session's sets, shown as the fields' hints.
+- **A suggestion** -- a simple double progression: if every working set at the
+  top weight got the same reps, add weight (2.5 kg, or 1 kg under 20 kg); if
+  not, hold the weight and aim for the best set's reps on every set; if the
+  logged RPE was 9.5 or more, repeat; for a body-weight exercise, one more
+  rep. Warm-ups, and drop/failure sets when there are normal ones, are not a
+  baseline. Tapping *Use* fills only values that are still empty.
+- **A plateau** -- the best session (by estimated 1RM, or best reps when there
+  is no load) is at least four sessions behind the latest, with a half-percent
+  tolerance so noise does not count as progress.
+
+Personal records (`models/exercise_records.dart`) use `GET
+/exercises/{id}/records` and the same rules everywhere: a set counts only if it
+beats the prior best *and* every earlier set in the workout, warm-ups never
+count, and reps count only for a set with no load. The live screen only flags
+an exercise that has history (nothing to have beaten otherwise); the summary
+screen counts a first-ever set as a record, as it always did.
+
 ## The web target needs the backend's CORS middleware
 
 A browser enforces CORS on cross-origin requests, and the frontend's origin

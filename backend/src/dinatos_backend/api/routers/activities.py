@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -82,10 +82,35 @@ async def list_activities(
 @router.post("", response_model=ActivityRead, status_code=status.HTTP_201_CREATED)
 async def create_activity(
     payload: ActivityCreate,
+    response: Response,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Activity:
+    """Creates an activity -- idempotently for a retried live-workout save.
+
+    A client that finished a workout on a flaky connection can't tell "the
+    request never arrived" from "it was saved but the response was lost", so
+    it retries. An activity from the same caller with the same title, start
+    and end is therefore treated as that same save being replayed: the
+    existing one comes back (200 rather than 201) instead of a duplicate.
+    A start time is a full-precision timestamp from the device, so two
+    genuinely different workouts never collide on it.
+    """
     await _check_routine_ownership(db, user.id, payload.routine_id)
+    existing = await db.execute(
+        select(Activity.id).where(
+            Activity.owner_id == user.id,
+            Activity.title == payload.title,
+            Activity.started_at == payload.started_at,
+            Activity.ended_at.is_(None)
+            if payload.ended_at is None
+            else Activity.ended_at == payload.ended_at,
+        )
+    )
+    replayed_id = existing.scalars().first()
+    if replayed_id is not None:
+        response.status_code = status.HTTP_200_OK
+        return await _get_or_404(db, user.id, replayed_id)
     activity = Activity(
         owner_id=user.id,
         routine_id=payload.routine_id,

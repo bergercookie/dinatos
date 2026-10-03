@@ -30,11 +30,16 @@ GoRouter _router() => GoRouter(
                 path: path,
                 builder: (context, state) => Scaffold(body: Text('page $path')),
                 routes: [
-                  if (path == '/activities')
+                  if (path == '/activities') ...[
                     GoRoute(
                       path: 'live',
                       builder: (context, state) => const Scaffold(body: Text('live screen')),
                     ),
+                    GoRoute(
+                      path: 'live/summary',
+                      builder: (context, state) => const Scaffold(body: Text('summary screen')),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -77,6 +82,38 @@ void main() {
     container.read(liveActivityProvider.notifier).finish();
     await tester.pump();
     expect(find.text('Workout paused'), findsNothing);
+  });
+
+  testWidgets('a finished, unsaved workout keeps a way back to its Save button', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final router = _router();
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    final notifier = container.read(liveActivityProvider.notifier);
+    notifier.start();
+    notifier.finish();
+    await tester.pump();
+
+    expect(find.text('Workout finished, not saved yet'), findsOneWidget);
+    expect(find.text('Workout in progress'), findsNothing);
+
+    await tester.tap(find.text('Workout finished, not saved yet'));
+    await tester.pumpAndSettle();
+    expect(find.text('summary screen'), findsOneWidget);
+    // On the summary itself the banner would only be in the way.
+    expect(find.text('Workout finished, not saved yet'), findsNothing);
+
+    // Once saved there is nothing left to do, anywhere.
+    notifier.markSaved(activityId: 1, title: 'Workout');
+    router.go('/profile');
+    await tester.pumpAndSettle();
+    expect(find.text('Workout finished, not saved yet'), findsNothing);
+    expect(find.text('Workout in progress'), findsNothing);
   });
 
   test('notification follows the session: shown, updated, then cancelled', () {

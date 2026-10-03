@@ -119,6 +119,7 @@ async def export_user_data(db: AsyncSession, user: User, app_version: str) -> Us
                 exercises=[
                     ExportedRoutineExercise(
                         exercise=names[item.exercise_id],
+                        superset_group=item.superset_group,
                         notes=item.notes,
                         sets=[
                             ExportedRoutineSet(
@@ -354,6 +355,7 @@ async def import_user_data(
             exercises=[
                 RoutineExercise(
                     exercise_id=exercise_ids[item.exercise],
+                    superset_group=item.superset_group,
                     notes=item.notes,
                     position=position,
                     sets=[

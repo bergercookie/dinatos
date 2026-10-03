@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +8,7 @@ import '../../../core/design_tokens.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/responsive_body.dart';
 import '../../../models/activity.dart';
+import '../../../models/exercise_records.dart';
 import '../../../models/muscle_group.dart';
 import '../../exercises/exercises_providers.dart';
 import '../../exercises/exercises_repository.dart';
@@ -36,6 +35,16 @@ class _NewRecord {
   final String description;
 }
 
+/// What the end-of-workout record check found. [unavailable] means it could
+/// not be done at all (the server couldn't be reached), which is not the same
+/// as "no records" and is reported as such.
+class _RecordsOutcome {
+  const _RecordsOutcome({this.records = const [], this.unavailable = false});
+
+  final List<_NewRecord> records;
+  final bool unavailable;
+}
+
 /// Shown once the person taps "Finish workout" -- a recap of the just-
 /// finished [LiveActivitySession] (duration, volume, muscles targeted, any
 /// new personal records) with a title field, then an explicit save that
@@ -53,7 +62,7 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
   final _titleController = TextEditingController();
   bool _submitting = false;
   String? _error;
-  Future<List<_NewRecord>>? _recordsFuture;
+  Future<_RecordsOutcome>? _recordsFuture;
 
   @override
   void initState() {
@@ -61,7 +70,9 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
     final session = ref.read(liveActivityProvider);
     if (session != null && !session.isSaved) {
       _titleController.text =
-          session.routineName ?? 'Workout on ${DateFormat.yMMMd().format(session.startedAt)}';
+          session.pendingTitle ??
+          session.routineName ??
+          'Workout on ${DateFormat.yMMMd().format(session.startedAt)}';
       _recordsFuture = _loadNewRecords(session);
     }
   }
@@ -72,52 +83,67 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
     super.dispose();
   }
 
-  /// For each exercise actually performed this session, compares its best
-  /// set here against the caller's own all-time best (`GET
+  /// For each exercise actually performed this session, compares its sets
+  /// here against the caller's own all-time best (`GET
   /// /exercises/{id}/records`, fetched fresh since nothing from this
   /// session is saved yet to have changed it) and reports a new record for
-  /// whichever of heaviest weight / most reps was just beaten.
-  Future<List<_NewRecord>> _loadNewRecords(LiveActivitySession session) async {
+  /// whichever of heaviest weight / most reps was just beaten -- by the same
+  /// rules the live screen's trophies use ([detectSetRecords]).
+  ///
+  /// Needs the server, and a workout finished with no connection is exactly
+  /// when it hasn't got it: that comes back as [_RecordsOutcome.unavailable]
+  /// rather than as a (false) "no new records".
+  Future<_RecordsOutcome> _loadNewRecords(LiveActivitySession session) async {
     final repository = ref.read(exercisesRepositoryProvider);
-    final catalog = await ref.read(exerciseListProvider.future);
-    final catalogById = {for (final exercise in catalog) exercise.id: exercise};
+    final names = <int?, String>{};
+    try {
+      for (final exercise in await ref.read(exerciseListProvider.future)) {
+        names[exercise.id] = exercise.name;
+      }
+    } catch (_) {
+      // Only names are lost; "Exercise #12" will do.
+    }
     final records = <_NewRecord>[];
-
-    final exerciseIds = session.exercises.map((e) => e.exerciseId).toSet();
-    for (final exerciseId in exerciseIds) {
-      final sets = session.exercises.where((e) => e.exerciseId == exerciseId).expand((e) => e.sets);
-      final weights = sets.map((s) => s.weightKg).whereType<double>().toList();
-      final reps = sets.map((s) => s.reps).whereType<int>().toList();
-      if (weights.isEmpty && reps.isEmpty) continue;
-
-      final priorBest = await repository.getRecords(exerciseId);
-      final name = catalogById[exerciseId]?.name ?? 'Exercise #$exerciseId';
-
-      if (weights.isNotEmpty) {
-        final sessionBestWeight = weights.reduce(math.max);
-        if (priorBest.maxWeightKg == null || sessionBestWeight > priorBest.maxWeightKg!) {
+    try {
+      for (final exerciseId in session.exercises.map((e) => e.exerciseId).toSet()) {
+        final sets = session.exercises
+            .where((e) => e.exerciseId == exerciseId)
+            .expand((e) => e.sets)
+            .toList();
+        final prior = await repository.getRecords(exerciseId);
+        final flags = detectSetRecords(sets, prior, requirePrior: false);
+        final name = names[exerciseId] ?? 'Exercise #$exerciseId';
+        final weights = [
+          for (var i = 0; i < sets.length; i++)
+            if (flags[i].weight) sets[i].weightKg!,
+        ];
+        final reps = [
+          for (var i = 0; i < sets.length; i++)
+            if (flags[i].reps) sets[i].reps!,
+        ];
+        if (weights.isNotEmpty) {
           records.add(
             _NewRecord(
               exerciseName: name,
-              description: 'New heaviest weight: ${sessionBestWeight.toStringAsFixed(1)} kg',
+              description: 'New heaviest weight: ${weights.last.toStringAsFixed(1)} kg',
             ),
           );
         }
-      }
-      if (reps.isNotEmpty) {
-        final sessionBestReps = reps.reduce(math.max);
-        if (priorBest.maxReps == null || sessionBestReps > priorBest.maxReps!) {
-          records.add(
-            _NewRecord(exerciseName: name, description: 'New best: $sessionBestReps reps'),
-          );
+        if (reps.isNotEmpty) {
+          records.add(_NewRecord(exerciseName: name, description: 'New best: ${reps.last} reps'));
         }
       }
+    } catch (_) {
+      return const _RecordsOutcome(unavailable: true);
     }
-    return records;
+    return _RecordsOutcome(records: records);
   }
 
   Future<void> _save(LiveActivitySession session) async {
-    if (_titleController.text.trim().isEmpty) {
+    // After an attempt that may have reached the server the title is frozen,
+    // so the retry is recognisably the same save (see `pendingTitle`).
+    final title = session.pendingTitle ?? _titleController.text.trim();
+    if (title.isEmpty) {
       setState(() => _error = 'Title is required');
       return;
     }
@@ -125,8 +151,9 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       _submitting = true;
       _error = null;
     });
+    final notifier = ref.read(liveActivityProvider.notifier);
     final activity = Activity(
-      title: _titleController.text.trim(),
+      title: title,
       startedAt: session.startedAt,
       endedAt: session.endedAt ?? DateTime.now(),
       exercises: session.exercises,
@@ -135,13 +162,28 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
     try {
       final saved = await ref.read(activitiesRepositoryProvider).create(activity);
       ref.invalidate(activityListProvider);
-      if (mounted) {
-        ref
-            .read(liveActivityProvider.notifier)
-            .markSaved(activityId: saved.id!, title: saved.title);
-      }
+      if (mounted) notifier.markSaved(activityId: saved.id!, title: saved.title);
     } on ApiException catch (error) {
-      setState(() => _error = error.message);
+      // No HTTP status means no response: the workout may or may not have been
+      // stored. A status means the server looked at it and said no.
+      if (error.statusCode == null) {
+        notifier.markSaveUncertain(title);
+        setState(
+          () => _error =
+              '${error.message} Your workout is kept on this device -- try saving again '
+              'once you are back online.',
+        );
+      } else {
+        notifier.clearSaveUncertainty();
+        setState(() => _error = error.message);
+      }
+    } catch (_) {
+      // E.g. a response that could not be read: as unknown as a dropped one.
+      notifier.markSaveUncertain(title);
+      setState(
+        () => _error =
+            'Something went wrong while saving. Your workout is kept on this device -- try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -183,7 +225,15 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
             else
               TextField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                enabled: session.pendingTitle == null,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  helperText: session.pendingTitle == null
+                      ? null
+                      : 'The last attempt may have gone through, so the title is locked '
+                            'to keep a retry from saving the workout twice.',
+                  helperMaxLines: 3,
+                ),
               ),
             const SizedBox(height: AppSpacing.lg),
             Row(
@@ -248,7 +298,7 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
             if (_recordsFuture != null) ...[
               Text('New records', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
-              FutureBuilder<List<_NewRecord>>(
+              FutureBuilder<_RecordsOutcome>(
                 future: _recordsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
@@ -257,15 +307,39 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
-                  final records = snapshot.data ?? [];
-                  if (records.isEmpty) {
-                    return Text(
-                      'No new records this time — keep at it.',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  final outcome = snapshot.data ?? const _RecordsOutcome(unavailable: true);
+                  final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
+                  if (outcome.unavailable) {
+                    return Row(
+                      children: [
+                        Icon(Icons.cloud_off_outlined, color: muted.color),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'Could not check for new records without a connection.',
+                            style: muted,
+                          ),
+                        ),
+                        // Only before saving: afterwards the server's "best" already
+                        // includes this workout, and nothing would read as a record.
+                        if (savedActivityId == null)
+                          TextButton(
+                            onPressed: () {
+                              final retry = _loadNewRecords(session);
+                              setState(() {
+                                _recordsFuture = retry;
+                              });
+                            },
+                            child: const Text('Retry'),
+                          ),
+                      ],
                     );
                   }
+                  if (outcome.records.isEmpty) {
+                    return Text('No new records this time — keep at it.', style: muted);
+                  }
                   return Column(
-                    children: records
+                    children: outcome.records
                         .map(
                           (record) => Card(
                             margin: const EdgeInsets.only(bottom: AppSpacing.sm),

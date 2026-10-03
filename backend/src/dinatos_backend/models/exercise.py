@@ -59,7 +59,7 @@ class Equipment(enum.StrEnum):
 class Exercise(Base, TimestampMixin):
     """A named movement in the catalog, e.g. "Squat (Barbell)".
 
-    The `tracks_*` flags are advisory metadata for the UI and watch app --
+    The `tracks_*` flags are advisory metadata for the UI --
     which fields to show when logging a set -- not a hard constraint on what
     a set may record.
 
