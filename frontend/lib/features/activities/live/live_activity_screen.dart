@@ -130,7 +130,7 @@ class LiveActivityScreen extends ConsumerWidget {
 
     if (session == null) {
       // Reached directly (e.g. a refreshed page on web) rather than via the
-      // activities list's "Start workout" button -- offer to start one
+      // activities list's "Start activity" button -- offer to start one
       // instead of showing a blank, broken screen.
       return Scaffold(
         appBar: AppBar(title: const Text('Live workout')),
@@ -138,7 +138,7 @@ class LiveActivityScreen extends ConsumerWidget {
           child: FilledButton.icon(
             onPressed: () => ref.read(liveActivityProvider.notifier).start(),
             icon: const Icon(Icons.play_arrow),
-            label: const Text('Start workout'),
+            label: const Text('Start activity'),
           ),
         ),
       );

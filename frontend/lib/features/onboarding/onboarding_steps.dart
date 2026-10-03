@@ -133,7 +133,7 @@ final List<TourStep> defaultTourSteps = [
   TourStep(
     id: 'start-workout',
     title: 'Start a live workout',
-    body: 'Press Start workout to get a running clock and log sets as you do them.',
+    body: 'Press Start activity, then From scratch, to get a running clock and log sets as you do them.',
     target: 'start-workout',
     advanceOnLocation: (path) => path == '/activities/live',
     modal: true,
