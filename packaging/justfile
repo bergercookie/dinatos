@@ -25,9 +25,27 @@ build-apk version build_number="1":
     cd "{{frontend_dir}}" && flutter pub get
     cd "{{frontend_dir}}" && flutter build apk --release --build-name="{{version}}" --build-number="{{build_number}}" --dart-define=APP_VERSION="{{version}}" --dart-define=GIT_COMMIT="$(git rev-parse HEAD)"
 
+# Refuse to build Linux packages from a devbox shell: Nix's toolchain bakes
+# /nix/store library paths and a Nix glibc interpreter into the binary, so the
+# package only runs on this machine (and often not even there, e.g. no GL
+# drivers). DEVBOX_SHELL_ENABLED is set by `devbox shell`/`devbox run`.
+[private]
+_not-in-devbox:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "${DEVBOX_SHELL_ENABLED:-}" = "1" ] && [ -z "${DINATOS_ALLOW_DEVBOX_BUILD:-}" ]; then
+        echo "error: don't build Linux packages inside a devbox shell -- the result links" >&2
+        echo "against /nix/store and won't run elsewhere. Use the Docker-based recipes:" >&2
+        echo "    just packaging build-deb-docker <version>" >&2
+        echo "    just packaging build-appimage-docker <version>" >&2
+        echo "    just packaging build-linux-artifacts-docker <version>" >&2
+        echo "(set DINATOS_ALLOW_DEVBOX_BUILD=1 to override, e.g. for a local-only test)" >&2
+        exit 1
+    fi
+
 # Build the Flutter Linux bundle shared by both Linux package formats.
 [private]
-_build-linux version:
+_build-linux version: _not-in-devbox
     flutter config --enable-linux-desktop
     cd "{{frontend_dir}}" && flutter pub get
     cd "{{frontend_dir}}" && flutter build linux --release --dart-define=APP_VERSION="{{version}}" --dart-define=GIT_COMMIT="$(git rev-parse HEAD)"
