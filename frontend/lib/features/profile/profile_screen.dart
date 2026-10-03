@@ -13,6 +13,9 @@ import '../../core/server_url_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/profile.dart';
+import '../onboarding/onboarding_controller.dart';
+import '../onboarding/onboarding_overlay.dart';
+import '../onboarding/onboarding_steps.dart';
 import 'profile_providers.dart';
 import 'profile_repository.dart';
 
@@ -149,6 +152,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       ref.invalidate(profileProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile saved')));
+        ref.read(onboardingProvider.notifier).event(profileSavedEvent);
       }
     } on ApiException catch (error) {
       setState(() => _error = error.message);
@@ -228,6 +232,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 onTap: () => context.go('/profile/import-hevy'),
               ),
               ListTile(
+                leading: const Icon(Icons.explore_outlined),
+                title: const Text('Take the tour again'),
+                subtitle: const Text('A quick walkthrough of setting up and logging a workout'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => ref.read(onboardingProvider.notifier).restart(),
+              ),
+              ListTile(
                 leading: const Icon(Icons.api_outlined),
                 title: const Text('API documentation'),
                 subtitle: const Text('Browse and try out the REST API'),
@@ -244,40 +255,43 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         ),
         const SizedBox(height: AppSpacing.xl),
         const _SectionHeader('Preferences'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _heightController,
-                  decoration: const InputDecoration(labelText: 'Height (cm)'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                DropdownButtonFormField<UnitSystem>(
-                  initialValue: _unitSystem,
-                  decoration: const InputDecoration(labelText: 'Unit system'),
-                  items: UnitSystem.values
-                      .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _unitSystem = value);
-                  },
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  ErrorBanner(message: _error!),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _submitting ? null : _save,
-                    child: const Text('Save'),
+        OnboardingTarget(
+          id: 'profile-prefs',
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _heightController,
+                    decoration: const InputDecoration(labelText: 'Height (cm)'),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.md),
+                  DropdownButtonFormField<UnitSystem>(
+                    initialValue: _unitSystem,
+                    decoration: const InputDecoration(labelText: 'Unit system'),
+                    items: UnitSystem.values
+                        .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setState(() => _unitSystem = value);
+                    },
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    ErrorBanner(message: _error!),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _submitting ? null : _save,
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

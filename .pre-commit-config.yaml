@@ -33,7 +33,7 @@ repos:
   - repo: local
     hooks:
       # ruff runs from the repo root against the root pyproject.toml, so it
-      # covers everything under backend/, mcp_server/ and screenshots/ alike
+      # covers everything under backend/, mcp_server/, screenshots/ and e2e/ alike
       # -- ruff itself needs no runtime dependencies, unlike mypy below, so
       # it isn't limited by screenshots/ using its own uv dependency group.
       # Markdown is in the trigger because ruff formats the Python blocks
@@ -42,13 +42,13 @@ repos:
         name: ruff (lint + pyupgrade)
         entry: uv run --project backend ruff check --fix .
         language: system
-        files: ^(backend|mcp_server|screenshots)/.*\.py$
+        files: ^(backend|mcp_server|screenshots|e2e)/.*\.py$
         pass_filenames: false
       - id: ruff-format
         name: ruff (format)
         entry: uv run --project backend ruff format .
         language: system
-        files: (^(backend|mcp_server|screenshots)/.*\.py$|\.md$)
+        files: (^(backend|mcp_server|screenshots|e2e)/.*\.py$|\.md$)
         pass_filenames: false
       - id: mypy
         name: mypy (strict, backend)

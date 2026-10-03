@@ -9,6 +9,7 @@ import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/routine.dart';
+import '../onboarding/onboarding_overlay.dart';
 import 'routines_providers.dart';
 
 class RoutineListScreen extends ConsumerWidget {
@@ -20,10 +21,13 @@ class RoutineListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Routines')),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'New routine',
-        onPressed: () => context.go('/routines/new'),
-        child: const Icon(Icons.add),
+      floatingActionButton: OnboardingTarget(
+        id: 'routines-new',
+        child: FloatingActionButton(
+          tooltip: 'New routine',
+          onPressed: () => context.go('/routines/new'),
+          child: const Icon(Icons.add),
+        ),
       ),
       bottomNavigationBar: routines.whenOrNull(
         data: (data) => CountFooter(count: data.length, singular: 'routine'),

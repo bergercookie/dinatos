@@ -53,6 +53,11 @@ doesn't work here (it's old enough to reject this repo's `mod`-based root
   layout)? `just screenshots check` (CI's `screenshots` job) regenerates
   `README.md`'s screenshots against a real backend + frontend build and
   fails if they've drifted from what's committed.
+- Touched the first-run tour, or navigation/screens it points at? `just e2e
+  test` (CI's `e2e` job) drives the real web build in a real browser,
+  against a real backend and Postgres, and walks a new account through
+  it -- the one layer neither `flutter test` (mocked API) nor the backend's
+  suite (no UI) covers. Needs Docker and the Flutter SDK, like `screenshots`.
 - Keep each PR to one logical change. If it changes user-visible or
   operator-visible behavior, update the matching docs section in the same
   PR -- `docs/user-guide/` for what an end user sees, `docs/deploy/` for

@@ -236,6 +236,10 @@ def _register(page: Page) -> None:
     _fill(page.get_by_role("textbox", name="Password"), PASSWORD)
     page.get_by_role("button", name="Register").click()
     page.wait_for_timeout(1000)
+    # A brand-new account is offered the first-run tour, whose dimmed overlay
+    # would block everything below (and show up in every screenshot).
+    page.get_by_role("button", name="Skip tour").click()
+    page.wait_for_timeout(300)
 
 
 def _create_exercise(page: Page, name: str) -> None:

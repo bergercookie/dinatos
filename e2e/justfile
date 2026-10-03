@@ -1,0 +1,25 @@
+# End-to-end tests: a real browser (Playwright) driving the real Flutter web
+# build, served by the real backend over a real Postgres -- the one layer
+# `flutter test` (headless, mocked API) and the backend's own suite
+# (in-memory sqlite, no UI) can't cover between them.
+#
+# Self-sufficient: `cd e2e && just test` works on its own. Imported by the
+# root justfile as the `e2e` module.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+default:
+    @just --list
+
+# Fetch/refresh the Python side (playwright + testcontainers) and the browser Playwright drives.
+install:
+    uv sync --project ../backend --group e2e
+    uv run --project ../backend --group e2e playwright install --with-deps chromium
+
+# mypy --strict on the suite (needs this package's own group; ruff already covers it via the shared hook).
+lint:
+    uv run --project ../backend --group e2e mypy --strict --explicit-package-bases .
+
+# Build the web app, start a throwaway Postgres + backend, and run the browser tests against them.
+# `E2E_WEB_DIR=<a built build/web>` skips the Flutter build; `E2E_DATABASE_URL` skips Docker.
+test *args:
+    uv run --project ../backend --group e2e pytest {{args}}

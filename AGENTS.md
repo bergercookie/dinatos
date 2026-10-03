@@ -334,3 +334,39 @@ or the Dockerfile locally before tagging: a failure partway through the
 workflow (e.g. the `.deb` step failing after the Docker image already
 pushed) leaves a real, partially-published state on GHCR with no automatic
 rollback.
+
+## `just e2e test` drives the real web build in a browser -- these things only show up there
+
+`e2e/` (Playwright, borrowing the backend's venv through its `e2e`
+dependency group) builds the web app, starts a throwaway Postgres
+(testcontainers) and the backend serving that build itself -- same origin,
+exactly like the Docker image -- then drives it in Chromium. Needs Docker
+and the Flutter SDK. `E2E_WEB_DIR=<a built build/web>` skips the Flutter
+build and `E2E_DATABASE_URL=<asyncpg url>` skips Docker, for iterating on
+the tests alone; `E2E_CHROMIUM_PATH=<chrome binary>` for a sandbox whose
+preinstalled Chromium is a different revision than the one Playwright
+wants and can't be downloaded (the "Executable doesn't exist" error).
+Further gotchas, beyond the web-target section above (same rules for
+`channel="chromium"`, typing, role locators):
+
+- The build uses `--no-web-resources-cdn`. Without it Flutter fetches
+  CanvasKit from Google's CDN at page load, and in a sandbox with no
+  browser internet the page just never renders -- no error, just no
+  `flt-semantics` nodes ever appearing.
+- Newer Flutter web builds create the accessibility tree up front and
+  have no `flt-semantics-placeholder` at all (older ones need it clicked,
+  see the section above) -- `e2e/conftest.py` handles both; a bare
+  `.dispatch_event("click")` on it times out after 30s on a newer one.
+- The wide layout's `NavigationRail` destinations do not appear in the
+  accessibility tree at all (no role, no label: searched the whole
+  `flt-semantics-host`), so Playwright can't find them -- the bottom bar's
+  are proper `tab`s. The e2e tests press the rail by coordinates; if you
+  fix this in `app_shell.dart`, switch them to `get_by_role("tab")`.
+- A press on an accessibility-tree element reaches the app as a *semantic
+  tap*, not pointer events -- code listening with a `Listener`/
+  `onPointerUp` never sees it. See `docs/architecture/frontend.md`'s
+  first-run-tour section for why the tour doesn't depend on that.
+- Playwright refuses to click a node another node "intercepts pointer
+  events" for -- which is how the modal tour steps' scrim shows up there.
+  Test "blocked" with a short-timeout click expecting a timeout, not
+  `force=True`.

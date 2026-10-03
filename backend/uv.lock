@@ -640,6 +640,10 @@ docs = [
     { name = "myst-parser" },
     { name = "sphinx" },
 ]
+e2e = [
+    { name = "playwright" },
+    { name = "testcontainers" },
+]
 screenshots = [
     { name = "playwright" },
     { name = "testcontainers" },
@@ -679,6 +683,10 @@ docs = [
     { name = "furo", specifier = ">=2024.8" },
     { name = "myst-parser", specifier = ">=4.0" },
     { name = "sphinx", specifier = ">=8.1" },
+]
+e2e = [
+    { name = "playwright", specifier = ">=1.48" },
+    { name = "testcontainers", extras = ["postgres"], specifier = ">=4.15.0" },
 ]
 screenshots = [
     { name = "playwright", specifier = ">=1.48" },

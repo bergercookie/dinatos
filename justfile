@@ -19,6 +19,7 @@ default:
 mod backend 'backend/justfile'
 mod docker 'docker/justfile'
 mod docs 'docs/justfile'
+mod e2e 'e2e/justfile'
 mod frontend 'frontend/justfile'
 mod mcp_server 'mcp_server/justfile'
 mod packaging 'packaging/justfile'

@@ -8,6 +8,7 @@ import '../../../core/widgets/responsive_body.dart';
 import '../../../models/exercise.dart';
 import '../../exercises/exercise_picker.dart';
 import '../../exercises/exercises_providers.dart';
+import '../../onboarding/onboarding_overlay.dart';
 import '../widgets/activity_exercise_card.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
@@ -227,25 +228,31 @@ class LiveActivityScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
             AsyncValueView(
               value: exercisesAsync,
-              builder: (context, allExercises) => OutlinedButton.icon(
-                onPressed: () async {
-                  final exercise = await showExercisePicker(context, exercises: allExercises);
-                  if (exercise != null) {
-                    ref.read(liveActivityProvider.notifier).addExercise(exercise.id!);
-                  }
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add exercise'),
+              builder: (context, allExercises) => OnboardingTarget(
+                id: 'live-add-exercise',
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final exercise = await showExercisePicker(context, exercises: allExercises);
+                    if (exercise != null) {
+                      ref.read(liveActivityProvider.notifier).addExercise(exercise.id!);
+                    }
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add exercise'),
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(
-              onPressed: () {
-                ref.read(liveActivityProvider.notifier).finish();
-                context.go('/activities/live/summary');
-              },
-              icon: const Icon(Icons.flag_outlined),
-              label: const Text('Finish workout'),
+            OnboardingTarget(
+              id: 'live-finish',
+              child: FilledButton.icon(
+                onPressed: () {
+                  ref.read(liveActivityProvider.notifier).finish();
+                  context.go('/activities/live/summary');
+                },
+                icon: const Icon(Icons.flag_outlined),
+                label: const Text('Finish workout'),
+              ),
             ),
           ],
         ),

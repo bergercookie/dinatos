@@ -12,6 +12,7 @@ import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
 import '../activities/live/muscle_distribution_card.dart';
+import '../onboarding/onboarding_overlay.dart';
 import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
 import 'routines_providers.dart';
@@ -185,13 +186,16 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
         const SizedBox(height: 8),
         AsyncValueView(
           value: exercisesAsync,
-          builder: (context, allExercises) => OutlinedButton.icon(
-            onPressed: () async {
-              final exercise = await showExercisePicker(context, exercises: allExercises);
-              if (exercise != null) _addExercise(exercise);
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add exercise'),
+          builder: (context, allExercises) => OnboardingTarget(
+            id: 'routine-add-exercise',
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final exercise = await showExercisePicker(context, exercises: allExercises);
+                if (exercise != null) _addExercise(exercise);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add exercise'),
+            ),
           ),
         ),
         if (_error != null) ...[

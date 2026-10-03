@@ -59,6 +59,13 @@ screenshots = [
     {include-group = "testing-infra"},
 ]
 
+# ../e2e/ (Playwright against the real web build) borrows this project's venv
+# the same way, for the same reasons.
+e2e = [
+    "playwright>=1.48",
+    {include-group = "testing-infra"},
+]
+
 [build-system]
 requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
