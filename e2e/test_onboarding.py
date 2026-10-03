@@ -40,7 +40,7 @@ def _register(page: Page) -> None:
     page.get_by_role("button", name="Register").click()
 
 
-_TABS = ["Exercises", "Routines", "Home", "Measurements", "Settings"]
+_TABS = ["Exercises", "Routines", "Home", "Body", "Settings"]
 _WIDE_LAYOUT_FROM = 900  # px -- mirrors `_wideBreakpoint` in app_shell.dart
 
 
@@ -152,7 +152,7 @@ def test_highlighted_step_blocks_everything_else(page: Page) -> None:
     # On the phone layout the browser itself refuses the press (the scrim
     # intercepts it), on the wide one it lands on the scrim and does nothing.
     with contextlib.suppress(PlaywrightTimeoutError):
-        _press_tab(page, "Measurements", timeout=2_000)
+        _press_tab(page, "Body", timeout=2_000)
     page.wait_for_timeout(500)
     _on_step(page, "Start with Settings")
     expect(page.get_by_role("heading", name="Exercises")).to_be_visible()

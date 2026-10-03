@@ -363,7 +363,7 @@ def _create_exercise(page: Page, name: str) -> None:
 
 
 # Top-level destinations, in the order the shell draws them.
-_TABS = ["Exercises", "Routines", "Home", "Measurements", "Settings"]
+_TABS = ["Exercises", "Routines", "Home", "Body", "Settings"]
 
 
 def _goto_tab(page: Page, name: str) -> None:
