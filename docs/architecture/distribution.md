@@ -60,6 +60,15 @@ actually building this one platform target;
 `.github/workflows/release.yml`'s `linux-packages` job installs all of it
 via `apt-get` before building.
 
+That job runs on `ubuntu-22.04`, deliberately not `ubuntu-latest`: the
+bundle links against the build machine's glibc, so building on a newer
+Ubuntu yields a package that fails on older ones with
+`GLIBC_2.38 not found`. The `linux-smoke` job then installs the `.deb` in
+pristine `ubuntu:22.04` and `ubuntu:24.04` containers and starts it under
+Xvfb (`packaging/linux/smoke-test-deb.sh`, also runnable locally with
+Docker) and gates the release on it. Raise the build image only together
+with the minimum supported Ubuntu.
+
 `flutter create --platforms=linux .` on an existing project is not purely
 additive: it rewrote `.metadata`'s migration list to contain only `linux`,
 silently dropping the existing `android`/`web` entries, which had to be
