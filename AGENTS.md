@@ -60,6 +60,16 @@ the shared `client` fixture registers and logs in a throwaway user before
 handing back an already-authenticated `AsyncClient`; a test that needs to
 check unauthenticated behavior itself asks for `anonymous_client` instead.
 
+## A new table must be added to the backup, or `just test` fails
+
+`backend/src/dinatos_backend/services/backup.py` lists every table in
+`BACKED_UP_TABLES` (or in `EXCLUDED_TABLES`, with a reason -- `auth_sessions`
+is the only one); `tests/services/test_backup_coverage.py` fails if a model
+table is in neither. Columns need nothing (the backup is generic over them),
+but a user-owned field should also go into `schemas/backup.py`'s `Exported*`
+models and `services/user_export.py`. See `docs/architecture/backend.md`'s
+"Backup and data export" for why, and for how a restore treats sessions.
+
 ## Coverage requires `concurrency = ["greenlet"]`
 
 SQLAlchemy's async engine bridges every DBAPI call through `greenlet`. Without
@@ -299,6 +309,21 @@ that was just filled. Typing character-by-character with real key events
 (`Locator.press_sequentially`), the way a person would, avoids the race
 entirely; select-all-then-delete first if the field might already hold a
 value (e.g. one copied from a saved routine) rather than being empty.
+
+A password manager extension (Bitwarden et al.) fills a field by setting
+`input.value` and dispatching *synthetic* `input`/`change` events -- no key
+events -- and Flutter web, left alone, ignores that: the fields flash, then
+stay empty (a real report: autofill worked on Android, not in a desktop
+browser). `Locator.fill()` and `press_sequentially()` can't reproduce it;
+`e2e/test_autofill.py` does it the extension's way. The fix is
+`core/widgets/web_autofill_bridge_web.dart` (used by login/register through
+`WebAutofillSemantics`): it copies untrusted `input`/`change` events into the
+matching `TextEditingController` and stamps the standard `autocomplete`/
+`name`/`id` onto the engine-built `<input>`s, which `autofillHints` alone
+doesn't reach on web (it left the password's `autocomplete="off"`). Any
+new form that should be fillable by an extension needs the same
+`WebAutofillSemantics(fields: ...)` wrapper; fields are matched by their
+`aria-label`, i.e. the label shown.
 
 Seed data for anything backed by a genuinely global (not per-owner) table --
 `exercises` is the example here -- needs a fresh database per run, not a
