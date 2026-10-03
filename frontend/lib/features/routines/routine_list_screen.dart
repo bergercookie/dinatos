@@ -9,6 +9,7 @@ import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/routine.dart';
+import '../activities/live/start_routine_workout.dart';
 import '../onboarding/onboarding_overlay.dart';
 import 'routines_providers.dart';
 
@@ -63,7 +64,17 @@ class RoutineListScreen extends ConsumerWidget {
                     leading: const AppIconAvatar(icon: Icons.list_alt_rounded),
                     title: routine.name,
                     subtitle: Text(_subtitle(routine)),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Start workout from ${routine.name}',
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          onPressed: () => startWorkoutFromRoutine(context, ref, routine),
+                        ),
+                        const Icon(Icons.chevron_right_rounded),
+                      ],
+                    ),
                     onTap: () => context.go('/routines/${routine.id}'),
                   );
                 },

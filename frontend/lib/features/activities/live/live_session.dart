@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/auth_notifier.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../models/activity.dart';
+import '../../../models/routine.dart';
 import 'live_session_storage.dart';
 
 /// An in-progress (or just-finished, not yet saved) live workout -- built up
@@ -19,6 +20,8 @@ class LiveActivitySession {
     this.pausedAt,
     this.savedActivityId,
     this.savedTitle,
+    this.routineId,
+    this.routineName,
   }) : clockOrigin = clockOrigin ?? startedAt;
 
   /// When the workout actually began -- what gets saved as the activity's
@@ -44,6 +47,11 @@ class LiveActivitySession {
 
   final DateTime? endedAt;
   final List<ActivityExercise> exercises;
+
+  /// The saved routine this workout was started from, if any: saved onto the
+  /// activity as `routine_id`, and its name is the summary's default title.
+  final int? routineId;
+  final String? routineName;
 
   /// Non-null once `POST /activities` has actually succeeded for this
   /// session -- tracked on the session itself, not as local screen state,
@@ -100,6 +108,8 @@ class LiveActivitySession {
     pausedAt: clearPausedAt ? null : (pausedAt ?? this.pausedAt),
     savedActivityId: savedActivityId ?? this.savedActivityId,
     savedTitle: savedTitle ?? this.savedTitle,
+    routineId: routineId,
+    routineName: routineName,
   );
 }
 
@@ -129,6 +139,35 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
   void start() {
     ownerId = _currentUserId?.call();
     state = LiveActivitySession(startedAt: DateTime.now());
+  }
+
+  /// Starts a workout pre-filled from [routine]: its exercises, notes and
+  /// target sets (weight/reps), to be edited into what was actually done --
+  /// the same copy `ActivityFormScreen`'s "Start from a saved routine" makes.
+  void startFromRoutine(Routine routine) {
+    ownerId = _currentUserId?.call();
+    state = LiveActivitySession(
+      startedAt: DateTime.now(),
+      routineId: routine.id,
+      routineName: routine.name,
+      exercises: [
+        for (final exercise in routine.exercises)
+          ActivityExercise(
+            exerciseId: exercise.exerciseId,
+            notes: exercise.notes,
+            sets: [
+              for (final set in exercise.sets)
+                ActivitySet(
+                  setType: set.setType,
+                  weightKg: set.targetWeightKg,
+                  reps: set.targetReps,
+                  distanceKm: set.targetDistanceKm,
+                  durationSeconds: set.targetDurationSeconds,
+                ),
+            ],
+          ),
+      ],
+    );
   }
 
   void addExercise(int exerciseId) {

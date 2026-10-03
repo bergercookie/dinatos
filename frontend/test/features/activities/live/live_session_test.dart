@@ -1,5 +1,7 @@
 import 'package:dinatos_frontend/features/activities/live/live_session.dart';
 import 'package:dinatos_frontend/models/activity.dart';
+import 'package:dinatos_frontend/models/routine.dart';
+import 'package:dinatos_frontend/models/set_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -21,6 +23,49 @@ void main() {
         notifier.state!.startedAt.difference(DateTime.now()).abs(),
         lessThan(const Duration(seconds: 5)),
       );
+    });
+
+    test('startFromRoutine() pre-fills exercises, notes and target sets from the routine', () {
+      final notifier = LiveActivityNotifier();
+
+      notifier.startFromRoutine(
+        const Routine(
+          id: 7,
+          name: 'Push day',
+          exercises: [
+            RoutineExercise(
+              exerciseId: 3,
+              notes: 'slow negatives',
+              sets: [
+                RoutineSet(setType: SetType.warmup, targetWeightKg: 40, targetReps: 12),
+                RoutineSet(targetWeightKg: 80, targetReps: 5),
+              ],
+            ),
+            RoutineExercise(exerciseId: 9),
+          ],
+        ),
+      );
+
+      final session = notifier.state!;
+      expect(session.routineId, 7);
+      expect(session.routineName, 'Push day');
+      expect(session.endedAt, isNull);
+      expect(session.exercises.map((e) => e.exerciseId), [3, 9]);
+      expect(session.exercises[0].notes, 'slow negatives');
+      expect(session.exercises[0].sets.map((s) => s.setType), [SetType.warmup, SetType.normal]);
+      expect(session.exercises[0].sets.map((s) => s.weightKg), [40, 80]);
+      expect(session.exercises[0].sets.map((s) => s.reps), [12, 5]);
+      expect(session.exercises[1].sets, isEmpty);
+    });
+
+    test('editing a workout started from a routine keeps its routine link', () {
+      final notifier = LiveActivityNotifier()
+        ..startFromRoutine(const Routine(id: 7, name: 'Push day'));
+
+      notifier.addExercise(1);
+
+      expect(notifier.state!.routineId, 7);
+      expect(notifier.state!.routineName, 'Push day');
     });
 
     test('addExercise/updateExerciseAt/removeExerciseAt build up and edit the exercise list', () {

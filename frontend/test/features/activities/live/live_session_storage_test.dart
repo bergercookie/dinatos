@@ -87,6 +87,21 @@ void main() {
     expect(restored.savedTitle, 'Leg day');
   });
 
+  test('the routine a workout was started from survives a round trip too', () {
+    final fromRoutine = LiveActivitySession(
+      startedAt: session.startedAt,
+      routineId: 5,
+      routineName: 'Pull day',
+    );
+
+    final restored = PersistedLiveSession.fromJson(
+      PersistedLiveSession(session: fromRoutine, ownerId: 3).toJson(),
+    ).session;
+
+    expect(restored.routineId, 5);
+    expect(restored.routineName, 'Pull day');
+  });
+
   test('PrefsLiveSessionStorage writes, reads back and clears', () async {
     SharedPreferences.setMockInitialValues({});
     const storage = PrefsLiveSessionStorage();
