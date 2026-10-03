@@ -17,12 +17,13 @@ new ids.
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from sqlalchemy import CursorResult, delete, select
+from sqlalchemy import CursorResult, delete, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
-from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.exercise import Exercise, ExerciseMuscle
+from dinatos_backend.models.hevy_import import HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.routine import Routine, RoutineExercise, RoutineSet
 from dinatos_backend.models.user import User
@@ -203,6 +204,43 @@ async def _delete_own_data(db: AsyncSession, owner_id: int) -> UserImportCounts:
         for statement in statements
     ]
     return UserImportCounts(activities=removed[2], routines=removed[5], measurements=removed[6])
+
+
+async def clear_own_data(db: AsyncSession, user: User) -> UserImportCounts:
+    """Wipes the caller's routines, activities, measurements and Hevy import
+    records, plus every custom exercise that nothing else references any more.
+
+    Exercises are shared by the whole server, not owned, so a custom exercise
+    another account's routine or activity still uses is left alone (and the
+    shipped catalog never is touched). Settings and the account itself stay.
+    """
+    deleted = await _delete_own_data(db, user.id)
+    await db.execute(
+        delete(HevyImportRecord)
+        .where(HevyImportRecord.owner_id == user.id)
+        .execution_options(synchronize_session=False)
+    )
+    unused = (
+        select(Exercise.id)
+        .where(Exercise.is_custom.is_(True))
+        .where(~exists().where(RoutineExercise.exercise_id == Exercise.id))
+        .where(~exists().where(ActivityExercise.exercise_id == Exercise.id))
+    )
+    unused_ids = list(await db.scalars(unused))
+    if unused_ids:
+        await db.execute(
+            delete(ExerciseMuscle)
+            .where(ExerciseMuscle.exercise_id.in_(unused_ids))
+            .execution_options(synchronize_session=False)
+        )
+        await db.execute(
+            delete(Exercise)
+            .where(Exercise.id.in_(unused_ids))
+            .execution_options(synchronize_session=False)
+        )
+    deleted.exercises = len(unused_ids)
+    await db.commit()
+    return deleted
 
 
 def _used_exercise_names(document: UserExport) -> set[str]:

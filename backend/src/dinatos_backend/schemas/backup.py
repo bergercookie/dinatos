@@ -163,6 +163,13 @@ class UserImportCounts(BaseModel):
     measurements: int = 0
 
 
+class ClearDataResult(BaseModel):
+    """What `DELETE /profile/data` removed (`exercises` counts only custom
+    exercises nobody else still uses)."""
+
+    deleted: UserImportCounts
+
+
 class UserImportResult(BaseModel):
     mode: UserImportMode
     created: UserImportCounts

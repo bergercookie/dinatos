@@ -96,4 +96,15 @@ class ProfileRepository {
       throw ApiException.fromDioException(error);
     }
   }
+
+  /// Wipes the caller's routines, activities, measurements and custom
+  /// exercises (`DELETE /profile/data`). Settings and the account stay.
+  Future<ImportCounts> clearMyData() async {
+    try {
+      final response = await _dio.delete<Map<String, dynamic>>('/profile/data');
+      return ImportCounts.fromJson(response.data!['deleted'] as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
 }

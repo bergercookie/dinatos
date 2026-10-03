@@ -204,6 +204,10 @@ smuggles it in).
   skipped as present is linked to the existing routine. **Replace**
   (`?mode=replace`) first deletes the caller's routines, activities and
   measurements. Profile settings are applied in both modes.
+- `DELETE /profile/data` clears the account: the caller's routines, activities,
+  measurements and Hevy import records, plus every custom exercise no
+  remaining routine or activity (anyone's) references -- exercises are shared,
+  so one another account still uses survives. Settings and the user stay.
 - Every row written has `owner_id` set to the caller; nothing else in the
   database is touched. A file is fully validated (shape by pydantic, then
   references) before the first write, and applied in one transaction.

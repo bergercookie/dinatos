@@ -346,3 +346,34 @@ async def test_dangling_references_are_rejected_before_anything_is_written(
     assert response.status_code == 422, response.text
     assert fragment in json.dumps(response.json()["detail"])
     assert _comparable(await _export(client, seeded.alice)) == _comparable(before)
+
+
+async def test_clear_data_wipes_the_callers_data_and_unused_custom_exercises(
+    client: AsyncClient, seeded: Seeded
+) -> None:
+    response = await client.delete("/profile/data", headers=seeded.alice.headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["deleted"]["routines"] == 2
+    assert response.json()["deleted"]["activities"] == 2
+
+    document = await _export(client, seeded.alice)
+    assert document["routines"] == []
+    assert document["activities"] == []
+    assert document["measurements"] == []
+    assert document["profile"] == {"height_cm": 171.5, "unit_system": "imperial"}
+    # Bob's data is untouched.
+    bob = await _export(client, seeded.bob)
+    assert bob["routines"] or bob["activities"] or bob["measurements"]
+
+    # Clearing an already-clean account is a harmless no-op.
+    again = await client.delete("/profile/data", headers=seeded.alice.headers)
+    assert again.json()["deleted"] == {
+        "exercises": 0,
+        "routines": 0,
+        "activities": 0,
+        "measurements": 0,
+    }
+
+
+async def test_clear_data_requires_authentication(anonymous_client: AsyncClient) -> None:
+    assert (await anonymous_client.delete("/profile/data")).status_code == 401

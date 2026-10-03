@@ -7,11 +7,17 @@ from dinatos_backend.api.deps import get_current_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.profile import UserProfile
 from dinatos_backend.models.user import User
-from dinatos_backend.schemas.backup import UserExport, UserImportMode, UserImportResult
+from dinatos_backend.schemas.backup import (
+    ClearDataResult,
+    UserExport,
+    UserImportMode,
+    UserImportResult,
+)
 from dinatos_backend.schemas.profile import ProfileRead, ProfileUpdate
 from dinatos_backend.services.profile import get_or_create_profile
 from dinatos_backend.services.user_export import (
     UserImportInvalidError,
+    clear_own_data,
     export_user_data,
     import_user_data,
 )
@@ -72,3 +78,14 @@ async def import_my_data(
         return await import_user_data(db, user, payload, mode)
     except UserImportInvalidError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+
+
+@router.delete("/data", response_model=ClearDataResult)
+async def clear_my_data(
+    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> ClearDataResult:
+    """Start the account clean: deletes the caller's routines, activities,
+    measurements and Hevy import history, and every custom exercise no other
+    data still uses. Settings and the account itself are kept. Not undoable.
+    """
+    return ClearDataResult(deleted=await clear_own_data(db, user))

@@ -205,6 +205,57 @@ class _ImportModeDialogState extends State<_ImportModeDialog> {
   }
 }
 
+/// Pops true once the person has typed DELETE -- clearing is not undoable.
+class _ClearDataDialog extends StatefulWidget {
+  const _ClearDataDialog();
+
+  @override
+  State<_ClearDataDialog> createState() => _ClearDataDialogState();
+}
+
+class _ClearDataDialogState extends State<_ClearDataDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final confirmed = _controller.text.trim() == 'DELETE';
+    return AlertDialog(
+      title: const Text('Clear all account data?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This permanently deletes ALL your activities, routines, body measurements and '
+            'Hevy import history, plus any custom exercises nobody else uses. Your settings '
+            'and account stay. This cannot be undone -- export your data first if unsure.',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _controller,
+            decoration: const InputDecoration(labelText: 'Type DELETE to confirm'),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+          onPressed: confirmed ? () => Navigator.of(context).pop(true) : null,
+          child: const Text('Clear everything'),
+        ),
+      ],
+    );
+  }
+}
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -254,6 +305,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   late final _heightController = TextEditingController(text: widget.profile.heightCm?.toString());
   late UnitSystem _unitSystem = widget.profile.unitSystem;
   bool _submitting = false;
+  bool _showAdvanced = false;
   String? _error;
 
   @override
@@ -333,6 +385,25 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       _showMessage(result.summary());
     } on ApiException catch (error) {
       _showMessage('Import failed, nothing was changed: ${error.message}');
+    }
+  }
+
+  Future<void> _clearData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => const _ClearDataDialog(),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(profileRepositoryProvider).clearMyData();
+      ref.invalidate(routineListProvider);
+      ref.invalidate(activityListProvider);
+      ref.invalidate(measurementListProvider);
+      ref.invalidate(exerciseListProvider);
+      ref.invalidate(exercisePagingProvider);
+      _showMessage('All your account data was cleared.');
+    } on ApiException catch (error) {
+      _showMessage('Clearing failed: ${error.message}');
     }
   }
 
@@ -462,6 +533,35 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => context.go('/profile/about'),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  secondary: const Icon(Icons.tune_rounded),
+                  title: const Text('Advanced'),
+                  subtitle: const Text('Show options that can delete data'),
+                  value: _showAdvanced,
+                  onChanged: (value) => setState(() => _showAdvanced = value),
+                ),
+                if (_showAdvanced)
+                  ListTile(
+                    leading: Icon(
+                      Icons.delete_forever_outlined,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    title: Text(
+                      'Clear all account data',
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                    subtitle: const Text(
+                      'Delete your activities, routines, measurements and custom exercises',
+                    ),
+                    onTap: _clearData,
+                  ),
               ],
             ),
           ),
