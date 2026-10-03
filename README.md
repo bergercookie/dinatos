@@ -81,6 +81,11 @@ homelab instance rather than whichever one built it.
 Rendered at [the GitHub Pages site](https://bergercookie.github.io/dinatos/)
 (once published), and readable in place under [`docs/`](docs/).
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions and how to report a
+vulnerability privately.
+
 ## License
 
 [MIT](LICENSE) -- (c) Nikos Koukis.
