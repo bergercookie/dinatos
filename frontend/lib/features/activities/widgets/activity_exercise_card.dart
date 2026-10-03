@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/activity.dart';
+import '../../../models/equipment.dart';
 import '../../../models/exercise.dart';
 import '../../../models/set_type.dart';
 import '../../exercises/exercise_filter_sheet.dart';
@@ -69,6 +70,7 @@ class ActivityExerciseCard extends StatelessWidget {
               ActivitySetRow(
                 index: i,
                 set: exercise.sets[i],
+                weightEnabled: catalogExercise?.equipment != Equipment.bodyOnly,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -153,10 +155,14 @@ class ActivitySetRow extends StatelessWidget {
     required this.set,
     required this.onChanged,
     required this.onRemove,
+    this.weightEnabled = true,
   });
 
   final int index;
   final ActivitySet set;
+
+  /// `false` for a body-weight exercise: there is no load to enter.
+  final bool weightEnabled;
   final ValueChanged<ActivitySet> onChanged;
   final VoidCallback onRemove;
 
@@ -169,6 +175,7 @@ class ActivitySetRow extends StatelessWidget {
         Expanded(
           child: TextFormField(
             initialValue: set.weightKg?.toString(),
+            enabled: weightEnabled,
             decoration: const InputDecoration(labelText: 'kg', isDense: true),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (value) => onChanged(set.copyWith(weightKg: double.tryParse(value))),

@@ -8,6 +8,7 @@ import '../../core/design_tokens.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
+import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
@@ -180,6 +181,12 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
                   orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
                 )
                 .name,
+            weightEnabled:
+                exercisesAsync.valueOrNull
+                    ?.where((e) => e.id == _exercises[i].exerciseId)
+                    .firstOrNull
+                    ?.equipment !=
+                Equipment.bodyOnly,
             onChanged: (updated) => _updateExerciseAt(i, updated),
             onRemove: () => _removeExerciseAt(i),
           ),
@@ -228,12 +235,14 @@ class _RoutineExerciseCard extends StatelessWidget {
   const _RoutineExerciseCard({
     required this.exercise,
     required this.exerciseName,
+    required this.weightEnabled,
     required this.onChanged,
     required this.onRemove,
   });
 
   final RoutineExercise exercise;
   final String? exerciseName;
+  final bool weightEnabled;
   final ValueChanged<RoutineExercise> onChanged;
   final VoidCallback onRemove;
 
@@ -277,6 +286,7 @@ class _RoutineExerciseCard extends StatelessWidget {
               _SetRow(
                 index: i,
                 set: exercise.sets[i],
+                weightEnabled: weightEnabled,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -296,12 +306,14 @@ class _SetRow extends StatelessWidget {
   const _SetRow({
     required this.index,
     required this.set,
+    required this.weightEnabled,
     required this.onChanged,
     required this.onRemove,
   });
 
   final int index;
   final RoutineSet set;
+  final bool weightEnabled;
   final ValueChanged<RoutineSet> onChanged;
   final VoidCallback onRemove;
 
@@ -314,6 +326,7 @@ class _SetRow extends StatelessWidget {
         Expanded(
           child: TextFormField(
             initialValue: set.targetWeightKg?.toString(),
+            enabled: weightEnabled,
             decoration: const InputDecoration(labelText: 'kg', isDense: true),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (value) => onChanged(set.copyWith(targetWeightKg: double.tryParse(value))),
