@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -110,12 +109,8 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     leading: const Icon(Icons.menu_book_outlined),
                     title: const Text('Documentation'),
                     subtitle: const Text(docsUrl),
-                    trailing: const Icon(Icons.copy_rounded),
-                    onTap: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      await Clipboard.setData(const ClipboardData(text: docsUrl));
-                      messenger.showSnackBar(const SnackBar(content: Text('Link copied')));
-                    },
+                    trailing: const Icon(Icons.open_in_new_rounded),
+                    onTap: () => openExternalLink(context, ref, docsUrl),
                   ),
                   const ListTile(leading: Icon(Icons.copyright), title: Text(copyrightNotice)),
                 ],
