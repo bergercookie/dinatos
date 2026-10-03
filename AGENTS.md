@@ -31,6 +31,19 @@ cargo install just --locked   # if a Rust toolchain is already present
 ```
 
 or the install script from <https://github.com/casey/just#installation>.
+
+In a sandbox behind an egress proxy, the install script itself (it fetches
+from `just.systems`) can fail with a 403, and so can GitHub's API and
+`releases/latest` redirect (so you can't look up "the latest version"). The
+release *assets* on github.com still download fine -- pick a version
+(1.43.0 worked; anything past ~1.31 does) and fetch the tarball directly:
+
+```bash
+V=1.43.0
+curl -sSfL "https://github.com/casey/just/releases/download/$V/just-$V-x86_64-unknown-linux-musl.tar.gz" \
+    | tar -xzf - -C /usr/local/bin just
+```
+
 CI does not hit this: `extractions/setup-just@v4` fetches a current release.
 
 ## What needs nothing extra
