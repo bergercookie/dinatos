@@ -18,7 +18,7 @@ a paragraph of prose describing the same command can. If you find yourself
 about to run a raw tool invocation because there's no recipe for it yet, add
 the recipe instead of working around its absence.
 
-[Devbox](https://www.devbox.dev) is the recommended way to get every tool a
+[Devbox](https://www.jetify.com/devbox) is the recommended way to get every tool a
 recipe might need (Python 3.12, `uv`, a current `just`, Docker, the Flutter
 SDK, CMake) onto your `PATH` without touching your system install of any of
 them:

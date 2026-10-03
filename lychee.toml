@@ -1,0 +1,40 @@
+# Link checker config (https://lychee.cli.rs). Used by `just check-links`, the
+# `links` workflow and the offline pre-commit hook; see
+# docs/development/ci-and-releases.md.
+
+# Build output / vendored trees (also skipped via .gitignore, listed for safety).
+exclude_path = [
+  '(^|/)node_modules/',
+  '(^|/)\.venv/',
+  '(^|/)\.dart_tool/',
+  '^docs/_build/',
+  '(^|/)build/',
+]
+
+extensions = ["md"]
+# MyST/Sphinx allow extensionless relative doc links; resolve them as .md.
+fallback_extensions = ["md"]
+
+# 200..=299 plus 429 (rate limited: the host is alive, just throttling us).
+accept = ["200..=299", "429"]
+
+timeout = 20
+max_retries = 3
+retry_wait_time = 5
+max_concurrency = 8
+# GitHub and others reject unidentified clients.
+user_agent = "Mozilla/5.0 (compatible; lychee link check)"
+
+include_fragments = "anchor-only"
+no_progress = true
+
+# Intentionally non-real URLs: local dev servers, placeholders, examples.
+exclude = [
+  '^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])',
+  '^https?://([a-z0-9.-]+\.)?example\.(com|org|net)',
+  '^https?://[^/]*\.(local|internal|invalid|test)(/|:|$)',
+  # GitHub renders README anchors client-side; lychee can't see them (false positive).
+  '^https://github\.com/casey/just#installation$',
+  '\{\{', # template placeholders
+  '<[a-z_-]+>', # <owner>, <host> style placeholders
+]

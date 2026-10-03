@@ -48,6 +48,25 @@ docs-serve` to also serve it on `http://127.0.0.1:8000` while you edit) uses
 the exact same `-W --keep-going` Sphinx invocation, so a broken cross-link
 or toctree entry fails the same way locally as it would in CI.
 
+## Link checking
+
+[lychee](https://github.com/lycheeverse/lychee) checks every link in the
+repo's Markdown (`README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `docs/**`),
+configured in `lychee.toml` (exclusions for placeholder/localhost URLs and
+build output live there, each with its reason). It runs in two places:
+
+- **Offline, in `just check`**: the `lychee-offline` pre-commit hook checks
+  relative links and `#anchors` between files, with no network, in well under
+  a second -- so it can't flake and is safe to block on.
+- **Online, outside `just check`**: `just check-links` also fetches every
+  external URL. `.github/workflows/links.yml` runs it weekly, on demand and on
+  PRs touching Markdown, but it is not part of the blocking `check` job: a
+  third-party site going down must not block unrelated PRs. A flaky-but-valid
+  host gets excluded in `lychee.toml` with a comment, not retried forever.
+
+Both use the `lychee-bin` PyPI wheel, pinned in `.pre-commit-config.yaml` and
+the root `justfile` (bump both together).
+
 ## Nightly releases
 
 `.github/workflows/nightly.yml` runs daily (02:17 UTC, or manually via

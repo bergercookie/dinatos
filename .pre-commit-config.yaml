@@ -95,3 +95,15 @@ repos:
         language: system
         files: ^backend/.*\.py$
         pass_filenames: false
+      # Offline only: relative links and anchors between the Markdown files,
+      # no network, so it is near-instant and can't flake. External URLs are
+      # checked by `just check-links` / the `links` workflow instead. lychee
+      # is installed from its official PyPI wheel (lychee-bin, prebuilt, works
+      # on old glibc unlike the official hook's cargo-binstall download); keep
+      # the version in step with `check-links` in the root justfile.
+      - id: lychee-offline
+        name: lychee (offline Markdown links)
+        entry: lychee --offline --no-progress --config lychee.toml
+        language: python
+        additional_dependencies: ["lychee-bin==0.24.2"]
+        files: \.md$

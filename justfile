@@ -38,6 +38,10 @@ check: lint backend::test mcp_server::test docs::docs
 lint:
     uvx pre-commit run --all-files
 
+# Check every link in the Markdown files, external URLs included (network; not part of `check` -- see docs/development/ci-and-releases.md).
+check-links:
+    uvx --from lychee-bin==0.24.2 lychee --config lychee.toml .
+
 # Install the git pre-commit hooks.
 hooks:
     uvx pre-commit install
