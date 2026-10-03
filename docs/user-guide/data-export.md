@@ -17,6 +17,11 @@ another one). You choose how:
   measurements, then imports the file. Use it to make an account match a file
   exactly.
 
+To start over entirely, turn on **Advanced** in Settings and use **Clear all
+account data**. It deletes your activities, routines, body measurements, Hevy
+import history and any custom exercises nobody else uses, and keeps your
+settings and account. It cannot be undone.
+
 Exercises are shared by everyone on a server: an exercise in the file is matched
 to the one with the same name; if there is none, it is created as a custom
 exercise. Your settings in the file are applied in both modes.
