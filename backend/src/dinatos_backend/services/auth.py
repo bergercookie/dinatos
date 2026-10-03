@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dinatos_backend.config import get_settings
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
+from dinatos_backend.services.starter_routines import seed_starter_routines
 
 _hasher = PasswordHasher()
 
@@ -77,6 +78,7 @@ async def create_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    await seed_starter_routines(db, user)
     return user
 
 
@@ -108,14 +110,14 @@ async def bootstrap_admin_user(db: AsyncSession) -> None:
     if existing.scalar_one_or_none() is not None:
         return
 
-    db.add(
-        User(
-            email=settings.admin_email,
-            password_hash=hash_password(settings.admin_password),
-            is_admin=True,
-        )
+    admin = User(
+        email=settings.admin_email,
+        password_hash=hash_password(settings.admin_password),
+        is_admin=True,
     )
+    db.add(admin)
     await db.commit()
+    await seed_starter_routines(db, admin)
 
 
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:

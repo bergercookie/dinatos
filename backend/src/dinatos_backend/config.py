@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     # what it creates.
     seed_default_exercises: bool = True
 
+    # Gives each brand new account a few classic starter routines (Push,
+    # Pull, Legs, ...) built from that seeded catalog -- see
+    # `services.starter_routines`. Skips any exercise missing from the
+    # catalog, so it's a no-op when `seed_default_exercises` is off.
+    seed_default_routines: bool = True
+
     # Opts into WorkoutX (https://workoutxapp.com) for exercise tutorials
     # (real animated GIFs, richer per-exercise metadata) instead of the
     # bundled free-exercise-db dataset -- see

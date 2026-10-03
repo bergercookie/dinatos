@@ -22,6 +22,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # Docker image's entrypoint does this; `just dev` does too) -- this
     # only creates rows, never touches schema.
     async with async_session_factory() as db:
-        await bootstrap_admin_user(db)
+        # Exercises first: a new account's starter routines are built from them.
         await bootstrap_default_exercises(db)
+        await bootstrap_admin_user(db)
     yield
