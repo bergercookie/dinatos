@@ -11,7 +11,7 @@ shape changes.
 
 Layout:
 
-```
+```text
 frontend/lib/
   core/       API client (Dio + an auth interceptor), auth state/storage,
               routing (go_router), theme

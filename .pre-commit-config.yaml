@@ -49,6 +49,14 @@ repos:
       - id: shfmt
         args: [--diff, --indent, "2"]
 
+  # Markdown (README, AGENTS.md, docs/). Check-only: markdownlint-cli2 is run
+  # without --fix so it can never rewrite MyST syntax the Sphinx build relies
+  # on. Rules are configured in .markdownlint-cli2.yaml.
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.3
+    hooks:
+      - id: markdownlint-cli2
+
   - repo: local
     hooks:
       # ruff runs from the repo root against the root pyproject.toml, so it

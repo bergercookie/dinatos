@@ -14,21 +14,21 @@ Android, and Linux desktop).
 <table>
 <tr>
 <td align="center" width="50%">
-<img src="screenshots/login.png" width="380"><br>
+<img alt="Signing in" src="screenshots/login.png" width="380"><br>
 <sub>Signing in</sub>
 </td>
 <td align="center" width="50%">
-<img src="screenshots/exercise-view.png" width="380"><br>
+<img alt="The exercise catalog" src="screenshots/exercise-view.png" width="380"><br>
 <sub>The exercise catalog</sub>
 </td>
 </tr>
 <tr>
 <td align="center" width="50%">
-<img src="screenshots/routine-creation.png" width="380"><br>
+<img alt="Building a saved routine" src="screenshots/routine-creation.png" width="380"><br>
 <sub>Building a saved routine</sub>
 </td>
 <td align="center" width="50%">
-<img src="screenshots/routine-execution.png" width="380"><br>
+<img alt="Logging an activity from a routine" src="screenshots/routine-execution.png" width="380"><br>
 <sub>Logging an activity from it</sub>
 </td>
 </tr>

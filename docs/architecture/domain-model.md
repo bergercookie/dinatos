@@ -21,7 +21,7 @@ someone using the app rather than changing its code.)
 
 ## Repository layout
 
-```
+```text
 dinatos/
   backend/   FastAPI + async SQLAlchemy + pydantic API, backed by Postgres
   frontend/  Flutter app (web today; the same codebase targets Android)

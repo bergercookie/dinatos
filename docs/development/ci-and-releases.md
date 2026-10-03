@@ -124,3 +124,6 @@ and `shfmt` (2-space indent, check-only) run as pre-commit hooks, along with
 checks that anything with a shebang is executable. Both ship as wheels, so
 nothing needs installing system-wide. Fix formatting with
 `uvx --from shfmt-py shfmt -i 2 -w <file>`.
+
+Markdown (README, `AGENTS.md`, `docs/`) is linted the same way by
+`markdownlint-cli2`; its rules live in `.markdownlint-cli2.yaml`.

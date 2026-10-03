@@ -1,0 +1,19 @@
+# Config for the markdownlint-cli2 pre-commit hook (see .pre-commit-config.yaml).
+config:
+  default: true
+  # Prose is hand-wrapped at ~79 columns but tables, links and URLs overflow.
+  MD013: false
+  # README.md uses an HTML table for the screenshot grid.
+  MD033: false
+  # docs/development/contributing.md starts with a MyST {include} fence.
+  MD041: false
+  # Tables are written in compact `|a|b|` style; reformatting is churn.
+  MD060: false
+
+# Generated or vendored markdown.
+ignores:
+  - "**/node_modules/**"
+  - "**/.venv/**"
+  - "**/build/**"
+  - "docs/_build/**"
+  - "frontend/**/ephemeral/**"
