@@ -34,7 +34,16 @@ just packaging build-appimage <version>
 just packaging build-linux-artifacts <version>   # both Linux formats, one shared build
 ```
 
-Linux build dependencies and the Flutter/Android toolchains must already be
+`just packaging build-deb-docker <version>` (likewise `build-appimage-docker`
+and `build-linux-artifacts-docker`) builds inside an
+`ubuntu:22.04` container (`packaging/linux/Dockerfile.build`) and needs only
+Docker on the host. Prefer it for local builds from a Nix/devbox shell: a
+binary built there embeds `/nix/store` library paths and interpreter, so the
+resulting package doesn't run on other machines (or fails to find the host's
+GL drivers). It builds from a copy of the checkout, so stale host
+`frontend/build/` state is never reused.
+
+Otherwise, Linux build dependencies and the Flutter/Android toolchains must already be
 installed -- see [Environment setup](../development/environment-setup.md).
 The release workflow calls these same recipes, keeping local and published
 builds on the same path. APK output is under
