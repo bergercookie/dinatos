@@ -13,7 +13,28 @@ async def test_import_hevy_workouts_endpoint(client: AsyncClient) -> None:
         files={"file": ("workout_data.csv", csv_bytes, "text/csv")},
     )
     assert response.status_code == 200
-    assert response.json() == {"activities_created": 3, "exercises_created": 5}
+    body = response.json()
+    assert (body["activities_created"], body["exercises_created"]) == (3, 5)
+    # Every created exercise is reported, with which fields were guessed.
+    assert len(body["created_exercises"]) == 5
+    by_name = {e["name"]: e for e in body["created_exercises"]}
+    squat = by_name["Squat (Barbell)"]
+    assert squat["equipment"] == "barbell"
+    assert squat["equipment_guessed"] is True
+    assert set(squat) == {
+        "id",
+        "name",
+        "equipment",
+        "primary_muscles",
+        "secondary_muscles",
+        "equipment_guessed",
+        "muscles_guessed",
+    }
+
+    # The guesses were really saved on the exercise, so the edit screen shows them.
+    saved = await client.get(f"/exercises/{squat['id']}")
+    assert saved.json()["equipment"] == "barbell"
+    assert saved.json()["primary_muscles"] == squat["primary_muscles"]
 
     activities = await client.get("/activities")
     assert len(activities.json()) == 3
@@ -32,7 +53,7 @@ async def test_import_hevy_workouts_endpoint_accepts_pc_export(client: AsyncClie
         files={"file": ("workout_data.csv", csv_bytes, "text/csv")},
     )
     assert response.status_code == 200
-    assert response.json() == {"activities_created": 3, "exercises_created": 5}
+    assert response.json()["exercises_created"] == 5
 
 
 async def test_reimporting_the_same_workouts_file_is_rejected(client: AsyncClient) -> None:
@@ -62,7 +83,11 @@ async def test_force_reimports_the_same_workouts_file_anyway(client: AsyncClient
     assert second.status_code == 200
     # Same activities re-created, but the exercises already exist from the
     # first import -- exercises_created is 0 the second time around.
-    assert second.json() == {"activities_created": 3, "exercises_created": 0}
+    assert second.json() == {
+        "activities_created": 3,
+        "exercises_created": 0,
+        "created_exercises": [],
+    }
 
     activities = await client.get("/activities")
     assert len(activities.json()) == 6

@@ -127,6 +127,16 @@ def _words(name: str) -> frozenset[str]:
     return frozenset(out)
 
 
+_COMPOUND_RE = re.compile(r"\b(pull|push|chin|sit)[\s-]+ups?\b")
+
+
+def words_of(name: str) -> frozenset[str]:
+    """`_words`, plus joining "Pull Up"/"Pull-Ups"/"Pullups" into one word --
+    for *similarity* comparisons (`hevy_exercise_infer`), where those
+    spellings must look alike. The exact matcher below keeps `_words`."""
+    return _words(_COMPOUND_RE.sub(r"\1up", name.lower()))
+
+
 class CatalogMatcher:
     """Built once per import from the seeded (non-custom) exercises."""
 

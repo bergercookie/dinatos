@@ -18,6 +18,13 @@ re-imports it anyway; a good reason to do that is exporting from Hevy again
 after logging more workouts there, where a *different* file (even one new
 workout added) is not treated as a duplicate and imports normally.
 
+Hevy's export carries no equipment or muscle information. Exercises that
+match one of Dinatos's built-in ones are reused; any other is created as your
+own custom exercise, and we try to fill in its equipment and muscle groups
+automatically from similar built-in exercises. Some of those guesses may be
+wrong, so when the import finishes the screen lists the new exercises --
+tap one to review and edit it.
+
 > **Note:** the import matches files by their exact content, not their
 > filename -- Hevy names every export the same thing, so Dinatos can't tell
 > two exports apart by name alone.
