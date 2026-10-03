@@ -4,9 +4,10 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.responses import Response
+from starlette.responses import HTMLResponse, Response
 from starlette.types import Scope
 
 from dinatos_backend import __version__
@@ -27,6 +28,7 @@ app = FastAPI(
     title="Dinatos",
     version=__version__,
     lifespan=lifespan,
+    docs_url=None,  # replaced by the themed `/docs` route below
     description=(
         "The Dinatos REST API.\n\n"
         "Everything except `GET /health` needs an "
@@ -73,6 +75,68 @@ app.include_router(imports.router)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# Swagger UI ships a light-only stylesheet, and the Flutter app embeds this page
+# in an iframe -- so in dark mode (the app follows the OS setting) the docs were
+# a white sheet inside a navy app. Same palette as `frontend/lib/core/theme.dart`.
+_SWAGGER_DARK_CSS = """
+<style>
+:root { color-scheme: light dark; }
+@media (prefers-color-scheme: dark) {
+  html, body { background: #17252b; }
+  .swagger-ui, .swagger-ui .info .title, .swagger-ui .info li, .swagger-ui .info p,
+  .swagger-ui .info table, .swagger-ui .opblock-tag,
+  .swagger-ui .opblock .opblock-summary-description,
+  .swagger-ui .opblock .opblock-section-header h4, .swagger-ui .opblock-description-wrapper p,
+  .swagger-ui .opblock-external-docs-wrapper p, .swagger-ui .opblock-title_normal p,
+  .swagger-ui .parameter__name, .swagger-ui .parameter__type, .swagger-ui .parameter__in,
+  .swagger-ui table thead tr th, .swagger-ui table thead tr td, .swagger-ui .tab li,
+  .swagger-ui .response-col_status, .swagger-ui .response-col_links, .swagger-ui label,
+  .swagger-ui .model, .swagger-ui .model-title, .swagger-ui section.models h4,
+  .swagger-ui .responses-inner h4, .swagger-ui .responses-inner h5,
+  .swagger-ui .scheme-container .schemes > label, .swagger-ui .dialog-ux .modal-ux-header h3,
+  .swagger-ui .dialog-ux .modal-ux-content p, .swagger-ui .dialog-ux .modal-ux-content h4,
+  .swagger-ui .markdown p,
+  .swagger-ui .renderedMarkdown p, .swagger-ui .prop-type { color: #e3e6e7; }
+  .swagger-ui .info a,
+  .swagger-ui .info .base-url, .swagger-ui .opblock-tag small { color: #72d6b0; }
+  .swagger-ui .scheme-container { background: #1f2f36; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  .swagger-ui .opblock-tag { border-bottom-color: #3b4a50; }
+  .swagger-ui .opblock .opblock-section-header { background: #1f2f36; box-shadow: none; }
+  .swagger-ui .opblock .opblock-summary-path,
+  .swagger-ui .opblock .opblock-summary-path__deprecated { color: #e3e6e7; }
+  .swagger-ui .opblock.opblock-get { background: rgba(97,175,254,.10); }
+  .swagger-ui .opblock.opblock-post { background: rgba(73,204,144,.10); }
+  .swagger-ui .opblock.opblock-put { background: rgba(252,161,48,.10); }
+  .swagger-ui .opblock.opblock-delete { background: rgba(249,62,62,.10); }
+  .swagger-ui .opblock.opblock-patch { background: rgba(80,227,194,.10); }
+  .swagger-ui .opblock-body pre.microlight { background: #0f1a1f !important; }
+  .swagger-ui input[type=text], .swagger-ui input[type=password], .swagger-ui input[type=search],
+  .swagger-ui input[type=email], .swagger-ui textarea, .swagger-ui select {
+    background: #1f2f36; color: #e3e6e7; border-color: #3b4a50; }
+  .swagger-ui .btn { color: #e3e6e7; border-color: #72d6b0; background: transparent; }
+  .swagger-ui .btn.authorize { color: #72d6b0; }
+  .swagger-ui .btn.authorize svg { fill: #72d6b0; }
+  .swagger-ui .model-box, .swagger-ui section.models, .swagger-ui .dialog-ux .modal-ux {
+    background: #1f2f36; border-color: #3b4a50; }
+  .swagger-ui section.models.is-open h4 { border-bottom-color: #3b4a50; }
+  .swagger-ui .opblock-tag svg, .swagger-ui .opblock .opblock-summary-control svg,
+  .swagger-ui .expand-methods svg, .swagger-ui .model-toggle:after { fill: #e3e6e7; }
+  .swagger-ui table tbody tr td { border-bottom-color: #3b4a50; color: #e3e6e7; }
+  .swagger-ui .info code, .swagger-ui .markdown code, .swagger-ui .renderedMarkdown code {
+    background: #0f1a1f; color: #72d6b0; }
+  .swagger-ui .topbar, .swagger-ui .loading-container .loading:after { color: #e3e6e7; }
+}
+</style>
+"""
+
+
+@app.get("/docs", include_in_schema=False)
+async def swagger_ui() -> HTMLResponse:
+    page = get_swagger_ui_html(openapi_url="/openapi.json", title=f"{app.title} - Swagger UI")
+    html = bytes(page.body).decode().replace("</head>", f"{_SWAGGER_DARK_CSS}</head>", 1)
+    return HTMLResponse(html)
 
 
 class _WebApp(StaticFiles):
