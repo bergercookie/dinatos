@@ -370,3 +370,15 @@ Further gotchas, beyond the web-target section above (same rules for
   events" for -- which is how the modal tour steps' scrim shows up there.
   Test "blocked" with a short-timeout click expecting a timeout, not
   `force=True`.
+
+## A release APK needs `INTERNET` in the *main* manifest
+
+`flutter create` only puts `android.permission.INTERNET` in the `debug/` and
+`profile/` manifests (for hot reload). A release APK without it in
+`frontend/android/app/src/main/AndroidManifest.xml` installs and renders fine,
+then every request fails as "server not reachable" -- debug builds and
+`flutter test` never show it. `just android run` (after
+`create-avd` and `emulator`; needs the Android SDK and a host with KVM)
+builds and launches the release APK on an emulator to check this class of bug;
+`just android check-apk` asserts the permission on the built APK with no emulator
+at all (the emulator won't start without `/dev/kvm`, e.g. in a cloud container).

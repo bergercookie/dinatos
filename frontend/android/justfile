@@ -1,0 +1,96 @@
+# Android recipes: a throwaway emulator, and building/installing/launching the
+# release APK on it -- the same build type users get, so it catches
+# manifest/permission problems that debug builds and `flutter test` hide.
+#
+# Imported by the root justfile as the `android` module (`just android <recipe>`);
+# also runs directly from here. Needs the Android SDK (cmdline-tools) with
+# ANDROID_HOME or ANDROID_SDK_ROOT set, plus a Flutter SDK; the emulator wants
+# KVM -- without it the emulator refuses to start (so not in a typical
+# unprivileged container; use a machine with /dev/kvm).
+set shell := ["bash", "-euo", "pipefail", "-c"]
+# Recipes run from frontend/, where the Flutter project is.
+set working-directory := ".."
+
+default:
+    @just --list
+
+avd_name := "dinatos_test"
+package := "dev.bergercookie.dinatos_frontend"
+# Must match the host CPU (the emulator refuses a foreign architecture), and
+# needs KVM / hardware acceleration; override with ANDROID_IMAGE for another
+# API level.
+android_image := env("ANDROID_IMAGE", if arch() == "aarch64" { "system-images;android-34;google_apis;arm64-v8a" } else { "system-images;android-34;google_apis;x86_64" })
+
+# Install the SDK packages and create the throwaway AVD (idempotent).
+create-avd:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}"
+    export PATH="$sdk/cmdline-tools/latest/bin:$sdk/emulator:$sdk/platform-tools:$PATH"
+    yes | sdkmanager --licenses >/dev/null || true
+    sdkmanager "platform-tools" "emulator" "{{android_image}}"
+    # avdmanager prints a spurious "Could not load devices ... devices.xml"
+    # error and exits non-zero even when it works, so ask the emulator instead.
+    if emulator -list-avds | grep -qx "{{avd_name}}"; then
+        echo "AVD {{avd_name}} already exists"
+    else
+        echo no | avdmanager create avd -n "{{avd_name}}" -k "{{android_image}}" -d pixel_6 || true
+        emulator -list-avds | grep -qx "{{avd_name}}"
+        echo "Created AVD {{avd_name}}"
+    fi
+
+# Boot the emulator and wait until Android has finished starting (headless=true: no window, e.g. CI).
+emulator headless="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}"
+    export PATH="$sdk/emulator:$sdk/platform-tools:$PATH"
+    if ! emulator -list-avds | grep -qx "{{avd_name}}"; then
+        echo "No AVD {{avd_name}}; run 'just android create-avd' first" >&2
+        exit 1
+    fi
+    flags="-no-snapshot -no-boot-anim -gpu swiftshader_indirect"
+    [ "{{headless}}" = "true" ] && flags="$flags -no-window -no-audio"
+    if ! adb devices | grep -q '^emulator-'; then
+        nohup emulator -avd "{{avd_name}}" $flags >/tmp/dinatos-emulator.log 2>&1 &
+        emu_pid=$!
+    fi
+    # Wait for boot, but give up if the emulator process dies (e.g. no KVM).
+    until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+        if [ -n "${emu_pid:-}" ] && ! kill -0 "$emu_pid" 2>/dev/null; then
+            echo "Emulator exited; see /tmp/dinatos-emulator.log" >&2
+            tail -5 /tmp/dinatos-emulator.log >&2
+            exit 1
+        fi
+        sleep 3
+    done
+    echo "Emulator ready (log: /tmp/dinatos-emulator.log). The host's localhost is http://10.0.2.2 from inside it."
+
+# Build the release APK (output in frontend/build/app/outputs/flutter-apk/).
+build:
+    flutter build apk --release
+
+# Fail unless the built release APK declares INTERNET -- the check that needs no emulator/KVM (builds first if there's no APK yet).
+check-apk:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    apk=build/app/outputs/flutter-apk/app-release.apk
+    [ -f "$apk" ] || just --justfile android/justfile build
+    sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}"
+    aapt2=$(ls "$sdk"/build-tools/*/aapt2 | sort -V | tail -1)
+    "$aapt2" dump permissions "$apk" | grep -q "android.permission.INTERNET" \
+        || { echo "$apk lacks android.permission.INTERNET" >&2; exit 1; }
+    echo "OK: $apk declares INTERNET"
+
+# Build, install and launch the release APK on the running emulator.
+run: build
+    adb install -r build/app/outputs/flutter-apk/app-release.apk
+    adb shell monkey -p {{package}} -c android.intent.category.LAUNCHER 1
+
+# Save a screenshot of the emulator (path is relative to frontend/).
+screenshot out="android.png":
+    adb exec-out screencap -p > "{{out}}"
+
+# Stop the emulator.
+stop:
+    adb emu kill
