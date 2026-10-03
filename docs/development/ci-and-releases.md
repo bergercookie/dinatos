@@ -21,6 +21,19 @@ artifact (the mismatched images) if the check fails, so a screenshot drift
 can be inspected without reproducing it locally first; `e2e` uploads a
 screenshot of the page at the moment a browser test failed.
 
+## Coverage
+
+Backend and `mcp_server` (pytest-cov, `--cov` in each `pyproject.toml`'s
+`addopts`, 100% line+branch gate) and the Flutter frontend
+(`just frontend coverage`: `flutter test --coverage` -> `coverage/lcov.info`,
+50% line gate) are all measured on every CI run; `e2e` is not. Nothing is
+sent to an external service: each run's summary page shows the backend and
+`mcp_server` per-file tables and the frontend total, and the `check` and
+`frontend` jobs upload browsable HTML (`backend-coverage-html`,
+`frontend-coverage-html`; `mcp_server` has none in CI). Locally, `just
+backend coverage`, `just mcp_server coverage` and `just frontend coverage`
+write the same reports.
+
 See [Environment setup](environment-setup.md) for what each of these needs
 installed, and [Running and testing](workflow.md) for what each recipe
 actually does.
