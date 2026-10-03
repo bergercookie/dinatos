@@ -467,9 +467,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             const _SectionHeader('Administration'),
             Card(
               child: ListTile(
-                leading: const Icon(Icons.manage_accounts_outlined),
-                title: const Text('Manage users'),
-                subtitle: const Text('View accounts and add new ones'),
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Text('Server administration'),
+                subtitle: const Text('Manage users, and back up or restore the whole server'),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.go('/profile/admin'),
               ),
