@@ -84,7 +84,7 @@ def test_tour_takes_a_new_user_from_sign_up_to_a_logged_workout(page: Page) -> N
     _press_tab(page, "Settings")
 
     _on_step(page, "Pick your units")
-    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Save", exact=True).click()
 
     _on_step(page, "Routines are reusable plans")
     _press_tab(page, "Routines")
