@@ -15,7 +15,7 @@ const _destinations = [
   (icon: Icons.fitness_center, label: 'Exercises'),
   (icon: Icons.list_alt, label: 'Routines'),
   (icon: Icons.home, label: 'Home'),
-  (icon: Icons.straighten, label: 'Measurements'),
+  (icon: Icons.straighten, label: 'Body'),
   (icon: Icons.settings, label: 'Settings'),
 ];
 

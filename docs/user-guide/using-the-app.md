@@ -41,8 +41,8 @@ Saving an activity, like a routine, replaces the whole thing at once.
 ## Measurements
 
 Track body measurements (weight, and whatever else you choose) separately
-from routines, each with its own date. Useful for watching trends
-independent of any single gym session.
+from routines (the **Body** tab), each with its own date. Useful for watching
+trends independent of any single gym session.
 
 ## Profile
 

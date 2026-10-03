@@ -19,7 +19,7 @@ Dinatos organizes everything around four kinds of thing:
   activity can start from one of your saved routines (copying its exercises
   in as a starting point) or be built from scratch on the spot. Also
   private to your own account.
-- **Measurements** -- dated body-measurement entries (weight, and whatever
+- **Measurements** (the **Body** tab) -- dated body-measurement entries (weight, and whatever
   else you choose to track), separate from any routine.
 
 Your **profile** holds account-level settings and is where you log out,

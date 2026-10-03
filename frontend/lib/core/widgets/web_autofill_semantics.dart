@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import 'web_autofill_bridge.dart';
+
 /// Keeps Flutter's semantics tree alive for as long as it's mounted, on web.
 ///
 /// Why this exists: Flutter web paints text fields to a canvas, and only
@@ -12,9 +14,13 @@ import 'package:flutter/semantics.dart';
 /// mounts a persistent, correctly-sized `<input>` per text field, which is
 /// what password managers can find and fill. Scoped to the screens that need
 /// it (login/register) so the rest of the app doesn't pay for the extra tree.
+///
+/// [fields] additionally makes those inputs fillable by an extension: see
+/// [bindWebAutofill] for the attributes and the synthetic-event handling.
 class WebAutofillSemantics extends StatefulWidget {
-  const WebAutofillSemantics({super.key, required this.child});
+  const WebAutofillSemantics({super.key, required this.fields, required this.child});
 
+  final List<WebAutofillField> fields;
   final Widget child;
 
   @override
@@ -23,15 +29,20 @@ class WebAutofillSemantics extends StatefulWidget {
 
 class _WebAutofillSemanticsState extends State<WebAutofillSemantics> {
   SemanticsHandle? _handle;
+  VoidCallback? _unbind;
 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) _handle = SemanticsBinding.instance.ensureSemantics();
+    if (kIsWeb) {
+      _handle = SemanticsBinding.instance.ensureSemantics();
+      _unbind = bindWebAutofill(widget.fields);
+    }
   }
 
   @override
   void dispose() {
+    _unbind?.call();
     _handle?.dispose();
     super.dispose();
   }

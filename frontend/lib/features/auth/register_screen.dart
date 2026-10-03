@@ -7,6 +7,7 @@ import '../../core/auth/auth_notifier.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/web_autofill_bridge.dart';
 import '../../core/widgets/web_autofill_semantics.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: WebAutofillSemantics(
+              fields: [
+                WebAutofillField(
+                  label: 'Email',
+                  controller: _emailController,
+                  autocomplete: 'username',
+                  name: 'username',
+                ),
+                WebAutofillField(
+                  label: 'Password',
+                  controller: _passwordController,
+                  autocomplete: 'new-password',
+                  name: 'password',
+                ),
+              ],
               child: AutofillGroup(
                 child: Form(
                   key: _formKey,

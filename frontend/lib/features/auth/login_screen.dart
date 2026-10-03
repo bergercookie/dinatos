@@ -10,6 +10,7 @@ import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/web_autofill_bridge.dart';
 import '../../core/widgets/web_autofill_semantics.dart';
 import 'auth_config_provider.dart';
 
@@ -92,6 +93,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: WebAutofillSemantics(
+              fields: [
+                WebAutofillField(
+                  label: 'Email',
+                  controller: _emailController,
+                  autocomplete: 'username',
+                  name: 'username',
+                ),
+                WebAutofillField(
+                  label: 'Password',
+                  controller: _passwordController,
+                  autocomplete: 'current-password',
+                  name: 'password',
+                ),
+              ],
               child: AutofillGroup(
                 child: Form(
                   key: _formKey,
