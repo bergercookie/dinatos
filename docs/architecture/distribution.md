@@ -40,7 +40,9 @@ and `build-linux-artifacts-docker`) builds inside an
 Docker on the host. Prefer it for local builds from a Nix/devbox shell: a
 binary built there embeds `/nix/store` library paths and interpreter, so the
 resulting package doesn't run on other machines (or fails to find the host's
-GL drivers). It builds from a copy of the checkout, so stale host
+GL drivers) -- which is why the non-Docker `build-deb`/`build-appimage`/
+`build-linux-artifacts` recipes refuse to run inside a devbox shell
+(`DINATOS_ALLOW_DEVBOX_BUILD=1` overrides, for a local-only test). It builds from a copy of the checkout, so stale host
 `frontend/build/` state is never reused.
 
 Otherwise, Linux build dependencies and the Flutter/Android toolchains must already be
