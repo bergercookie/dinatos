@@ -36,6 +36,29 @@ _build-linux version:
 build-deb version output_dir="dist": (_build-linux version)
     ./linux/build-deb.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
 
+# Build the Debian package inside an ubuntu:22.04 container (needs only Docker --
+# no Flutter/GTK/libsecret on the host, and safe to run from a Nix/devbox shell,
+# whose toolchain would otherwise bake /nix/store paths into the binary).
+build-deb-docker version output_dir="dist": (_docker-build "build-deb" version output_dir)
+
+# Build the AppImage inside the same container.
+build-appimage-docker version output_dir="dist": (_docker-build "build-appimage" version output_dir)
+
+# Build both Linux packages inside the same container, from one shared Flutter build.
+build-linux-artifacts-docker version output_dir="dist": (_docker-build "build-linux-artifacts" version output_dir)
+
+[private]
+_docker-build recipe version output_dir:
+    docker build -t dinatos-linux-builder -f linux/Dockerfile.build linux
+    mkdir -p "{{repo_root}}/{{output_dir}}"
+    docker run --rm \
+        -v "{{repo_root}}":/src:ro \
+        -v "{{repo_root}}/{{output_dir}}":/out \
+        -v dinatos-pub-cache:/root/.pub-cache \
+        -e RECIPE="{{recipe}}" -e VERSION="{{version}}" \
+        -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
+        dinatos-linux-builder
+
 # Build an AppImage in OUTPUT_DIR.
 build-appimage version output_dir="dist": (_build-linux version)
     ./linux/build-appimage.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
