@@ -48,3 +48,7 @@ run:
 # Production web build, output in build/web/.
 build-web:
     flutter build web --release
+
+# Flutter clean
+clean:
+    flutter clean
