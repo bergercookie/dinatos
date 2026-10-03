@@ -7,7 +7,7 @@ Devbox is giving you for free.
 
 ## Devbox (recommended)
 
-[Devbox](https://www.devbox.dev) provisions every tool a `just` recipe might
+[Devbox](https://www.jetify.com/devbox) provisions every tool a `just` recipe might
 need -- Python 3.12, `uv`, a current `just`, Docker tooling, the Flutter SDK,
 CMake -- into an isolated shell, pinned by `devbox.lock`, without touching
 your system installs.
