@@ -80,6 +80,63 @@ class _ServerUrlDialogState extends State<_ServerUrlDialog> {
   }
 }
 
+/// Pops the new key, an empty string to remove the saved one, or null if
+/// cancelled. Dedicated `State` for the controller, same reasoning as
+/// [_ServerUrlDialog].
+class _WorkoutxKeyDialog extends StatefulWidget {
+  const _WorkoutxKeyDialog({required this.hasKey});
+
+  final bool hasKey;
+
+  @override
+  State<_WorkoutxKeyDialog> createState() => _WorkoutxKeyDialogState();
+}
+
+class _WorkoutxKeyDialogState extends State<_WorkoutxKeyDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('WorkoutX API key'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your own WorkoutX account key, used for animated exercise tutorials. '
+            'It is stored on the server and never shown again.',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: const InputDecoration(labelText: 'API key'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        if (widget.hasKey)
+          TextButton(onPressed: () => Navigator.pop(context, ''), child: const Text('Remove')),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -157,6 +214,25 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       setState(() => _error = error.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _editWorkoutxKey() async {
+    final key = await showDialog<String>(
+      context: context,
+      builder: (context) => _WorkoutxKeyDialog(hasKey: widget.profile.hasWorkoutxApiKey),
+    );
+    if (key == null) return;
+    try {
+      await ref.read(profileRepositoryProvider).setWorkoutxApiKey(key);
+      ref.invalidate(profileProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(key.isEmpty ? 'WorkoutX key removed' : 'WorkoutX key saved')),
+        );
+      }
+    } on ApiException catch (error) {
+      setState(() => _error = error.message);
     }
   }
 
@@ -250,6 +326,21 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 onTap: () => context.go('/docs'),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        const _SectionHeader('Exercise tutorials'),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.vpn_key_outlined),
+            title: const Text('WorkoutX API key'),
+            subtitle: Text(
+              widget.profile.hasWorkoutxApiKey
+                  ? 'Saved -- using your own WorkoutX account'
+                  : 'Not set -- using the built-in exercise images',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: _editWorkoutxKey,
           ),
         ),
         const SizedBox(height: AppSpacing.xl),

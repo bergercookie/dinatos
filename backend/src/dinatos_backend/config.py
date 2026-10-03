@@ -64,17 +64,6 @@ class Settings(BaseSettings):
     # catalog, so it's a no-op when `seed_default_exercises` is off.
     seed_default_routines: bool = True
 
-    # Opts into WorkoutX (https://workoutxapp.com) for exercise tutorials
-    # (real animated GIFs, richer per-exercise metadata) instead of the
-    # bundled free-exercise-db dataset -- see
-    # `services.tutorials.get_tutorial_provider`. A homelab admin brings
-    # their own WorkoutX account and API key; unset (the default) means
-    # the bundled dataset is used, which needs no signup and no network
-    # access. WorkoutX's own terms forbid bulk-caching their data, so this
-    # is fetched and cached one exercise at a time, in memory only, never
-    # written to the database -- see `services.tutorials.cache`.
-    workoutx_api_key: str | None = None
-
     # Where to look for a built Flutter web app (an `index.html` plus its
     # assets) to serve alongside the API -- see `main.py`. Relative to the
     # process's working directory, which is why the Docker image's runtime

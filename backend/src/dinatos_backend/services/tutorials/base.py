@@ -1,6 +1,6 @@
 """The contract every tutorial provider implements, and the shared shape
 their results come back in -- regardless of which one is active (see
-`services.tutorials.get_tutorial_provider`), an exercise's tutorial always
+`services.tutorials.get_tutorial_provider_for_key`), an exercise's tutorial always
 looks the same to the rest of the app.
 """
 

@@ -5,7 +5,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from dinatos_backend.api.deps import get_current_user
+from dinatos_backend.api.deps import get_current_user, get_tutorial_provider_for_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
@@ -17,11 +17,7 @@ from dinatos_backend.schemas.exercise import (
     ExerciseTutorialRead,
     ExerciseUpdate,
 )
-from dinatos_backend.services.tutorials import (
-    ExerciseTutorial,
-    TutorialProvider,
-    get_tutorial_provider,
-)
+from dinatos_backend.services.tutorials import ExerciseTutorial, TutorialProvider
 
 router = APIRouter(
     prefix="/exercises", tags=["exercises"], dependencies=[Depends(get_current_user)]
@@ -145,7 +141,7 @@ async def get_exercise(exercise_id: int, db: AsyncSession = Depends(get_db)) -> 
 async def get_exercise_tutorial(
     exercise_id: int,
     db: AsyncSession = Depends(get_db),
-    provider: TutorialProvider = Depends(get_tutorial_provider),
+    provider: TutorialProvider = Depends(get_tutorial_provider_for_user),
 ) -> ExerciseTutorial:
     """A GIF plus instructions/muscles/equipment for this exercise, from
     whichever provider is active (see `services.tutorials`) -- looked up
