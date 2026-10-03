@@ -13,7 +13,7 @@ const double _wideBreakpoint = 900;
 const _destinations = [
   (icon: Icons.fitness_center, label: 'Exercises'),
   (icon: Icons.list_alt, label: 'Routines'),
-  (icon: Icons.history, label: 'Home'),
+  (icon: Icons.home, label: 'Home'),
   (icon: Icons.straighten, label: 'Measurements'),
   (icon: Icons.person, label: 'Profile'),
 ];
