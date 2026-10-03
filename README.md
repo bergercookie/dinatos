@@ -73,7 +73,7 @@ web UI together (to `ghcr.io/bergercookie/dinatos`), a Linux
 `.deb`/`.AppImage`, and an Android APK -- see the
 [Releases page](https://github.com/bergercookie/dinatos/releases) for the
 latest. The native builds ask for the backend's URL on first launch (or
-later, from the profile screen), so one release works against anyone's own
+later, from the settings screen), so one release works against anyone's own
 homelab instance rather than whichever one built it.
 
 ## Documentation

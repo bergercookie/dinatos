@@ -8,7 +8,7 @@ field (whoever runs your instance will give you this address, e.g.
 `https://dinatos.example.com` or `http://192.168.1.50:8000`) -- set it there
 before registering or logging in. It's saved on your device or browser, not
 baked into the app, so the same app install works against any instance; you
-can change it later from the profile screen too.
+can change it later from the settings screen too.
 
 If your instance sits behind a self-signed certificate (common for a
 homelab setup without a public CA-issued one), you may also need the
@@ -43,7 +43,7 @@ profile screen and choose **Take the tour again**.
 A session lasts **30 days**. There's no silent background refresh -- once a
 session ends (you explicitly logged out, or 30 days passed, or whoever runs
 the instance revoked it), the next request simply drops you back to the
-login screen and you sign in again. Logging out from the profile screen's
+login screen and you sign in again. Logging out from the settings screen's
 app bar icon ends that session for real on the server, not just on this
 device -- if you're signed in on your phone and your laptop separately,
 logging out on one doesn't touch the other.

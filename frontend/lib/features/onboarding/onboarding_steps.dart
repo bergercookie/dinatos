@@ -159,8 +159,8 @@ final List<TourStep> defaultTourSteps = [
     title: "You're all set",
     body:
         'Your workout shows up under Home, with your training calendar and streak. Coming '
-        'from Hevy? Profile has an importer for your history. You can replay this tour from '
-        'Profile any time.',
+        'from Hevy? Settings has an importer for your history. You can replay this tour from '
+        'Settings any time.',
     primaryLabel: 'Finish',
   ),
 ];
