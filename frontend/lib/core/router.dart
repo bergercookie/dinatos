@@ -18,6 +18,7 @@ import '../features/home/app_shell.dart';
 import '../features/measurements/measurement_form_screen.dart';
 import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
+import '../features/profile/about_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/routines/routine_form_screen.dart';
 import '../features/routines/routine_list_screen.dart';
@@ -148,6 +149,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'import-hevy',
                     builder: (context, state) => const HevyImportScreen(),
                   ),
+                  GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
                   GoRoute(path: 'admin', builder: (context, state) => const AdminScreen()),
                 ],
               ),

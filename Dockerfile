@@ -58,7 +58,11 @@ COPY frontend .
 # `_WebApp`), and `ApiConfig`'s default for a web build with no override is
 # already "whatever origin served it" -- same-origin, zero setup. See
 # docs/deploy/clients.md for building against a separately-hosted backend.
-RUN flutter build web --release
+ARG APP_VERSION=dev
+ARG GIT_COMMIT=unknown
+RUN flutter build web --release \
+    --dart-define=APP_VERSION="${APP_VERSION}" \
+    --dart-define=GIT_COMMIT="${GIT_COMMIT}"
 
 
 FROM python:3.12-slim-trixie AS builder
