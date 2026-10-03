@@ -33,4 +33,18 @@ class ProfileRepository {
       throw ApiException.fromDioException(error);
     }
   }
+
+  /// Saves (or, with null/blank, removes) this user's own WorkoutX API key.
+  /// Separate from [update] since the key is write-only on the backend.
+  Future<Profile> setWorkoutxApiKey(String? key) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/profile',
+        data: {'workoutx_api_key': key},
+      );
+      return Profile.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
 }

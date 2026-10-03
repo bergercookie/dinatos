@@ -194,4 +194,47 @@ void main() {
     // `addTearDown(container.dispose)` fires.
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('saving a WorkoutX key patches only that field', (tester) async {
+    final dio = buildMockDio();
+    Map<String, dynamic>? sent;
+    when(() => dio.patch<Map<String, dynamic>>(any(), data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          sent = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return Response(
+            requestOptions: RequestOptions(path: '/profile'),
+            statusCode: 200,
+            data: {'height_cm': 180.0, 'unit_system': 'metric', 'has_workoutx_api_key': true},
+          );
+        });
+    final container = ProviderContainer(
+      overrides: [
+        dioProvider.overrideWithValue(dio),
+        profileProvider.overrideWith(
+          (ref) async => const Profile(heightCm: 180, unitSystem: UnitSystem.metric),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ProfileScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The list is lazy, so the tile may not be built until scrolled to.
+    await tester.scrollUntilVisible(find.text('WorkoutX API key'), 200);
+    expect(find.text('Not set -- using the built-in exercise images'), findsOneWidget);
+    await tester.tap(find.text('WorkoutX API key'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'API key'), ' wx_secret ');
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Save')));
+    await tester.pumpAndSettle();
+
+    expect(sent, {'workoutx_api_key': 'wx_secret'});
+    await tester.pumpWidget(const SizedBox());
+  });
 }

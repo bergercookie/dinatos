@@ -1,6 +1,6 @@
 """Optional tutorial provider: WorkoutX (https://workoutxapp.com), a paid
-third-party API a homelab admin can opt into with their own account (see
-`config.Settings.workoutx_api_key`) instead of the bundled
+third-party API each user can opt into with their own account (see
+`UserProfile.workoutx_api_key`) instead of the bundled
 `free-exercise-db` dataset -- its chief advantage over that dataset is
 real animated GIFs rather than two static JPGs per exercise.
 

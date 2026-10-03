@@ -6,6 +6,8 @@ from dinatos_backend.db import get_db
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
 from dinatos_backend.services.auth import get_valid_session
+from dinatos_backend.services.profile import get_or_create_profile
+from dinatos_backend.services.tutorials import TutorialProvider, get_tutorial_provider_for_key
 
 _bearer_scheme = HTTPBearer()
 
@@ -38,3 +40,13 @@ async def require_admin(user: User = Depends(get_current_user)) -> User:
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "admin access required")
     return user
+
+
+async def get_tutorial_provider_for_user(
+    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> TutorialProvider:
+    """Tutorials for this caller: via their own saved WorkoutX key if they
+    have one, else the instance-wide provider.
+    """
+    profile = await get_or_create_profile(db, user.id)
+    return get_tutorial_provider_for_key(profile.workoutx_api_key)

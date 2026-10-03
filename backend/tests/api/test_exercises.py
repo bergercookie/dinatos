@@ -2,9 +2,10 @@ import httpx2 as httpx
 from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dinatos_backend.api.deps import get_tutorial_provider_for_user
 from dinatos_backend.main import app
 from dinatos_backend.models.exercise import Exercise
-from dinatos_backend.services.tutorials import ExerciseTutorial, get_tutorial_provider
+from dinatos_backend.services.tutorials import ExerciseTutorial
 
 
 class _FakeProvider:
@@ -319,7 +320,9 @@ async def test_get_exercise_tutorial(client: AsyncClient) -> None:
         primary_muscles=["quadriceps"],
         secondary_muscles=["glutes"],
     )
-    app.dependency_overrides[get_tutorial_provider] = lambda: _FakeProvider(result=tutorial)
+    app.dependency_overrides[get_tutorial_provider_for_user] = lambda: _FakeProvider(
+        result=tutorial
+    )
 
     response = await client.get(f"/exercises/{exercise_id}/tutorial")
 
@@ -335,7 +338,7 @@ async def test_get_exercise_tutorial(client: AsyncClient) -> None:
 
 
 async def test_get_exercise_tutorial_is_404_for_a_missing_exercise(client: AsyncClient) -> None:
-    app.dependency_overrides[get_tutorial_provider] = lambda: _FakeProvider(result=None)
+    app.dependency_overrides[get_tutorial_provider_for_user] = lambda: _FakeProvider(result=None)
 
     response = await client.get("/exercises/999/tutorial")
 
@@ -347,7 +350,7 @@ async def test_get_exercise_tutorial_is_404_when_the_provider_has_nothing(
 ) -> None:
     created = await client.post("/exercises", json={"name": "A Custom Exercise"})
     exercise_id = created.json()["id"]
-    app.dependency_overrides[get_tutorial_provider] = lambda: _FakeProvider(result=None)
+    app.dependency_overrides[get_tutorial_provider_for_user] = lambda: _FakeProvider(result=None)
 
     response = await client.get(f"/exercises/{exercise_id}/tutorial")
 
@@ -359,7 +362,7 @@ async def test_get_exercise_tutorial_is_502_when_the_provider_is_unreachable(
 ) -> None:
     created = await client.post("/exercises", json={"name": "A Custom Exercise"})
     exercise_id = created.json()["id"]
-    app.dependency_overrides[get_tutorial_provider] = lambda: _FakeProvider(
+    app.dependency_overrides[get_tutorial_provider_for_user] = lambda: _FakeProvider(
         error=httpx.ConnectError("connection refused")
     )
 
@@ -379,7 +382,7 @@ async def test_get_exercise_tutorial_502_still_carries_cors_headers(client: Asyn
     """
     created = await client.post("/exercises", json={"name": "A Custom Exercise"})
     exercise_id = created.json()["id"]
-    app.dependency_overrides[get_tutorial_provider] = lambda: _FakeProvider(
+    app.dependency_overrides[get_tutorial_provider_for_user] = lambda: _FakeProvider(
         error=KeyError("gifUrl")
     )
 

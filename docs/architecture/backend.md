@@ -199,18 +199,22 @@ equipment for an exercise, from whichever provider is active:
   instance's `exercises` table from, so an instance's exercise names match
   this dataset's own exactly -- a tutorial lookup by name always hits, no
   fuzzy matching needed.
-- **[WorkoutX](https://workoutxapp.com)**, opt-in -- set
-  `DINATOS_WORKOUTX_API_KEY` (see
-  [Configuration reference](../deploy/configuration.md)) to use it instead,
-  for real animated GIFs rather than free-exercise-db's two static JPGs per
-  exercise. Each instance brings its own account/quota; this project never
-  holds a shared key.
+- **[WorkoutX](https://workoutxapp.com)**, opt-in per user -- each user can
+  save their own API key in the app's Profile screen (`PATCH /profile`,
+  stored in `user_profile.workoutx_api_key`) to get real animated GIFs
+  rather than free-exercise-db's two static JPGs per exercise. There is
+  deliberately no instance-wide key: this project never holds a shared one,
+  and one user's lookups are never served from, or billed to, another's
+  WorkoutX account. The key is stored as-is (it must be sent to WorkoutX on every lookup, so a hash
+  would be useless) and is write-only over the API: `GET /profile` only
+  reports `has_workoutx_api_key`.
 
 Both providers implement the same `TutorialProvider` protocol
 (`backend/src/dinatos_backend/services/tutorials/base.py`), so adding a
 third is a new adapter, not a rewrite;
-`services.tutorials.get_tutorial_provider` picks one based on whether
-`workoutx_api_key` is set. WorkoutX is wrapped in a
+`services.tutorials.get_tutorial_provider_for_key` picks one per request:
+WorkoutX for a user who saved a key (one cached provider per distinct key),
+the bundled dataset otherwise. WorkoutX is wrapped in a
 `FallbackTutorialProvider` (`services/tutorials/fallback.py`): if it fails
 (a bad or expired key, a quota error, an outage) or has no match for an
 exercise, the bundled free-exercise-db answers instead, so opting in can't
