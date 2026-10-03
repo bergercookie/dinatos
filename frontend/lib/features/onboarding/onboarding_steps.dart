@@ -136,7 +136,8 @@ final List<TourStep> defaultTourSteps = [
     body: 'Press Start activity, then From scratch, to get a running clock and log sets as you do them.',
     target: 'start-workout',
     advanceOnLocation: (path) => path == '/activities/live',
-    modal: true,
+    // Not modal: the From scratch choice lives in a bottom sheet above the
+    // app, and a modal scrim would block it.
   ),
   const TourStep(
     id: 'live-add-exercise',
