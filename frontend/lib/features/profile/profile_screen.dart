@@ -8,12 +8,14 @@ import '../../core/async_value_view.dart';
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_state.dart';
 import '../../core/design_tokens.dart';
+import '../../core/external_link.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/profile.dart';
+import '../docs/api_docs_url.dart';
 import '../onboarding/onboarding_controller.dart';
 import '../onboarding/onboarding_overlay.dart';
 import '../onboarding/onboarding_steps.dart';
@@ -319,17 +321,23 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => ref.read(onboardingProvider.notifier).restart(),
                 ),
+                // Both open the backend's own pages in a new browser tab --
+                // the server URL is whatever this install is pointed at.
                 ListTile(
                   leading: const Icon(Icons.api_outlined),
                   title: const Text('API documentation'),
-                  subtitle: const Text('Browse and try out the REST API'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  // `go`, not `push`: verified in a real browser that `push`
-                  // renders this screen but leaves the address bar on
-                  // `#/profile`, so the /docs link couldn't be copied,
-                  // bookmarked or reloaded. `go` leaves nothing to pop, which
-                  // is why the docs screen carries its own explicit back button.
-                  onTap: () => context.go('/docs'),
+                  subtitle: const Text('Browse and try out the REST API (Swagger UI)'),
+                  trailing: const Icon(Icons.open_in_new_rounded),
+                  onTap: () =>
+                      openExternalLink(context, ref, apiDocsUrl(ref.read(serverUrlProvider))),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.article_outlined),
+                  title: const Text('API reference'),
+                  subtitle: const Text('Read-only view of the same API (ReDoc)'),
+                  trailing: const Icon(Icons.open_in_new_rounded),
+                  onTap: () =>
+                      openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
                 ),
                 ListTile(
                   leading: const Icon(Icons.info_outline),

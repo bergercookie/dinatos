@@ -19,6 +19,11 @@ target number of sets/reps/weight for each. Saving replaces the whole thing
 as one unit -- there's no way to edit a single set within a saved routine
 without re-saving the routine itself.
 
+Tap the **play** button on a routine in the Routines list to start a live
+workout pre-filled from it (its exercises and target sets, to adjust as you
+go). If a workout is already in progress you're asked whether to resume it or
+discard it for the routine.
+
 ## Logging an activity
 
 An activity is what you actually did in the gym. Two ways to start one:
@@ -44,5 +49,7 @@ independent of any single gym session.
 Your account-level settings: change your Server URL, log out (ends the
 session on the server, see [Getting started](getting-started.md#staying-signed-in)),
 [import your history from Hevy](hevy-import.md), and open **"API
-documentation"** -- the backend's own interactive API reference, useful if
+documentation"** (Swagger UI) or **"API reference"** (ReDoc) -- the
+backend's own API reference, each opening in a new browser tab, useful if
 you're scripting something against your instance rather than using the app.
+**About** shows the UI version and the commit it was built from.

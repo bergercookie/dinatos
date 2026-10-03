@@ -1,6 +1,7 @@
 import 'package:dinatos_frontend/core/auth/auth_notifier.dart';
 import 'package:dinatos_frontend/core/auth/token_storage.dart';
 import 'package:dinatos_frontend/core/dio_provider.dart';
+import 'package:dinatos_frontend/core/external_link.dart';
 import 'package:dinatos_frontend/core/router.dart';
 import 'package:dinatos_frontend/core/server_url_provider.dart';
 import 'package:dinatos_frontend/core/server_url_storage.dart';
@@ -58,9 +59,10 @@ void main() {
     return dio;
   }
 
-  ProviderContainer signedInContainer() {
+  ProviderContainer signedInContainer({List<Override> extraOverrides = const []}) {
     return ProviderContainer(
       overrides: [
+        ...extraOverrides,
         serverUrlProvider.overrideWith((ref) => 'https://api.example.com'),
         serverUrlStorageProvider.overrideWithValue(ServerUrlStorage(storage: FakeSecureStore())),
         tokenStorageProvider.overrideWithValue(TokenStorage(storage: FakeSecureStore())),
@@ -122,8 +124,17 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('the profile screen links to it', (tester) async {
-    final container = signedInContainer();
+  testWidgets('the profile screen opens the docs and ReDoc in a new tab', (tester) async {
+    final opened = <Uri>[];
+    // The real launcher is a platform channel, so swap it for a recorder.
+    final container = signedInContainer(
+      extraOverrides: [
+        urlOpenerProvider.overrideWithValue((uri) async {
+          opened.add(uri);
+          return true;
+        }),
+      ],
+    );
     addTearDown(container.dispose);
     await container.read(authNotifierProvider.notifier).login('a@example.com', 'a-password');
 
@@ -135,29 +146,27 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The router starts at /exercises, so go where the link actually lives.
+    // The router starts at /exercises, so go where the links actually live.
     container.read(routerProvider).go('/profile');
     await tester.pumpAndSettle();
 
-    expect(find.text('API documentation'), findsOneWidget);
     // The profile list is longer than the test viewport.
     await tester.ensureVisible(find.text('API documentation'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('API documentation'));
     await tester.pumpAndSettle();
-
-    expect(find.byType(ApiDocsScreen), findsOneWidget);
-    // Navigated with `go`, so the shell is replaced rather than covered -- and
-    // the route has to be a real, addressable location, not just a widget
-    // swap: the whole point of putting this at /docs is that the URL is
-    // linkable and survives a reload.
-    expect(find.byType(ProfileScreen), findsNothing);
-    expect(container.read(routerProvider).state.uri.path, '/docs');
-
-    // `go` leaves nothing to pop, so the screen has to offer its own way out
-    // -- without this the docs page is a dead end.
-    await tester.tap(find.byTooltip('Back'));
+    await tester.ensureVisible(find.text('API reference'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('API reference'));
+    await tester.pumpAndSettle();
+
+    // Both are handed to the launcher as the backend's own pages, and the app
+    // itself stays where it was (the page opens elsewhere).
+    expect(opened.map((u) => u.toString()), [
+      'https://api.example.com/docs',
+      'https://api.example.com/redoc',
+    ]);
+    expect(find.byType(ProfileScreen), findsOneWidget);
     expect(container.read(routerProvider).state.uri.path, '/profile');
 
     await tester.pumpWidget(const SizedBox());

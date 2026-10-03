@@ -60,7 +60,8 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
     super.initState();
     final session = ref.read(liveActivityProvider);
     if (session != null && !session.isSaved) {
-      _titleController.text = 'Workout on ${DateFormat.yMMMd().format(session.startedAt)}';
+      _titleController.text =
+          session.routineName ?? 'Workout on ${DateFormat.yMMMd().format(session.startedAt)}';
       _recordsFuture = _loadNewRecords(session);
     }
   }
@@ -129,6 +130,7 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       startedAt: session.startedAt,
       endedAt: session.endedAt ?? DateTime.now(),
       exercises: session.exercises,
+      routineId: session.routineId,
     );
     try {
       final saved = await ref.read(activitiesRepositoryProvider).create(activity);
