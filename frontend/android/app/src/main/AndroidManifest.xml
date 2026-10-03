@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Talking to the backend. Only the debug/profile manifests declared this
+         (for hot reload), so release APKs could not open a socket at all and
+         every request failed as "server not reachable". -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Android 13+: the ongoing "workout in progress" notification. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Keeps the process alive while a live workout is under way. -->
@@ -7,7 +11,8 @@
     <application
         android:label="Dinatos"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

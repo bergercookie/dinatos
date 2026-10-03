@@ -16,6 +16,7 @@ set dotenv-filename := ".env"
 default:
     @just --list
 
+mod android 'frontend/android/justfile'
 mod backend 'backend/justfile'
 mod docker 'docker/justfile'
 mod docs 'docs/justfile'
