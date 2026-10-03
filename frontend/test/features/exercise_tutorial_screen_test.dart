@@ -76,6 +76,52 @@ GoRouter _tutorialRouter({required int initialId}) => GoRouter(
 );
 
 void main() {
+  testWidgets('fetches a backend-proxied GIF path through Dio, not Image.network', (tester) async {
+    final dio = MockDio();
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1'))
+        .thenAnswer((_) async => _exerciseResponse(1, 'Bench Press'));
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1/tutorial')).thenAnswer(
+      (_) async => Response(
+        requestOptions: RequestOptions(path: '/exercises/1/tutorial'),
+        statusCode: 200,
+        data: {
+          'source': 'workoutx',
+          'gif_urls': ['/exercises/media/workoutx/0025.gif'],
+          'instructions': <String>[],
+          'equipment': null,
+          'primary_muscles': <String>[],
+          'secondary_muscles': <String>[],
+        },
+      ),
+    );
+    when(
+      () =>
+          dio.get<List<int>>('/exercises/media/workoutx/0025.gif', options: any(named: 'options')),
+    ).thenAnswer(
+      (_) async => Response(
+        requestOptions: RequestOptions(path: '/exercises/media/workoutx/0025.gif'),
+        statusCode: 200,
+        data: <int>[1, 2, 3],
+      ),
+    );
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ExerciseTutorialScreen(exerciseId: 1)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    verify(
+      () =>
+          dio.get<List<int>>('/exercises/media/workoutx/0025.gif', options: any(named: 'options')),
+    ).called(1);
+    expect(find.byType(Image), findsOneWidget);
+  });
+
   testWidgets('shows the GIF, muscles, and instructions when a tutorial exists', (tester) async {
     final dio = MockDio();
     when(() => dio.get<Map<String, dynamic>>('/exercises/1'))

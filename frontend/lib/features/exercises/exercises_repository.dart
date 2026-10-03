@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -112,6 +114,22 @@ class ExercisesRepository {
       return ExerciseTutorial.fromJson(response.data!);
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// A tutorial image the backend proxies (a `gif_urls` entry that is a
+  /// path on this server rather than an absolute URL, e.g. WorkoutX's,
+  /// whose GIFs need the user's API key). Fetched through Dio so the
+  /// bearer token goes along; `Image.network` can't send one.
+  Future<Uint8List> getMedia(String path) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        path,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data!);
+    } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }
   }

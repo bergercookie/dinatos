@@ -69,3 +69,30 @@ async def test_tutorial_uses_the_callers_own_workoutx_key(
 class _NoTutorial:
     async def get_tutorial(self, _exercise_name: str) -> None:
         return None
+
+
+async def test_gif_proxy_uses_the_callers_own_workoutx_key(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import httpx2 as httpx
+
+    from dinatos_backend.api import deps
+    from dinatos_backend.services.tutorials.workoutx import WorkoutXProvider
+
+    seen: list[str] = []
+
+    def fake_for_key(api_key: str) -> WorkoutXProvider:
+        seen.append(api_key)
+        transport = httpx.MockTransport(lambda _request: httpx.Response(200, content=b"GIF89a"))
+        return WorkoutXProvider(
+            api_key,
+            client=httpx.AsyncClient(transport=transport, base_url="https://api.test/v1"),
+        )
+
+    monkeypatch.setattr(deps, "get_workoutx_provider", fake_for_key)
+    await client.patch("/profile", json={"workoutx_api_key": "wx_mine"})
+
+    response = await client.get("/exercises/media/workoutx/0025.gif")
+
+    assert response.status_code == 200
+    assert seen == ["wx_mine"]

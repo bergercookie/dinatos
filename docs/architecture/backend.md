@@ -209,6 +209,14 @@ equipment for an exercise, from whichever provider is active:
   would be useless) and is write-only over the API: `GET /profile` only
   reports `has_workoutx_api_key`.
 
+WorkoutX's GIF URLs (`/v1/gifs/<id>.gif`) answer 401 without the key too,
+and a browser `<img>` / Flutter `Image.network` cannot send the
+`X-WorkoutX-Key` header (nor should the key ride in a URL query string, where
+it would leak to the client and logs). So the provider rewrites each GIF URL
+to `/exercises/media/workoutx/<id>.gif`, an authenticated backend endpoint
+that fetches the GIF with the caller's own saved key and streams the bytes
+back; the app fetches it through its normal bearer-token Dio client.
+
 Both providers implement the same `TutorialProvider` protocol
 (`backend/src/dinatos_backend/services/tutorials/base.py`), so adding a
 third is a new adapter, not a rewrite;

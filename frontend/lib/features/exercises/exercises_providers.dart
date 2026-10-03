@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -141,6 +142,12 @@ final exerciseTutorialProvider = FutureProvider.autoDispose.family<ExerciseTutor
   id,
 ) {
   return ref.watch(exercisesRepositoryProvider).getTutorial(id);
+});
+
+/// Bytes of a backend-proxied tutorial image (see
+/// [ExercisesRepository.getMedia]).
+final tutorialMediaProvider = FutureProvider.autoDispose.family<Uint8List, String>((ref, path) {
+  return ref.watch(exercisesRepositoryProvider).getMedia(path);
 });
 
 /// Exercises that train a given muscle (primary or secondary) -- backs the

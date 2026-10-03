@@ -171,16 +171,16 @@ const _frameDuration = Duration(milliseconds: 800);
 ///
 /// Not a `PageView`: a horizontal swipe on this screen already means
 /// "next/previous exercise", so a swipeable carousel would fight it.
-class _FrameCarousel extends StatefulWidget {
+class _FrameCarousel extends ConsumerStatefulWidget {
   const _FrameCarousel({required this.urls});
 
   final List<String> urls;
 
   @override
-  State<_FrameCarousel> createState() => _FrameCarouselState();
+  ConsumerState<_FrameCarousel> createState() => _FrameCarouselState();
 }
 
-class _FrameCarouselState extends State<_FrameCarousel> {
+class _FrameCarouselState extends ConsumerState<_FrameCarousel> {
   Timer? _timer;
   int _index = 0;
   bool _paused = false;
@@ -244,19 +244,36 @@ class _FrameCarouselState extends State<_FrameCarousel> {
   @override
   Widget build(BuildContext context) {
     final url = widget.urls[_index];
+    const brokenImage = Center(child: Icon(Icons.broken_image_outlined, size: 48));
+    const loading = Center(child: CircularProgressIndicator());
+    // A path on our own backend (e.g. a WorkoutX GIF, which needs the
+    // user's API key the backend holds) is fetched with the bearer token;
+    // anything else is a public URL.
+    final Widget content = url.startsWith('/')
+        ? ref
+              .watch(tutorialMediaProvider(url))
+              .when(
+                data: (bytes) => Image.memory(
+                  bytes,
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) => brokenImage,
+                ),
+                loading: () => loading,
+                error: (error, stackTrace) => brokenImage,
+              )
+        : Image.network(
+            url,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (context, error, stackTrace) => brokenImage,
+            loadingBuilder: (context, child, progress) => progress == null ? child : loading,
+          );
     final image = AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
-      child: Image.network(
-        url,
-        key: ValueKey(url),
-        fit: BoxFit.contain,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (context, error, stackTrace) =>
-            const Center(child: Icon(Icons.broken_image_outlined, size: 48)),
-        loadingBuilder: (context, child, progress) =>
-            progress == null ? child : const Center(child: CircularProgressIndicator()),
-      ),
+      child: KeyedSubtree(key: ValueKey(url), child: content),
     );
     if (!_multiple) return image;
 

@@ -7,7 +7,12 @@ from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
 from dinatos_backend.services.auth import get_valid_session
 from dinatos_backend.services.profile import get_or_create_profile
-from dinatos_backend.services.tutorials import TutorialProvider, get_tutorial_provider_for_key
+from dinatos_backend.services.tutorials import (
+    TutorialProvider,
+    get_tutorial_provider_for_key,
+    get_workoutx_provider,
+)
+from dinatos_backend.services.tutorials.workoutx import WorkoutXProvider
 
 _bearer_scheme = HTTPBearer()
 
@@ -50,3 +55,15 @@ async def get_tutorial_provider_for_user(
     """
     profile = await get_or_create_profile(db, user.id)
     return get_tutorial_provider_for_key(profile.workoutx_api_key)
+
+
+async def get_workoutx_provider_for_user(
+    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> WorkoutXProvider:
+    """The caller's own WorkoutX adapter (for fetching GIFs, which need
+    their key); 404 if they haven't saved one.
+    """
+    profile = await get_or_create_profile(db, user.id)
+    if not profile.workoutx_api_key:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no WorkoutX API key saved")
+    return get_workoutx_provider(profile.workoutx_api_key)

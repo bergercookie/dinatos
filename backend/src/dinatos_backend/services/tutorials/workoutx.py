@@ -20,11 +20,23 @@ Failures here (a bad key, an outage) are not surfaced to the caller:
 dataset instead.
 """
 
+import re
+
 import httpx2 as httpx
 
 from dinatos_backend.services.tutorials.base import ExerciseTutorial
 
 _BASE_URL = "https://api.workoutxapp.com/v1"
+_KEY_HEADER = "X-WorkoutX-Key"
+
+# A GIF URL as WorkoutX reports it ("<base>/gifs/0025.gif"). Those URLs
+# 401 without the owner's API key, and a browser/Flutter `Image.network`
+# can't attach a custom header, so they are never handed to the client as
+# is: `get_tutorial` rewrites each to `GIF_PROXY_PATH`, which the backend
+# serves by fetching the GIF with the user's key (`get_gif`).
+_GIF_URL_RE = re.compile(r"/gifs/([A-Za-z0-9_-]+)\.gif(?:$|\?)")
+GIF_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+GIF_PROXY_PATH = "/exercises/media/workoutx/{gif_id}.gif"
 
 
 class WorkoutXProvider:
@@ -37,9 +49,19 @@ class WorkoutXProvider:
         self._api_key = api_key
         self._client = client or httpx.AsyncClient(base_url=_BASE_URL, timeout=10.0)
 
+    async def get_gif(self, gif_id: str) -> tuple[bytes, str]:
+        """The GIF's bytes and content type, fetched with this provider's
+        key. Raises on any non-2xx response.
+        """
+        response = await self._client.get(
+            f"/gifs/{gif_id}.gif", headers={_KEY_HEADER: self._api_key}
+        )
+        response.raise_for_status()
+        return response.content, response.headers.get("content-type", "image/gif")
+
     async def get_tutorial(self, exercise_name: str) -> ExerciseTutorial | None:
         response = await self._client.get(
-            f"/exercises/name/{exercise_name}", headers={"X-WorkoutX-Key": self._api_key}
+            f"/exercises/name/{exercise_name}", headers={_KEY_HEADER: self._api_key}
         )
         if response.status_code == httpx.codes.NOT_FOUND:
             return None
@@ -63,9 +85,14 @@ class WorkoutXProvider:
         )
         return ExerciseTutorial(
             source="workoutx",
-            gif_urls=[entry["gifUrl"]] if entry.get("gifUrl") else [],
+            gif_urls=[_proxied_gif_url(entry["gifUrl"])] if entry.get("gifUrl") else [],
             instructions=entry.get("instructions", []),
             equipment=entry.get("equipment"),
             primary_muscles=[entry["target"]] if entry.get("target") else [],
             secondary_muscles=entry.get("secondaryMuscles", []),
         )
+
+
+def _proxied_gif_url(gif_url: str) -> str:
+    match = _GIF_URL_RE.search(gif_url)
+    return GIF_PROXY_PATH.format(gif_id=match.group(1)) if match else gif_url

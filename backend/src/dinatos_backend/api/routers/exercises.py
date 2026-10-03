@@ -5,7 +5,11 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from dinatos_backend.api.deps import get_current_user, get_tutorial_provider_for_user
+from dinatos_backend.api.deps import (
+    get_current_user,
+    get_tutorial_provider_for_user,
+    get_workoutx_provider_for_user,
+)
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
@@ -18,6 +22,7 @@ from dinatos_backend.schemas.exercise import (
     ExerciseUpdate,
 )
 from dinatos_backend.services.tutorials import ExerciseTutorial, TutorialProvider
+from dinatos_backend.services.tutorials.workoutx import GIF_ID_RE, WorkoutXProvider
 
 router = APIRouter(
     prefix="/exercises", tags=["exercises"], dependencies=[Depends(get_current_user)]
@@ -173,6 +178,30 @@ async def get_exercise_tutorial(
     if tutorial is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no tutorial available for this exercise")
     return tutorial
+
+
+@router.get("/media/workoutx/{gif_id}.gif")
+async def get_workoutx_gif(
+    gif_id: str, provider: WorkoutXProvider = Depends(get_workoutx_provider_for_user)
+) -> Response:
+    """A WorkoutX GIF, proxied with the caller's own API key. WorkoutX's
+    media URLs answer 401 without the key (header or query param), and an
+    `<img>`/`Image.network` can't send a header -- while putting the key in
+    the URL would leak it to the client and any log along the way -- so the
+    key stays server-side and the app fetches the bytes from here instead.
+    """
+    if not GIF_ID_RE.fullmatch(gif_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "gif not found")
+    try:
+        content, content_type = await provider.get_gif(gif_id)
+    except Exception as error:
+        logger.exception("WorkoutX gif fetch failed for %r", gif_id)
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY, "could not reach the tutorial provider"
+        ) from error
+    return Response(
+        content, media_type=content_type, headers={"Cache-Control": "private, max-age=86400"}
+    )
 
 
 @router.get("/{exercise_id}/records", response_model=ExerciseRecordsRead)
