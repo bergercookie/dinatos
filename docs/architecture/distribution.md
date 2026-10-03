@@ -13,9 +13,17 @@ which builds and publishes, in parallel, everything a release needs:
   (`packaging/linux/build-appimage.sh`) -- both from the same
   `flutter build linux --release` bundle, so the two scripts can't drift
   apart on what they're packaging.
-- An Android APK, debug-signed: `android/app/build.gradle.kts`'s release
-  build type still points at the debug signing config, deliberately, since a
-  real release keystore is future work, not a gap in the workflow itself.
+- An Android APK, signed with a stable release key read from
+  `frontend/android/key.properties` (`android/app/build.gradle.kts`). Android
+  refuses to install an APK over an existing install if the signing key
+  differs, and the debug keystore is generated fresh on every machine -- so
+  debug-signed CI builds could never update an earlier install. The workflow
+  writes the keystore from the `ANDROID_KEYSTORE_BASE64`,
+  `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and (optional)
+  `ANDROID_KEY_PASSWORD` repository secrets and fails if they are missing.
+  Local builds without `key.properties` fall back to the debug key. Create a
+  key once with `keytool -genkeypair -v -keystore release.jks -alias dinatos
+  -keyalg RSA -keysize 2048 -validity 10000`, and never lose or rotate it.
 
 The same artifacts can be produced locally from the repository root:
 
