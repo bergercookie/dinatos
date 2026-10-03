@@ -44,7 +44,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(exercisePagingProvider);
-    final searching = state.search.isNotEmpty;
+    final searching = state.search.isNotEmpty || state.source != ExerciseSource.all;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Exercises')),
@@ -75,6 +75,24 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
                     isDense: true,
                   ),
                   onChanged: (value) => ref.read(exercisePagingProvider.notifier).setSearch(value),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: AppSpacing.xs,
+                    children: [
+                      for (final source in ExerciseSource.values)
+                        ChoiceChip(
+                          label: Text(source.label),
+                          selected: state.source == source,
+                          onSelected: (_) =>
+                              ref.read(exercisePagingProvider.notifier).setSource(source),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               Expanded(child: _buildBody(context, state, searching: searching)),
@@ -120,7 +138,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
         icon: searching ? Icons.search_off_rounded : Icons.fitness_center_rounded,
         title: searching ? 'No matching exercises' : 'No exercises yet',
         message: searching
-            ? 'Try a different search term.'
+            ? 'Try a different search term or filter.'
             : 'Add the exercises you train so you can build routines around them.',
         actionLabel: searching ? null : 'Add exercise',
         onAction: searching ? null : () => context.go('/exercises/new'),

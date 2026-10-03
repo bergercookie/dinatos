@@ -54,12 +54,18 @@ class ExercisesRepository {
   /// unlike [list], this always passes `limit`/`offset`, so the backend
   /// slices the result and reports the true (pre-slice) count via the
   /// `X-Total-Count` header instead of returning everything in one shot.
-  Future<ExercisePage> listPage({String? search, required int limit, required int offset}) async {
+  Future<ExercisePage> listPage({
+    String? search,
+    bool? isCustom,
+    required int limit,
+    required int offset,
+  }) async {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/exercises',
         queryParameters: {
           if (search != null && search.isNotEmpty) 'search': search,
+          'is_custom': ?isCustom,
           'limit': limit,
           'offset': offset,
         },

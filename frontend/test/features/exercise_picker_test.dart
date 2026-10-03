@@ -25,6 +25,7 @@ final _exercises = [
     equipment: Equipment.dumbbell,
     primaryMuscles: [MuscleGroup.biceps],
   ),
+  Exercise(id: 4, name: 'Pull-up', isCustom: false),
 ];
 
 Future<Exercise?> _open(WidgetTester tester) async {
@@ -139,5 +140,23 @@ void main() {
     await tester.pump();
     expect(find.text('Squat'), findsOneWidget);
     expect(find.text('Bench Press'), findsNothing);
+  });
+
+  testWidgets('the source chips narrow to only built-in or only custom exercises', (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _open(tester);
+    expect(find.text('Pull-up'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Built-in'));
+    await tester.pump();
+    expect(find.text('Pull-up'), findsOneWidget);
+    expect(find.text('Squat'), findsNothing);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Custom'));
+    await tester.pump();
+    expect(find.text('Pull-up'), findsNothing);
+    expect(find.text('Squat'), findsOneWidget);
   });
 }

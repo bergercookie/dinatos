@@ -12,6 +12,10 @@ Exercises marked "Built-in" are the catalog Dinatos ships with and can't be
 renamed, edited, or deleted -- if one doesn't fit, add your own custom
 exercise instead. Anything you add yourself you can edit or delete freely.
 
+Both the Exercises tab and the exercise picker (when adding an exercise to a
+routine or workout) have All / Built-in / Custom chips next to the search box,
+to find only the catalog's exercises or only the ones you added.
+
 ## Building a routine
 
 A routine is a reusable plan: give it a name, add exercises, and set a
