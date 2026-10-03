@@ -10,13 +10,18 @@ calling user's own data:
 
 - `/auth/register`, `/auth/login`, `/auth/me`, `/auth/logout` -- see
   "Authentication" below.
-- `/exercises` -- full CRUD, plus `?search=` (backs the watch-sync picker).
+- `/exercises` -- full CRUD, plus `?search=` (backs the exercise picker).
   The one shared, global resource: every user's catalog is the same. `PATCH`
   and `DELETE` are a 403 against a built-in (`is_custom=False`) exercise --
   only a user-created one can be edited or deleted; see "Exercise
   tutorials" below and `Exercise.is_custom`'s docstring.
   `/exercises/{id}/tutorial` -- a GIF plus instructions/muscles/equipment,
-  see "Exercise tutorials" below.
+  see "Exercise tutorials" below. `/exercises/{id}/records` -- the caller's
+  own all-time best weight and reps (warm-up sets never count), and
+  `/exercises/{id}/history` -- the caller's own past sessions of it, newest
+  first, one entry per activity. Both are per-caller despite the exercise
+  being global; the app computes "last time", suggestions, personal records
+  and the progress chart from them.
 - `/routines` -- saved routine templates, scoped to their owner. Nested
   exercises/sets are created and replaced as a whole (`POST`, `PUT`); there
   is no endpoint for patching one set in isolation.
@@ -24,7 +29,8 @@ calling user's own data:
   nested create/replace shape as routines, plus `?since=`/`?until=`
   filtering. An activity may reference one of the caller's own `/routines`
   templates; referencing someone else's is a 404, the same as trying to
-  read it directly.
+  read it directly. `POST` is idempotent for a retried save: see "Retried
+  saves" below.
 - `/profile` -- one row per user (`GET`/`PATCH`, no id in the path: always
   the caller's own).
 - `/measurements` -- dated body-measurement entries, scoped to their owner.
@@ -33,6 +39,25 @@ calling user's own data:
 - `GET /admin/backup` and `POST /admin/backup/restore` (admin only), and
   `GET /profile/export` and `POST /profile/import` (any user, own data only)
   -- see "Backup and data export" below.
+
+## Retried saves
+
+A client that finishes a workout with a flaky connection cannot tell "the
+request never arrived" from "it was stored but the response was lost", so it
+retries -- and without care that stores the workout twice. `POST /activities`
+therefore treats a request from the same caller with the same title, start and
+end as the first save replayed: it returns the existing activity (`200`
+rather than `201`) instead of creating another. No idempotency-key column is
+needed because a live workout's start time is a full-precision device
+timestamp, so two genuinely different workouts do not collide on it. The
+other half of this lives in the app, which freezes the title once an attempt
+may have gone through, since the title is part of that key -- see
+[Frontend](frontend.md#finishing-a-workout-without-a-connection).
+
+Routine exercises carry a `superset_group`, as activity exercises always have:
+exercises sharing a number are done back-to-back, and starting a workout from
+a routine copies it over. How the groups are kept coherent is client-side, see
+[Frontend](frontend.md#supersets).
 
 ## API documentation
 

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../models/activity.dart';
 import '../../../models/set_type.dart';
+import '../../../models/uid.dart';
 import 'live_session.dart';
 
 /// A live workout as written to disk, plus whose it is -- so a different
@@ -23,6 +24,7 @@ class PersistedLiveSession {
     'paused_at': session.pausedAt?.toUtc().toIso8601String(),
     'saved_activity_id': session.savedActivityId,
     'saved_title': session.savedTitle,
+    'pending_title': session.pendingTitle,
     'routine_id': session.routineId,
     'routine_name': session.routineName,
     // `ActivityExercise.toJson` is exactly the shape wanted here (no server ids).
@@ -44,6 +46,7 @@ class PersistedLiveSession {
         pausedAt: time('paused_at'),
         savedActivityId: json['saved_activity_id'] as int?,
         savedTitle: json['saved_title'] as String?,
+        pendingTitle: json['pending_title'] as String?,
         routineId: json['routine_id'] as int?,
         routineName: json['routine_name'] as String?,
         exercises: (json['exercises'] as List<dynamic>)
@@ -55,12 +58,14 @@ class PersistedLiveSession {
 }
 
 ActivityExercise _exerciseFromJson(Map<String, dynamic> json) => ActivityExercise(
+  uid: nextUid(),
   exerciseId: json['exercise_id'] as int,
   supersetGroup: json['superset_group'] as int?,
   notes: json['notes'] as String?,
   sets: (json['sets'] as List<dynamic>).map((raw) {
     final set = raw as Map<String, dynamic>;
     return ActivitySet(
+      uid: nextUid(),
       setType: SetType.fromJson(set['set_type'] as String),
       weightKg: (set['weight_kg'] as num?)?.toDouble(),
       reps: set['reps'] as int?,

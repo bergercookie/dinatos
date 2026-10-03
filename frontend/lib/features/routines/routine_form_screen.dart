@@ -12,6 +12,8 @@ import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/set_type.dart';
 import '../../models/routine.dart';
+import '../../models/superset.dart';
+import '../../models/uid.dart';
 import '../activities/live/muscle_distribution_card.dart';
 import '../onboarding/onboarding_overlay.dart';
 import '../exercises/exercise_picker.dart';
@@ -45,7 +47,8 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
     _loadedInitialValues = true;
     _nameController.text = routine.name;
     _descriptionController.text = routine.description ?? '';
-    _exercises = List.of(routine.exercises);
+    // Repairs group numbers that aren't a run of neighbours.
+    _exercises = normalizeSupersets(routine.exercises, routineSupersets);
   }
 
   @override
@@ -57,12 +60,12 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
 
   void _addExercise(Exercise exercise) {
     setState(() {
-      _exercises = [..._exercises, RoutineExercise(exerciseId: exercise.id!)];
+      _exercises = [..._exercises, RoutineExercise(uid: nextUid(), exerciseId: exercise.id!)];
     });
   }
 
   void _removeExerciseAt(int index) {
-    setState(() => _exercises = List.of(_exercises)..removeAt(index));
+    setState(() => _exercises = removeItem(_exercises, index, routineSupersets));
   }
 
   void _updateExerciseAt(int index, RoutineExercise updated) {
@@ -150,6 +153,7 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
 
   Widget _buildForm(BuildContext context) {
     final exercisesAsync = ref.watch(exerciseListProvider);
+    final labels = supersetLabels([for (final e in _exercises) e.supersetGroup]);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -174,7 +178,21 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
         const SizedBox(height: 8),
         for (var i = 0; i < _exercises.length; i++)
           _RoutineExerciseCard(
+            key: ValueKey(itemKeyOf(uid: _exercises[i].uid, id: _exercises[i].id, index: i)),
             exercise: _exercises[i],
+            supersetLabel: labels[i],
+            onLinkWithNext: i + 1 < _exercises.length
+                ? () => setState(() => _exercises = linkWithNext(_exercises, i, routineSupersets))
+                : null,
+            onUnlink: () => setState(() => _exercises = unlink(_exercises, i, routineSupersets)),
+            onMoveUp: i > 0
+                ? () =>
+                      setState(() => _exercises = moveItem(_exercises, i, i - 1, routineSupersets))
+                : null,
+            onMoveDown: i + 1 < _exercises.length
+                ? () =>
+                      setState(() => _exercises = moveItem(_exercises, i, i + 1, routineSupersets))
+                : null,
             exerciseName: exercisesAsync.valueOrNull
                 ?.firstWhere(
                   (e) => e.id == _exercises[i].exerciseId,
@@ -233,7 +251,13 @@ ActivityExercise _asActivityExercise(RoutineExercise exercise) => ActivityExerci
 
 class _RoutineExerciseCard extends StatelessWidget {
   const _RoutineExerciseCard({
+    super.key,
     required this.exercise,
+    required this.supersetLabel,
+    required this.onLinkWithNext,
+    required this.onUnlink,
+    required this.onMoveUp,
+    required this.onMoveDown,
     required this.exerciseName,
     required this.weightEnabled,
     required this.onChanged,
@@ -241,13 +265,25 @@ class _RoutineExerciseCard extends StatelessWidget {
   });
 
   final RoutineExercise exercise;
+  final String? supersetLabel;
+  final VoidCallback? onLinkWithNext;
+  final VoidCallback onUnlink;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
   final String? exerciseName;
   final bool weightEnabled;
   final ValueChanged<RoutineExercise> onChanged;
   final VoidCallback onRemove;
 
   void _addSet() {
-    onChanged(exercise.copyWith(sets: [...exercise.sets, const RoutineSet()]));
+    onChanged(
+      exercise.copyWith(
+        sets: [
+          ...exercise.sets,
+          RoutineSet(uid: nextUid()),
+        ],
+      ),
+    );
   }
 
   void _removeSetAt(int index) {
@@ -260,8 +296,17 @@ class _RoutineExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final inSuperset = supersetLabel != null;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      // A superset's members are outlined, so the run reads as one block.
+      shape: inSuperset
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              side: BorderSide(color: scheme.primary, width: 1.5),
+            )
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -275,6 +320,40 @@ class _RoutineExerciseCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
+                if (inSuperset)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Chip(
+                      label: Text('Superset $supersetLabel'),
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: scheme.primaryContainer,
+                      labelStyle: TextStyle(color: scheme.onPrimaryContainer, fontSize: 12),
+                      side: BorderSide.none,
+                    ),
+                  ),
+                if (onLinkWithNext != null || inSuperset || onMoveUp != null || onMoveDown != null)
+                  PopupMenuButton<String>(
+                    tooltip: 'Exercise options',
+                    onSelected: (value) => switch (value) {
+                      'link' => onLinkWithNext?.call(),
+                      'unlink' => onUnlink(),
+                      'up' => onMoveUp?.call(),
+                      _ => onMoveDown?.call(),
+                    },
+                    itemBuilder: (context) => [
+                      if (onLinkWithNext != null)
+                        const PopupMenuItem(
+                          value: 'link',
+                          child: Text('Superset with next exercise'),
+                        ),
+                      if (inSuperset)
+                        const PopupMenuItem(value: 'unlink', child: Text('Remove from superset')),
+                      if (onMoveUp != null)
+                        const PopupMenuItem(value: 'up', child: Text('Move up')),
+                      if (onMoveDown != null)
+                        const PopupMenuItem(value: 'down', child: Text('Move down')),
+                    ],
+                  ),
                 IconButton(
                   tooltip: 'Remove exercise',
                   icon: const Icon(Icons.close),
@@ -284,6 +363,9 @@ class _RoutineExerciseCard extends StatelessWidget {
             ),
             for (var i = 0; i < exercise.sets.length; i++)
               _SetRow(
+                key: ValueKey(
+                  itemKeyOf(uid: exercise.sets[i].uid, id: exercise.sets[i].id, index: i),
+                ),
                 index: i,
                 set: exercise.sets[i],
                 weightEnabled: weightEnabled,
@@ -304,6 +386,7 @@ class _RoutineExerciseCard extends StatelessWidget {
 
 class _SetRow extends StatelessWidget {
   const _SetRow({
+    super.key,
     required this.index,
     required this.set,
     required this.weightEnabled,

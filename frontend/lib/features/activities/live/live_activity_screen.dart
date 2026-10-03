@@ -5,10 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/async_value_view.dart';
 import '../../../core/design_tokens.dart';
 import '../../../core/widgets/responsive_body.dart';
+import '../../../models/activity.dart';
 import '../../../models/exercise.dart';
+import '../../../models/superset.dart';
+import '../../../models/uid.dart';
 import '../../exercises/exercise_picker.dart';
 import '../../exercises/exercises_providers.dart';
 import '../../onboarding/onboarding_overlay.dart';
+import '../../progress/exercise_progress_screen.dart';
 import '../widgets/activity_exercise_card.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
@@ -145,6 +149,7 @@ class LiveActivityScreen extends ConsumerWidget {
     }
 
     final exercisesAsync = ref.watch(exerciseListProvider);
+    final labels = supersetLabels([for (final e in session.exercises) e.supersetGroup]);
 
     return Scaffold(
       appBar: AppBar(
@@ -215,15 +220,18 @@ class LiveActivityScreen extends ConsumerWidget {
             Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
             for (var i = 0; i < session.exercises.length; i++)
-              ActivityExerciseCard(
+              _LiveExerciseCard(
+                key: ValueKey(
+                  itemKeyOf(uid: session.exercises[i].uid, id: session.exercises[i].id, index: i),
+                ),
+                index: i,
+                count: session.exercises.length,
                 exercise: session.exercises[i],
+                supersetLabel: labels[i],
                 catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
                   (e) => e.id == session.exercises[i].exerciseId,
                   orElse: () => Exercise(name: '#${session.exercises[i].exerciseId}'),
                 ),
-                onChanged: (updated) =>
-                    ref.read(liveActivityProvider.notifier).updateExerciseAt(i, updated),
-                onRemove: () => ref.read(liveActivityProvider.notifier).removeExerciseAt(i),
               ),
             const SizedBox(height: AppSpacing.sm),
             AsyncValueView(
@@ -294,7 +302,14 @@ class _StatTile extends StatelessWidget {
                 children: [
                   Icon(icon, size: 18, color: scheme.onSurfaceVariant),
                   const SizedBox(width: AppSpacing.xs),
-                  Text(label, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                    ),
+                  ),
                   if (trailingIcon != null) ...[
                     const SizedBox(width: AppSpacing.xs),
                     Icon(trailingIcon, size: 16, color: scheme.onSurfaceVariant),
@@ -305,6 +320,51 @@ class _StatTile extends StatelessWidget {
               value,
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One exercise in the live workout: [ActivityExerciseCard] plus what only
+/// this screen knows -- the exercise's history (for "last time" and the
+/// suggestion) and records (for trophies), both fetched from the server and
+/// simply absent while loading or when it can't be reached, so logging a set
+/// never waits on, or fails because of, the network.
+class _LiveExerciseCard extends ConsumerWidget {
+  const _LiveExerciseCard({
+    super.key,
+    required this.index,
+    required this.count,
+    required this.exercise,
+    required this.catalogExercise,
+    required this.supersetLabel,
+  });
+
+  final int index;
+  final int count;
+  final ActivityExercise exercise;
+  final Exercise? catalogExercise;
+  final String? supersetLabel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(liveActivityProvider.notifier);
+    return ActivityExerciseCard(
+      exercise: exercise,
+      catalogExercise: catalogExercise,
+      history: ref.watch(exerciseHistoryProvider(exercise.exerciseId)).valueOrNull,
+      records: ref.watch(exerciseRecordsProvider(exercise.exerciseId)).valueOrNull,
+      supersetLabel: supersetLabel,
+      onChanged: (updated) => notifier.updateExerciseAt(index, updated),
+      onRemove: () => notifier.removeExerciseAt(index),
+      onLinkWithNext: index + 1 < count ? () => notifier.linkExerciseWithNext(index) : null,
+      onUnlink: () => notifier.unlinkExercise(index),
+      onMoveUp: index > 0 ? () => notifier.moveExercise(index, index - 1) : null,
+      onMoveDown: index + 1 < count ? () => notifier.moveExercise(index, index + 1) : null,
+      onViewProgress: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ExerciseProgressScreen(exerciseId: exercise.exerciseId),
         ),
       ),
     );

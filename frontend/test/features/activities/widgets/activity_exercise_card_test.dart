@@ -4,6 +4,7 @@ import 'package:dinatos_frontend/models/activity.dart';
 import 'package:dinatos_frontend/models/equipment.dart';
 import 'package:dinatos_frontend/models/exercise.dart';
 import 'package:dinatos_frontend/models/muscle_group.dart';
+import 'package:dinatos_frontend/models/set_type.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,5 +174,199 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ActionChip), findsNothing);
+  });
+
+  _cardTests();
+}
+
+/// A card whose edits are applied to a held [ActivityExercise], as a screen would.
+class _Harness extends StatefulWidget {
+  const _Harness({required this.initial, this.catalog, this.onLinkWithNext, this.supersetLabel});
+
+  final ActivityExercise initial;
+  final Exercise? catalog;
+  final VoidCallback? onLinkWithNext;
+  final String? supersetLabel;
+
+  @override
+  State<_Harness> createState() => _HarnessState();
+}
+
+class _HarnessState extends State<_Harness> {
+  late ActivityExercise exercise = widget.initial;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    home: Scaffold(
+      body: SingleChildScrollView(
+        child: ActivityExerciseCard(
+          exercise: exercise,
+          catalogExercise: widget.catalog ?? const Exercise(id: 5, name: 'Bench Press'),
+          supersetLabel: widget.supersetLabel,
+          onLinkWithNext: widget.onLinkWithNext,
+          onChanged: (updated) => setState(() => exercise = updated),
+          onRemove: () {},
+        ),
+      ),
+    ),
+  );
+}
+
+_HarnessState _state(WidgetTester tester) => tester.state<_HarnessState>(find.byType(_Harness));
+
+void _cardTests() {
+  group('set rows', () {
+    testWidgets('RPE is recorded, and a value outside 1-10 is flagged and not recorded', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
+      );
+
+      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '8.5');
+      await tester.pump();
+      expect(_state(tester).exercise.sets.single.rpe, 8.5);
+      expect(find.text('1–10'), findsNothing);
+
+      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '11');
+      await tester.pump();
+      expect(_state(tester).exercise.sets.single.rpe, isNull);
+      expect(find.text('1–10'), findsOneWidget);
+      // The field keeps what was typed, so the error has something to point at.
+      expect(
+        tester.widget<TextField>(find.widgetWithText(TextField, 'RPE')).controller!.text,
+        '11',
+      );
+
+      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '');
+      await tester.pump();
+      expect(_state(tester).exercise.sets.single.rpe, isNull);
+      expect(find.text('1–10'), findsNothing);
+    });
+
+    testWidgets('a field takes digits only, and reps no decimal point', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
+      );
+
+      await tester.enterText(find.widgetWithText(TextField, 'kg'), '62.5kg');
+      await tester.enterText(find.widgetWithText(TextField, 'reps'), '8.5');
+      await tester.pump();
+
+      expect(_state(tester).exercise.sets.single.weightKg, 62.5);
+      expect(_state(tester).exercise.sets.single.reps, 85);
+    });
+
+    testWidgets('the set options menu changes the type, marking a non-normal set', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
+      );
+      expect(find.text('W'), findsNothing);
+
+      await tester.tap(find.byTooltip('Set options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('warmup'));
+      await tester.pumpAndSettle();
+
+      expect(_state(tester).exercise.sets.single.setType, SetType.warmup);
+      expect(find.text('W'), findsOneWidget);
+    });
+
+    testWidgets('a body-weight exercise has no plate calculator and no weight field', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const _Harness(
+          initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()]),
+          catalog: Exercise(id: 5, name: 'Push-up', equipment: Equipment.bodyOnly),
+        ),
+      );
+      expect(tester.widget<TextField>(find.widgetWithText(TextField, 'kg')).enabled, isFalse);
+
+      await tester.tap(find.byTooltip('Set options'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plate calculator'), findsNothing);
+      expect(find.text('Remove set'), findsOneWidget);
+    });
+
+    testWidgets('the plate calculator opens on the set weight', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(
+          initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet(weightKg: 100)]),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Set options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Plate calculator'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plate calculator'), findsOneWidget);
+      expect(find.text('25 + 15'), findsOneWidget); // (100 - 20) / 2 = 40 per side
+    });
+  });
+
+  group('notes and options', () {
+    testWidgets('a note is added from the menu and recorded, and clearing it removes it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const _Harness(initial: ActivityExercise(exerciseId: 5)));
+      expect(find.widgetWithText(TextFormField, 'Note'), findsNothing);
+
+      await tester.tap(find.byTooltip('Exercise options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add note'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextFormField, 'Note'), 'pause at the bottom');
+      expect(_state(tester).exercise.notes, 'pause at the bottom');
+
+      await tester.enterText(find.widgetWithText(TextFormField, 'Note'), '');
+      expect(_state(tester).exercise.notes, isNull);
+    });
+
+    testWidgets('an exercise that already has a note shows it', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, notes: 'slow negatives')),
+      );
+
+      expect(find.text('slow negatives'), findsOneWidget);
+    });
+
+    testWidgets('superset and move entries appear only when they can apply', (tester) async {
+      await tester.pumpWidget(const _Harness(initial: ActivityExercise(exerciseId: 5)));
+
+      await tester.tap(find.byTooltip('Exercise options'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Superset with next exercise'), findsNothing);
+      expect(find.text('Move up'), findsNothing);
+      expect(find.text('Move down'), findsNothing);
+      expect(find.text('View progress'), findsNothing);
+      expect(find.text('Remove from superset'), findsNothing);
+      expect(find.text('Add note'), findsOneWidget);
+    });
+
+    testWidgets('the superset entry calls back', (tester) async {
+      var linked = 0;
+      await tester.pumpWidget(
+        _Harness(initial: const ActivityExercise(exerciseId: 5), onLinkWithNext: () => linked++),
+      );
+
+      await tester.tap(find.byTooltip('Exercise options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Superset with next exercise'));
+      await tester.pumpAndSettle();
+
+      expect(linked, 1);
+    });
+
+    testWidgets('a superset member shows its label', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5), supersetLabel: 'B'),
+      );
+
+      expect(find.text('Superset B'), findsOneWidget);
+    });
   });
 }

@@ -42,6 +42,9 @@ class RoutineExercise(Base):
     routine_id: Mapped[int] = mapped_column(ForeignKey("routines.id", ondelete="CASCADE"))
     exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"))
     position: Mapped[int]
+    # Exercises sharing a `superset_group` are performed back-to-back; copied
+    # onto the activity when a workout is started from this routine.
+    superset_group: Mapped[int | None]
     notes: Mapped[str | None] = mapped_column(String(2000))
 
     routine: Mapped[Routine] = relationship(back_populates="exercises")

@@ -15,6 +15,7 @@ import '../features/exercises/exercise_form_screen.dart';
 import '../features/exercises/exercise_list_screen.dart';
 import '../features/exercises/exercise_tutorial_screen.dart';
 import '../features/home/app_shell.dart';
+import '../features/progress/exercise_progress_screen.dart';
 import '../features/measurements/measurement_form_screen.dart';
 import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
@@ -76,6 +77,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: ':id/edit',
                     builder: (context, state) =>
                         ExerciseFormScreen(exerciseId: int.parse(state.pathParameters['id']!)),
+                  ),
+                  GoRoute(
+                    path: ':id/progress',
+                    builder: (context, state) =>
+                        ExerciseProgressScreen(exerciseId: int.parse(state.pathParameters['id']!)),
                   ),
                   GoRoute(
                     path: ':id/tutorial',

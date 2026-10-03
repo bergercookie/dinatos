@@ -99,3 +99,24 @@ async def test_delete_routine(client: AsyncClient) -> None:
 async def test_delete_missing_routine_is_404(client: AsyncClient) -> None:
     response = await client.delete("/routines/999")
     assert response.status_code == 404
+
+
+async def test_routine_exercises_keep_their_superset_group(client: AsyncClient) -> None:
+    ids = [
+        (await client.post("/exercises", json={"name": name})).json()["id"]
+        for name in ("Bench Press", "Row", "Curl")
+    ]
+    response = await client.post(
+        "/routines",
+        json={
+            "name": "Upper",
+            "exercises": [
+                {"exercise_id": ids[0], "superset_group": 1, "sets": []},
+                {"exercise_id": ids[1], "superset_group": 1, "sets": []},
+                {"exercise_id": ids[2], "sets": []},
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+    assert [e["superset_group"] for e in response.json()["exercises"]] == [1, 1, None]

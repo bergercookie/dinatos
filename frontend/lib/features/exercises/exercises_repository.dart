@@ -7,9 +7,14 @@ import '../../core/api_exception.dart';
 import '../../core/dio_provider.dart';
 import '../../models/equipment.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_history.dart';
 import '../../models/exercise_records.dart';
 import '../../models/exercise_tutorial.dart';
 import '../../models/muscle_group.dart';
+
+/// How many past sessions of an exercise are fetched: plenty for a progress
+/// chart, and what the live workout's hints are computed from.
+const exerciseHistoryLimit = 200;
 
 final exercisesRepositoryProvider = Provider<ExercisesRepository>((ref) {
   return ExercisesRepository(ref.watch(dioProvider));
@@ -147,6 +152,23 @@ class ExercisesRepository {
     try {
       final response = await _dio.get<Map<String, dynamic>>('/exercises/$id/records');
       return ExerciseRecords.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// This caller's own past sessions of this exercise, newest first (at most
+  /// [limit]) -- what the "last time" hint, overload suggestion and progress
+  /// chart are computed from.
+  Future<List<ExerciseHistoryEntry>> getHistory(int id, {int limit = exerciseHistoryLimit}) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/exercises/$id/history',
+        queryParameters: {'limit': limit},
+      );
+      return response.data!
+          .map((e) => ExerciseHistoryEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }

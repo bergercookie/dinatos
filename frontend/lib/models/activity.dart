@@ -1,4 +1,5 @@
 import 'set_type.dart';
+import 'superset.dart';
 
 /// See `models/routine.dart`'s `_unset` -- same reason: distinguishes "not
 /// passed" from "explicitly cleared" in `copyWith`.
@@ -7,6 +8,7 @@ const _unset = Object();
 class ActivitySet {
   const ActivitySet({
     this.id,
+    this.uid = 0,
     this.position,
     this.setType = SetType.normal,
     this.weightKg,
@@ -28,6 +30,9 @@ class ActivitySet {
   );
 
   final int? id;
+
+  /// See `uid.dart`; what a row is keyed on while this set is being edited.
+  final int uid;
   final int? position;
   final SetType setType;
   final double? weightKg;
@@ -54,6 +59,7 @@ class ActivitySet {
     Object? rpe = _unset,
   }) => ActivitySet(
     id: id,
+    uid: uid,
     position: position,
     setType: setType ?? this.setType,
     weightKg: identical(weightKg, _unset) ? this.weightKg : weightKg as double?,
@@ -69,6 +75,7 @@ class ActivitySet {
 class ActivityExercise {
   const ActivityExercise({
     this.id,
+    this.uid = 0,
     this.position,
     required this.exerciseId,
     this.supersetGroup,
@@ -88,8 +95,14 @@ class ActivityExercise {
   );
 
   final int? id;
+
+  /// See `uid.dart`.
+  final int uid;
   final int? position;
   final int exerciseId;
+
+  /// Exercises sharing a group are done back-to-back as a superset; see
+  /// `superset.dart` for how the groups are kept adjacent and numbered.
   final int? supersetGroup;
   final String? notes;
   final List<ActivitySet> sets;
@@ -101,15 +114,26 @@ class ActivityExercise {
     'sets': sets.map((s) => s.toJson()).toList(),
   };
 
-  ActivityExercise copyWith({String? notes, List<ActivitySet>? sets}) => ActivityExercise(
+  ActivityExercise copyWith({
+    Object? supersetGroup = _unset,
+    Object? notes = _unset,
+    List<ActivitySet>? sets,
+  }) => ActivityExercise(
     id: id,
+    uid: uid,
     position: position,
     exerciseId: exerciseId,
-    supersetGroup: supersetGroup,
-    notes: notes ?? this.notes,
+    supersetGroup: identical(supersetGroup, _unset) ? this.supersetGroup : supersetGroup as int?,
+    notes: identical(notes, _unset) ? this.notes : notes as String?,
     sets: sets ?? this.sets,
   );
 }
+
+/// How [normalizeSupersets] and friends read and write an exercise's group.
+final activitySupersets = SupersetAccess<ActivityExercise>(
+  groupOf: (e) => e.supersetGroup,
+  withGroup: (e, group) => e.copyWith(supersetGroup: group),
+);
 
 class Activity {
   const Activity({

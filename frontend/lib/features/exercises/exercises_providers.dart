@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/equipment.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_history.dart';
+import '../../models/exercise_records.dart';
 import '../../models/exercise_tutorial.dart';
 import '../../models/muscle_group.dart';
 import 'exercises_repository.dart';
@@ -198,4 +200,20 @@ final exercisesByEquipmentProvider = FutureProvider.autoDispose.family<List<Exer
   equipment,
 ) {
   return ref.watch(exercisesRepositoryProvider).list(equipment: equipment);
+});
+
+/// The caller's past sessions of one exercise, newest first.
+final exerciseHistoryProvider = FutureProvider.autoDispose.family<List<ExerciseHistoryEntry>, int>((
+  ref,
+  exerciseId,
+) {
+  return ref.watch(exercisesRepositoryProvider).getHistory(exerciseId);
+});
+
+/// The caller's all-time bests for one exercise.
+final exerciseRecordsProvider = FutureProvider.autoDispose.family<ExerciseRecords, int>((
+  ref,
+  exerciseId,
+) {
+  return ref.watch(exercisesRepositoryProvider).getRecords(exerciseId);
 });

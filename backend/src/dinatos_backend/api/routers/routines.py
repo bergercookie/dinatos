@@ -18,6 +18,7 @@ def _build_exercises(payload: RoutineCreate) -> list[RoutineExercise]:
     return [
         RoutineExercise(
             exercise_id=item.exercise_id,
+            superset_group=item.superset_group,
             notes=item.notes,
             position=position,
             sets=[

@@ -102,6 +102,58 @@ void main() {
     expect(restored.routineName, 'Pull day');
   });
 
+  test(
+    'a workout finished offline survives the app being killed, as it will be restored',
+    () async {
+      // The real disk path: the notifier writes through PrefsLiveSessionStorage...
+      SharedPreferences.setMockInitialValues({});
+      const storage = PrefsLiveSessionStorage();
+      // `main()` reads the stored session before anything else, which also warms up
+      // SharedPreferences; a cold first call can reorder concurrent writes.
+      expect(await storage.read(), isNull);
+      final before = LiveActivityNotifier(storage: storage, currentUserId: () => 4)..start();
+      before.addExercise(1);
+      before.addExercise(2);
+      before.linkExerciseWithNext(0);
+      before.updateExerciseAt(
+        0,
+        before.state!.exercises[0].copyWith(
+          notes: 'tempo 3-1-1',
+          sets: [const ActivitySet(weightKg: 62.5, reps: 8, rpe: 8)],
+        ),
+      );
+      before.finish();
+      before.markSaveUncertain('Push day');
+      // Writes are fire-and-forget (see the storage's doc): wait for the last one to land.
+      for (var i = 0; i < 200; i++) {
+        if ((await storage.read())?.session.pendingTitle != null) break;
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+
+      // ...and a fresh process reads it back at startup, as `main()` does.
+      final restored = (await storage.read())!;
+      final after = LiveActivityNotifier(restored: restored, storage: storage);
+      final session = after.state!;
+
+      expect(restored.ownerId, 4);
+      expect(session.endedAt, isNotNull);
+      expect(session.isSaved, isFalse);
+      expect(session.pendingTitle, 'Push day');
+      expect(session.exercises.map((e) => e.exerciseId), [1, 2]);
+      expect(session.exercises.map((e) => e.supersetGroup), [1, 1]);
+      expect(session.exercises[0].notes, 'tempo 3-1-1');
+      expect(session.exercises[0].sets.single.weightKg, 62.5);
+      expect(session.exercises[0].sets.single.rpe, 8);
+      // Restored items get fresh row identities, so editing them is safe.
+      final uids = [
+        for (final e in session.exercises) e.uid,
+        for (final e in session.exercises) ...e.sets.map((s) => s.uid),
+      ];
+      expect(uids.every((uid) => uid != 0), isTrue);
+      expect(uids.toSet(), hasLength(uids.length));
+    },
+  );
+
   test('PrefsLiveSessionStorage writes, reads back and clears', () async {
     SharedPreferences.setMockInitialValues({});
     const storage = PrefsLiveSessionStorage();
