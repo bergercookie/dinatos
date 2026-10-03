@@ -23,24 +23,24 @@ default:
 # Build the release Android APK (BUILD_NUMBER must increase between app-store uploads).
 build-apk version build_number="1":
     cd "{{frontend_dir}}" && flutter pub get
-    cd "{{frontend_dir}}" && flutter build apk --release --build-name="{{version}}" --build-number="{{build_number}}"
+    cd "{{frontend_dir}}" && flutter build apk --release --build-name="{{version}}" --build-number="{{build_number}}" --dart-define=APP_VERSION="{{version}}" --dart-define=GIT_COMMIT="$(git rev-parse HEAD)"
 
 # Build the Flutter Linux bundle shared by both Linux package formats.
 [private]
-_build-linux:
+_build-linux version:
     flutter config --enable-linux-desktop
     cd "{{frontend_dir}}" && flutter pub get
-    cd "{{frontend_dir}}" && flutter build linux --release
+    cd "{{frontend_dir}}" && flutter build linux --release --dart-define=APP_VERSION="{{version}}" --dart-define=GIT_COMMIT="$(git rev-parse HEAD)"
 
 # Build a Debian package in OUTPUT_DIR.
-build-deb version output_dir="dist": _build-linux
+build-deb version output_dir="dist": (_build-linux version)
     ./linux/build-deb.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
 
 # Build an AppImage in OUTPUT_DIR.
-build-appimage version output_dir="dist": _build-linux
+build-appimage version output_dir="dist": (_build-linux version)
     ./linux/build-appimage.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
 
 # Build both Linux packages from one shared Flutter build.
-build-linux-artifacts version output_dir="dist": _build-linux
+build-linux-artifacts version output_dir="dist": (_build-linux version)
     ./linux/build-deb.sh "{{version}}" "{{repo_root}}/{{output_dir}}"
     ./linux/build-appimage.sh "{{version}}" "{{repo_root}}/{{output_dir}}"

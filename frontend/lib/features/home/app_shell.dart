@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_info.dart';
 import '../../core/auth/auth_notifier.dart';
 import '../onboarding/onboarding_overlay.dart';
 import 'live_workout_banner.dart';
@@ -60,10 +61,20 @@ class AppShell extends ConsumerWidget {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: IconButton(
-                      tooltip: 'Log out',
-                      icon: const Icon(Icons.logout),
-                      onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Log out',
+                          icon: const Icon(Icons.logout),
+                          onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          appVersion == 'dev' ? 'dev' : 'v$appVersion',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -325,6 +325,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 // is why the docs screen carries its own explicit back button.
                 onTap: () => context.go('/docs'),
               ),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('About'),
+                subtitle: const Text('Version, build and license'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.go('/profile/about'),
+              ),
             ],
           ),
         ),
