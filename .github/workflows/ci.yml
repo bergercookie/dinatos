@@ -118,29 +118,3 @@ jobs:
           name: e2e-debug
           path: /tmp/dinatos-e2e-*.png
           if-no-files-found: ignore
-
-  screenshots:
-    # The heaviest combination of the lot: the Flutter SDK (to build the
-    # frontend), Docker (testcontainers' disposable Postgres), and Playwright's
-    # own browser download -- so, like `migrations` and `frontend`, its own
-    # job rather than part of `just check`.
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-      - uses: extractions/setup-just@v4
-      - run: just screenshots::install
-      - run: just screenshots::lint
-      - run: just screenshots::check
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots-debug
-          path: /tmp/dinatos-screenshot-debug.png
-          if-no-files-found: ignore

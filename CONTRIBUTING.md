@@ -50,9 +50,9 @@ doesn't work here (it's old enough to reject this repo's `mod`-based root
   -- needs a real Flutter SDK, which is why it's a separate recipe/job from
   the root `just check` rather than folded into it.
 - Touched anything the app's screens render (a model's shape, a screen's
-  layout)? `just screenshots check` (CI's `screenshots` job) regenerates
-  `README.md`'s screenshots against a real backend + frontend build and
-  fails if they've drifted from what's committed.
+  layout)? `just screenshots generate` regenerates
+  `README.md`'s screenshots against a real backend + frontend build; commit
+  the result. (Not checked in CI: pixel output differs between machines.)
 - Touched the first-run tour, or navigation/screens it points at? `just e2e
   test` (CI's `e2e` job) drives the real web build in a real browser,
   against a real backend and Postgres, and walks a new account through

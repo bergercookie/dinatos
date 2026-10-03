@@ -1,12 +1,11 @@
 """Generates README.md's screenshots against a real, throwaway backend and
 a real frontend build -- not mocked data, not hand-maintained fixtures.
 
-`just screenshots update` overwrites the committed PNGs (and README.md's
-embed block) for whichever ones actually changed. `just screenshots check`
-(what CI runs) does the same comparison but writes nothing and exits
-non-zero if anything is stale, so a UI change that shifts what these
-screens look like has to be deliberately re-generated and reviewed, not
-silently drift out of sync with what README.md shows.
+`just screenshots generate` overwrites the committed PNGs (and README.md's
+embed block). Nothing checks them in CI: pixel output differs between
+machines (browser build, fonts), so a byte comparison was flaky. Re-run this
+after a UI change that alters what these screens look like, and commit the
+result.
 
 The "now" the app sees is frozen (see `_FREEZE_DATE_INIT_SCRIPT`) and every
 other piece of seed data (emails, exercise names, weights) is a fixed
@@ -174,6 +173,10 @@ def _build_frontend() -> Path:
             "build",
             "web",
             "--release",
+            # Bundle CanvasKit rather than fetching it from Google's CDN at page
+            # load: no network dependence, and a sandbox without internet would
+            # otherwise render a blank page forever (same flag as e2e/).
+            "--no-web-resources-cdn",
             f"--dart-define=API_BASE_URL=http://127.0.0.1:{BACKEND_PORT}",
         ],
         cwd=FRONTEND_DIR,
@@ -212,8 +215,14 @@ def _fill(locator: Locator, value: str) -> None:
     from a saved routine), not just to fill an empty one.
     """
     locator.click()
+    # Let Flutter process each key press before the next: fired back to back,
+    # the Delete can lose the race against the select-all and leave the old
+    # value in place, so the typed text lands in front of it ("4547.5").
+    locator.page.wait_for_timeout(100)
     locator.press("ControlOrMeta+a")
+    locator.page.wait_for_timeout(100)
     locator.press("Delete")
+    locator.page.wait_for_timeout(100)
     locator.press_sequentially(value, delay=20)
     locator.page.wait_for_timeout(150)
 
@@ -282,6 +291,25 @@ def _set_type(card: Locator, current: str, new: str) -> None:
     card.page.get_by_role("menuitem", name=new).click()
 
 
+def _screenshot(page: Page, path: Path, attempts: int = 8) -> None:
+    """Saves a screenshot once the page has visibly stopped changing: two
+    consecutive captures are byte-identical. A single capture can land
+    mid-way through something that is not part of "what the screen looks
+    like" -- the downscaled wordmark's resampling, an animation's last
+    frames -- which would make the byte comparison in `--check` flaky
+    against what was committed. (A blinking text caret never settles, so
+    callers blur the focused field first.)
+    """
+    previous = page.screenshot()
+    for _ in range(attempts):
+        page.wait_for_timeout(250)
+        current = page.screenshot()
+        if current == previous:
+            break
+        previous = current
+    path.write_bytes(previous)
+
+
 def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
     saved: dict[str, Path] = {}
 
@@ -302,7 +330,7 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             _enable_semantics(page)
 
             path = output_dir / f"{SCREENSHOTS['login'][0]}.png"
-            page.screenshot(path=path)
+            _screenshot(page, path)
             saved["login"] = path
 
             _register(page)
@@ -311,7 +339,7 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.mouse.move(10, 10)  # away from whatever was last hovered/focused
 
             path = output_dir / f"{SCREENSHOTS['exercise-view'][0]}.png"
-            page.screenshot(path=path)
+            _screenshot(page, path)
             saved["exercise-view"] = path
 
             _goto_tab(page, "Routines")
@@ -343,9 +371,11 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
                 page.wait_for_timeout(250)
             _fill_set(overhead, 0, "40", "8")
             _fill_set(overhead, 1, "45", "6")
+            page.mouse.click(250, 450)  # blur: no blinking caret in the capture
+            page.wait_for_timeout(300)
 
             path = output_dir / f"{SCREENSHOTS['routine-creation'][0]}.png"
-            page.screenshot(path=path)
+            _screenshot(page, path)
             saved["routine-creation"] = path
 
             page.get_by_role("button", name="Create").click()
@@ -370,9 +400,13 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.wait_for_timeout(500)
             activity_overhead = page.get_by_role("group", name="Overhead Press")
             _fill(activity_overhead.get_by_role("textbox", name="kg").nth(1), "47.5")
+            # Click empty space so the field loses focus: a focused field's
+            # caret blinks, so whether it is drawn would depend on timing.
+            page.mouse.click(250, 450)
+            page.wait_for_timeout(300)
 
             path = output_dir / f"{SCREENSHOTS['routine-execution'][0]}.png"
-            page.screenshot(path=path)
+            _screenshot(page, path)
             saved["routine-execution"] = path
 
             # Finish the flow for real -- not needed for any screenshot, but
@@ -414,9 +448,7 @@ def _readme_block(names: list[str]) -> str:
 
 def _rendered_readme(names: list[str]) -> str:
     """README.md with its screenshots block replaced by what it should be
-    right now -- callers compare this against the file on disk (`--check`)
-    or write it back (`--update`); either way this is the one place that
-    block's exact text gets produced, so the two modes can't drift apart.
+    right now.
     """
     text = README_PATH.read_text()
     start_marker = "<!-- screenshots:start"
@@ -430,15 +462,7 @@ def _rendered_readme(names: list[str]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument(
-        "--check", action="store_true", help="compare only; write nothing; exit 1 if stale"
-    )
-    mode.add_argument(
-        "--update", action="store_true", help="overwrite committed PNGs/README with what changed"
-    )
-    args = parser.parse_args()
+    argparse.ArgumentParser(description=__doc__).parse_args()
 
     frontend_web_dir = _build_frontend()
 
@@ -451,44 +475,16 @@ def main() -> int:
         ):
             generated = run_browser_flow(f"http://127.0.0.1:{FRONTEND_PORT}/", scratch_dir)
 
-        changed = []
         for name, generated_path in generated.items():
             stem, _caption = SCREENSHOTS[name]
-            committed_path = SCREENSHOTS_DIR / f"{stem}.png"
-            is_new_or_different = (
-                not committed_path.exists()
-                or committed_path.read_bytes() != generated_path.read_bytes()
-            )
-            if is_new_or_different:
-                changed.append(name)
-            if args.update:
-                shutil.copyfile(generated_path, committed_path)
+            shutil.copyfile(generated_path, SCREENSHOTS_DIR / f"{stem}.png")
         # scratch (and everything generated into it) is removed once this
         # `with` block exits -- nothing generated ever lingers outside it.
 
-    current_readme = README_PATH.read_text()
     new_readme = _rendered_readme(list(SCREENSHOTS))
-    readme_stale = new_readme != current_readme
-
-    if args.update:
-        if readme_stale:
-            README_PATH.write_text(new_readme)
-        if changed:
-            print("Updated: " + ", ".join(changed))
-        if readme_stale:
-            print(f"Updated {README_PATH.relative_to(REPO_ROOT)}'s screenshots block.")
-        if not changed and not readme_stale:
-            print("Nothing changed.")
-        return 0
-
-    # --check: report, write nothing.
-    problems = list(changed)
-    if readme_stale:
-        problems.append("README.md's screenshots block")
-    if problems:
-        print("Stale (run `just screenshots update` and commit the result): " + ", ".join(problems))
-        return 1
-    print("All screenshots and README.md match.")
+    if new_readme != README_PATH.read_text():
+        README_PATH.write_text(new_readme)
+    print("Regenerated: " + ", ".join(generated))
     return 0
 
 

@@ -239,194 +239,200 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    // Not a lazy `ListView`: the first-run tour looks up the Preferences card
+    // by its registered target and scrolls it into view, which cannot happen
+    // while it sits below the fold and so was never built.
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.lg,
         AppSpacing.lg,
         AppSpacing.xxl,
       ),
-      children: [
-        const _SectionHeader('Account'),
-        Card(
-          child: Column(
-            children: [
-              if (widget.email != null)
-                ListTile(
-                  leading: const Icon(Icons.alternate_email_rounded),
-                  title: const Text('Email'),
-                  subtitle: Text(widget.email!),
-                ),
-              ListTile(
-                leading: const Icon(Icons.dns_outlined),
-                title: const Text('Server'),
-                subtitle: Text(widget.serverUrl),
-                trailing: ApiConfig.isFixedToServingOrigin
-                    ? null
-                    : IconButton(
-                        tooltip: 'Change server',
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _editServerUrl(context, ref),
-                      ),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.lock_open_outlined),
-                title: const Text('Allow self-signed certificates'),
-                subtitle: const Text('Skips TLS certificate verification for this server'),
-                value: ref.watch(allowInsecureTlsProvider),
-                onChanged: (value) async {
-                  await ref.read(insecureTlsStorageProvider).write(value);
-                  ref.read(allowInsecureTlsProvider.notifier).state = value;
-                },
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        if (widget.isAdmin) ...[
-          const _SectionHeader('Administration'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionHeader('Account'),
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.manage_accounts_outlined),
-              title: const Text('Manage users'),
-              subtitle: const Text('View accounts and add new ones'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => context.go('/profile/admin'),
+            child: Column(
+              children: [
+                if (widget.email != null)
+                  ListTile(
+                    leading: const Icon(Icons.alternate_email_rounded),
+                    title: const Text('Email'),
+                    subtitle: Text(widget.email!),
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.dns_outlined),
+                  title: const Text('Server'),
+                  subtitle: Text(widget.serverUrl),
+                  trailing: ApiConfig.isFixedToServingOrigin
+                      ? null
+                      : IconButton(
+                          tooltip: 'Change server',
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _editServerUrl(context, ref),
+                        ),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.lock_open_outlined),
+                  title: const Text('Allow self-signed certificates'),
+                  subtitle: const Text('Skips TLS certificate verification for this server'),
+                  value: ref.watch(allowInsecureTlsProvider),
+                  onChanged: (value) async {
+                    await ref.read(insecureTlsStorageProvider).write(value);
+                    ref.read(allowInsecureTlsProvider.notifier).state = value;
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-        ],
-        const _SectionHeader('Data'),
-        Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.file_upload_outlined),
-                title: const Text('Import from Hevy'),
-                subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
+          if (widget.isAdmin) ...[
+            const _SectionHeader('Administration'),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.manage_accounts_outlined),
+                title: const Text('Manage users'),
+                subtitle: const Text('View accounts and add new ones'),
                 trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.go('/profile/import-hevy'),
+                onTap: () => context.go('/profile/admin'),
               ),
-              ListTile(
-                leading: const Icon(Icons.explore_outlined),
-                title: const Text('Take the tour again'),
-                subtitle: const Text('A quick walkthrough of setting up and logging a workout'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => ref.read(onboardingProvider.notifier).restart(),
-              ),
-              ListTile(
-                leading: const Icon(Icons.api_outlined),
-                title: const Text('API documentation'),
-                subtitle: const Text('Browse and try out the REST API'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                // `go`, not `push`: verified in a real browser that `push`
-                // renders this screen but leaves the address bar on
-                // `#/profile`, so the /docs link couldn't be copied,
-                // bookmarked or reloaded. `go` leaves nothing to pop, which
-                // is why the docs screen carries its own explicit back button.
-                onTap: () => context.go('/docs'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('About'),
-                subtitle: const Text('Version, build and license'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.go('/profile/about'),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        const _SectionHeader('Exercise tutorials'),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.vpn_key_outlined),
-            title: const Text('WorkoutX API key'),
-            subtitle: Text(
-              widget.profile.hasWorkoutxApiKey
-                  ? 'Saved -- using your own WorkoutX account'
-                  : 'Not set -- using the built-in exercise images',
             ),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: _editWorkoutxKey,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        const _SectionHeader('Appearance'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: SegmentedButton<ThemeMode>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto_outlined),
-                  label: Text('System'),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+          const _SectionHeader('Data'),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.file_upload_outlined),
+                  title: const Text('Import from Hevy'),
+                  subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/profile/import-hevy'),
                 ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined),
-                  label: Text('Light'),
+                ListTile(
+                  leading: const Icon(Icons.explore_outlined),
+                  title: const Text('Take the tour again'),
+                  subtitle: const Text('A quick walkthrough of setting up and logging a workout'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => ref.read(onboardingProvider.notifier).restart(),
                 ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined),
-                  label: Text('Dark'),
+                ListTile(
+                  leading: const Icon(Icons.api_outlined),
+                  title: const Text('API documentation'),
+                  subtitle: const Text('Browse and try out the REST API'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  // `go`, not `push`: verified in a real browser that `push`
+                  // renders this screen but leaves the address bar on
+                  // `#/profile`, so the /docs link couldn't be copied,
+                  // bookmarked or reloaded. `go` leaves nothing to pop, which
+                  // is why the docs screen carries its own explicit back button.
+                  onTap: () => context.go('/docs'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('About'),
+                  subtitle: const Text('Version, build and license'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/profile/about'),
                 ),
               ],
-              selected: {ref.watch(themeModeProvider)},
-              onSelectionChanged: (selection) async {
-                final mode = selection.first;
-                ref.read(themeModeProvider.notifier).state = mode;
-                await ref.read(themeModeStorageProvider).write(mode);
-              },
             ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        const _SectionHeader('Preferences'),
-        OnboardingTarget(
-          id: 'profile-prefs',
-          child: Card(
+          const SizedBox(height: AppSpacing.xl),
+          const _SectionHeader('Exercise tutorials'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.vpn_key_outlined),
+              title: const Text('WorkoutX API key'),
+              subtitle: Text(
+                widget.profile.hasWorkoutxApiKey
+                    ? 'Saved -- using your own WorkoutX account'
+                    : 'Not set -- using the built-in exercise images',
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: _editWorkoutxKey,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          const _SectionHeader('Appearance'),
+          Card(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _heightController,
-                    decoration: const InputDecoration(labelText: 'Height (cm)'),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              child: SegmentedButton<ThemeMode>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: ThemeMode.system,
+                    icon: Icon(Icons.brightness_auto_outlined),
+                    label: Text('System'),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  DropdownButtonFormField<UnitSystem>(
-                    initialValue: _unitSystem,
-                    decoration: const InputDecoration(labelText: 'Unit system'),
-                    items: UnitSystem.values
-                        .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) setState(() => _unitSystem = value);
-                    },
+                  ButtonSegment(
+                    value: ThemeMode.light,
+                    icon: Icon(Icons.light_mode_outlined),
+                    label: Text('Light'),
                   ),
-                  if (_error != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ErrorBanner(message: _error!),
-                  ],
-                  const SizedBox(height: AppSpacing.lg),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _submitting ? null : _save,
-                      child: const Text('Save'),
-                    ),
+                  ButtonSegment(
+                    value: ThemeMode.dark,
+                    icon: Icon(Icons.dark_mode_outlined),
+                    label: Text('Dark'),
                   ),
                 ],
+                selected: {ref.watch(themeModeProvider)},
+                onSelectionChanged: (selection) async {
+                  final mode = selection.first;
+                  ref.read(themeModeProvider.notifier).state = mode;
+                  await ref.read(themeModeStorageProvider).write(mode);
+                },
               ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.xl),
+          const _SectionHeader('Preferences'),
+          OnboardingTarget(
+            id: 'profile-prefs',
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _heightController,
+                      decoration: const InputDecoration(labelText: 'Height (cm)'),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DropdownButtonFormField<UnitSystem>(
+                      initialValue: _unitSystem,
+                      decoration: const InputDecoration(labelText: 'Unit system'),
+                      items: UnitSystem.values
+                          .map((unit) => DropdownMenuItem(value: unit, child: Text(unit.name)))
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => _unitSystem = value);
+                      },
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      ErrorBanner(message: _error!),
+                    ],
+                    const SizedBox(height: AppSpacing.lg),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _submitting ? null : _save,
+                        child: const Text('Save'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

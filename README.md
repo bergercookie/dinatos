@@ -36,9 +36,8 @@ Android, and Linux desktop).
 <!-- screenshots:end -->
 
 Generated against a real backend and a real frontend build, not mocked --
-see [`screenshots/`](screenshots/). `just screenshots update` regenerates
-them; CI (`just screenshots check`) fails if they've drifted from what's
-committed here.
+see [`screenshots/`](screenshots/). `just screenshots generate` regenerates
+them.
 
 ## Quickstart
 

@@ -12,13 +12,10 @@ locally before pushing:
 | `migrations` | `just backend test-migrations` | Docker |
 | `frontend` | `just frontend check` | Flutter SDK |
 | `e2e` | `just e2e test` | Docker, Flutter SDK, Playwright's Chromium |
-| `screenshots` | `just screenshots check` | Docker, Flutter SDK |
 
 `check` also verifies the `uv` lockfile is up to date before running
 `just install`/`just check` -- a dependency added to `pyproject.toml` without
-running `uv lock` fails here, not silently. `screenshots` uploads a debug
-artifact (the mismatched images) if the check fails, so a screenshot drift
-can be inspected without reproducing it locally first; `e2e` uploads a
+running `uv lock` fails here, not silently. `e2e` uploads a
 screenshot of the page at the moment a browser test failed.
 
 ## Coverage

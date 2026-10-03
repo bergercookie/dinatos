@@ -40,7 +40,7 @@ def _register(page: Page) -> None:
     page.get_by_role("button", name="Register").click()
 
 
-_TABS = ["Exercises", "Routines", "Home", "Measurements", "Profile"]
+_TABS = ["Exercises", "Routines", "Home", "Measurements", "Settings"]
 _WIDE_LAYOUT_FROM = 900  # px -- mirrors `_wideBreakpoint` in app_shell.dart
 
 
@@ -80,8 +80,8 @@ def test_tour_takes_a_new_user_from_sign_up_to_a_logged_workout(page: Page) -> N
     _on_step(page, "Welcome to Dinatos")
     page.get_by_role("button", name="Start tour").click()
 
-    _on_step(page, "Start with your profile")
-    _press_tab(page, "Profile")
+    _on_step(page, "Start with Settings")
+    _press_tab(page, "Settings")
 
     _on_step(page, "Pick your units")
     page.get_by_role("button", name="Save").click()
@@ -138,7 +138,7 @@ def test_skipping_the_tour_is_remembered_and_it_can_be_replayed(page: Page) -> N
     enable_semantics(page)
     expect(_step_card(page, "Welcome to Dinatos")).to_have_count(0)
 
-    _press_tab(page, "Profile")
+    _press_tab(page, "Settings")
     page.get_by_text("Take the tour again").click()
     _on_step(page, "Welcome to Dinatos")
 
@@ -146,16 +146,16 @@ def test_skipping_the_tour_is_remembered_and_it_can_be_replayed(page: Page) -> N
 def test_highlighted_step_blocks_everything_else(page: Page) -> None:
     _register(page)
     page.get_by_role("button", name="Start tour").click()
-    _on_step(page, "Start with your profile")
+    _on_step(page, "Start with Settings")
 
-    # Only Profile is left pressable; the other tabs sit behind the scrim.
+    # Only Settings is left pressable; the other tabs sit behind the scrim.
     # On the phone layout the browser itself refuses the press (the scrim
     # intercepts it), on the wide one it lands on the scrim and does nothing.
     with contextlib.suppress(PlaywrightTimeoutError):
         _press_tab(page, "Measurements", timeout=2_000)
     page.wait_for_timeout(500)
-    _on_step(page, "Start with your profile")
+    _on_step(page, "Start with Settings")
     expect(page.get_by_role("heading", name="Exercises")).to_be_visible()
 
-    _press_tab(page, "Profile")
+    _press_tab(page, "Settings")
     _on_step(page, "Pick your units")
