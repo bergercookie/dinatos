@@ -104,3 +104,10 @@ no automatic rollback.
 
 `hadolint` lints the `Dockerfile` as a pre-commit hook, so most Dockerfile
 mistakes are caught by `just check` well before a release build.
+
+Shell scripts (`backend/docker-entrypoint.sh`, `packaging/linux/*.sh`,
+`tools/*.sh`) are covered the same way: `shellcheck` (at `--severity=style`)
+and `shfmt` (2-space indent, check-only) run as pre-commit hooks, along with
+checks that anything with a shebang is executable. Both ship as wheels, so
+nothing needs installing system-wide. Fix formatting with
+`uvx --from shfmt-py shfmt -i 2 -w <file>`.

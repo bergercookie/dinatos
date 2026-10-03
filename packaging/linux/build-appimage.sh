@@ -32,7 +32,7 @@ install -m 644 "${REPO_ROOT}/frontend/web/icons/Icon-512.png" "${APPDIR}/dinatos
 
 # appimagetool wants Exec/Icon/a desktop file at the AppDir root; Exec here
 # is relative to AppRun below, not a system PATH lookup.
-cat > "${APPDIR}/dinatos.desktop" <<'EOF'
+cat >"${APPDIR}/dinatos.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=Dinatos
@@ -47,7 +47,7 @@ EOF
 # still finds usr/bin/ (and, through the binary's own $ORIGIN/lib rpath,
 # its bundled libraries) regardless of the caller's own working directory
 # or however the AppImage's own runtime chose to invoke this.
-cat > "${APPDIR}/AppRun" <<'EOF'
+cat >"${APPDIR}/AppRun" <<'EOF'
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "${0}")")"
 exec "${HERE}/usr/bin/dinatos_frontend" "$@"

@@ -23,10 +23,10 @@
 set -euo pipefail
 
 function announce() {
-    echo
-    echo "========================"
-    echo "$*"
-    echo "========================"
+  echo
+  echo "========================"
+  echo "$*"
+  echo "========================"
 }
 
 ANDROID_CMDLINE_TOOLS_URL="${ANDROID_CMDLINE_TOOLS_URL:-https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip}"
@@ -35,32 +35,32 @@ SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
 echo "Installing Android SDK command-line tools into: $SDK_ROOT"
 
 if [ -e "$SDK_ROOT" ] && [ ! -w "$SDK_ROOT" ]; then
-    echo "Error: $SDK_ROOT exists but is not writable by $(whoami)." >&2
-    echo "Either fix its permissions, or point ANDROID_HOME at a writable directory and re-run." >&2
-    exit 1
+  echo "Error: $SDK_ROOT exists but is not writable by $(whoami)." >&2
+  echo "Either fix its permissions, or point ANDROID_HOME at a writable directory and re-run." >&2
+  exit 1
 fi
 
 CMDLINE_TOOLS_DIR="$SDK_ROOT/cmdline-tools/latest"
 SDKMANAGER="$CMDLINE_TOOLS_DIR/bin/sdkmanager"
 
 if [ -x "$SDKMANAGER" ]; then
-    echo "sdkmanager already installed at $SDKMANAGER"
+  echo "sdkmanager already installed at $SDKMANAGER"
 else
-    WORK_DIR="$(mktemp -d)"
-    trap 'rm -rf "$WORK_DIR"' EXIT
+  WORK_DIR="$(mktemp -d)"
+  trap 'rm -rf "$WORK_DIR"' EXIT
 
-    announce "Downloading command-line tools from $ANDROID_CMDLINE_TOOLS_URL..."
-    curl -fsSL -o "$WORK_DIR/cmdline-tools.zip" "$ANDROID_CMDLINE_TOOLS_URL"
+  announce "Downloading command-line tools from $ANDROID_CMDLINE_TOOLS_URL..."
+  curl -fsSL -o "$WORK_DIR/cmdline-tools.zip" "$ANDROID_CMDLINE_TOOLS_URL"
 
-    echo "Extracting..."
-    unzip -q "$WORK_DIR/cmdline-tools.zip" -d "$WORK_DIR"
+  echo "Extracting..."
+  unzip -q "$WORK_DIR/cmdline-tools.zip" -d "$WORK_DIR"
 
-    # The zip's top-level folder is always named "cmdline-tools" -- sdkmanager
-    # refuses to run unless it lives one level deeper, under a "latest" (or
-    # otherwise version-named) directory.
-    mkdir -p "$SDK_ROOT/cmdline-tools"
-    rm -rf "$CMDLINE_TOOLS_DIR"
-    mv "$WORK_DIR/cmdline-tools" "$CMDLINE_TOOLS_DIR"
+  # The zip's top-level folder is always named "cmdline-tools" -- sdkmanager
+  # refuses to run unless it lives one level deeper, under a "latest" (or
+  # otherwise version-named) directory.
+  mkdir -p "$SDK_ROOT/cmdline-tools"
+  rm -rf "$CMDLINE_TOOLS_DIR"
+  mv "$WORK_DIR/cmdline-tools" "$CMDLINE_TOOLS_DIR"
 fi
 
 export ANDROID_HOME="$SDK_ROOT"
