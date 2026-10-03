@@ -19,7 +19,7 @@ const _destinations = [
   (icon: Icons.settings, label: 'Settings'),
 ];
 
-/// What the first-run tour calls a tab: `tab-home`, `tab-profile`, ...
+/// What the first-run tour calls a tab: `tab-home`, `tab-settings`, ...
 String _tabTarget(String label) => 'tab-${label.toLowerCase()}';
 
 /// Hosts the 5 top-level sections behind a single nav (bottom bar on narrow

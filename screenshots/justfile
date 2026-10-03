@@ -2,7 +2,7 @@
 # backend (a disposable Postgres via testcontainers) and a real frontend
 # build -- not mocked data, not a hand-maintained fixture.
 #
-# Self-sufficient: `cd screenshots && just check` works on its own. Imported
+# Self-sufficient: `cd screenshots && just generate` works on its own. Imported
 # by the root justfile as the `screenshots` module.
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -18,10 +18,6 @@ install:
 lint:
     uv run --project ../backend --group screenshots mypy --strict generate.py
 
-# Regenerate and compare against what's committed; fail if anything's stale, without writing (what CI runs).
-check:
-    uv run --project ../backend --group screenshots python generate.py --check
-
-# Regenerate and overwrite the committed PNGs/README embed for whichever changed -- review the diff, then commit.
-update:
-    uv run --project ../backend --group screenshots python generate.py --update
+# Regenerate and overwrite the committed PNGs/README embed -- review the diff, then commit.
+generate:
+    uv run --project ../backend --group screenshots python generate.py

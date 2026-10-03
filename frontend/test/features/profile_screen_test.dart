@@ -225,8 +225,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The list is lazy, so the tile may not be built until scrolled to.
-    await tester.scrollUntilVisible(find.text('WorkoutX API key'), 200);
+    await tester.ensureVisible(find.text('WorkoutX API key'));
     expect(find.text('Not set -- using the built-in exercise images'), findsOneWidget);
     await tester.tap(find.text('WorkoutX API key'));
     await tester.pumpAndSettle();
