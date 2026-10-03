@@ -148,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
     final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: const Text('Settings')),
       body: ResponsiveBody(
         child: AsyncValueView(
           value: profileAsync,

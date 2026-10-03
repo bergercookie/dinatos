@@ -57,7 +57,7 @@ Three decisions worth knowing before changing it:
 
 Completion is remembered per account in `shared_preferences`
 (`onboarding_seen_<user id>`), so a second account on the same device gets
-its own tour; Profile's "Take the tour again" restarts it. Its steps are
+its own tour; Settings' "Take the tour again" restarts it. Its steps are
 data (`onboarding_steps.dart`), so adding or reordering one is an edit to
 that list plus an `OnboardingTarget` where it points.
 
@@ -71,7 +71,7 @@ there is no refresh token, and a 401 from *any* request (caught by a Dio
 interceptor) clears it and routes back to `/login` -- there is nothing to
 refresh, so a 401 always means "log in again," never "retry after
 refreshing." `go_router` redirects based on that auth state, not on which
-screen thinks it's logged in. Logging out (the profile screen's app bar
+screen thinks it's logged in. Logging out (the settings screen's app bar
 icon) calls `POST /auth/logout` to revoke the session server-side, then
 clears the local token regardless of whether that call succeeded -- if the
 backend is unreachable, "logged out on this device" still has to win over
@@ -88,7 +88,7 @@ useful if it can point at *their* own backend, not whichever one built it
 `core/server_url_provider.dart`). It's editable from the login screen
 (before ever signing in -- committed just before the actual login/register
 call, so that call always goes to whatever the field currently says) and
-from the profile screen (which logs out first, since a session token from
+from the settings screen (which logs out first, since a session token from
 one backend is meaningless on another). See
 [Getting started](../user-guide/getting-started.md) for this same field
 explained for someone using the app rather than building it.

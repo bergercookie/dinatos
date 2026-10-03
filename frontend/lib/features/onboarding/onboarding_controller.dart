@@ -85,7 +85,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     state = const OnboardingState();
   }
 
-  /// From the top, whether or not it was seen before (Profile's "Take the tour again").
+  /// From the top, whether or not it was seen before (Settings' "Take the tour again").
   void restart() => state = const OnboardingState(stepIndex: 0);
 
   void next() {

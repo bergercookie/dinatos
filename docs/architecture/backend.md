@@ -200,7 +200,7 @@ equipment for an exercise, from whichever provider is active:
   this dataset's own exactly -- a tutorial lookup by name always hits, no
   fuzzy matching needed.
 - **[WorkoutX](https://workoutxapp.com)**, opt-in per user -- each user can
-  save their own API key in the app's Profile screen (`PATCH /profile`,
+  save their own API key in the app's Settings screen (`PATCH /profile`,
   stored in `user_profile.workoutx_api_key`) to get real animated GIFs
   rather than free-exercise-db's two static JPGs per exercise. There is
   deliberately no instance-wide key: this project never holds a shared one,

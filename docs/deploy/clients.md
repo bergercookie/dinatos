@@ -16,7 +16,7 @@ Every tagged release also publishes an Android APK and Linux
 [Releases page](https://github.com/bergercookie/dinatos/releases) and
 [Distribution](../architecture/distribution.md) for exactly what's built.
 Install one, then point it at your instance's URL: the Server URL field on
-first launch, editable later from the profile screen.
+first launch, editable later from the settings screen.
 
 There's no packaged macOS or Windows build yet, and no iOS build (Flutter
 supports the platform, but nothing in this repo builds or signs it).
@@ -36,7 +36,7 @@ flutter build web --release --dart-define=API_BASE_URL=https://api.example.com
 (nginx, Caddy, `python3 -m http.server`, ...) on whatever origin you like.
 Without `API_BASE_URL`, a web build defaults to same-origin (the image's own
 setup above); with it, every request goes to that URL instead, and the
-Server URL field (still editable from the login/profile screens) starts out
+Server URL field (still editable from the login/settings screens) starts out
 pre-filled with it. See [CORS](security-and-networking.md#cors) for the one
 thing a split setup like this needs from the backend side that the bundled,
 same-origin build doesn't.
