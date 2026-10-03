@@ -107,7 +107,8 @@ def test_tour_takes_a_new_user_from_sign_up_to_a_logged_workout(page: Page) -> N
     _press_tab(page, "Home")
 
     _on_step(page, "Start a live workout")
-    page.get_by_role("button", name="Start workout").click()
+    page.get_by_role("button", name="Start activity").click()
+    page.get_by_role("button", name="From scratch").click()
 
     _on_step(page, "Add an exercise")
     page.get_by_role("button", name="Next").click()

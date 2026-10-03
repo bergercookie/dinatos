@@ -14,6 +14,7 @@ import 'activities_providers.dart';
 import '../onboarding/onboarding_overlay.dart';
 import '../stats/stats_summary_card.dart';
 import 'live/live_session.dart';
+import 'live/start_activity_sheet.dart';
 import 'widgets/training_calendar_card.dart';
 
 class ActivityListScreen extends ConsumerWidget {
@@ -40,11 +41,14 @@ class ActivityListScreen extends ConsumerWidget {
                 tooltip: 'Start an interactive session as you work out',
                 onPressed: () {
                   // Never clobber a workout already under way -- resume it.
-                  if (!hasLiveWorkout) ref.read(liveActivityProvider.notifier).start();
-                  context.go('/activities/live');
+                  if (hasLiveWorkout) {
+                    context.go('/activities/live');
+                  } else {
+                    showStartActivitySheet(context, ref);
+                  }
                 },
                 icon: const Icon(Icons.play_arrow),
-                label: Text(hasLiveWorkout ? 'Resume workout' : 'Start workout'),
+                label: Text(hasLiveWorkout ? 'Resume workout' : 'Start activity'),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
