@@ -46,10 +46,7 @@ class AboutScreen extends StatelessWidget {
                       messenger.showSnackBar(const SnackBar(content: Text('Link copied')));
                     },
                   ),
-                  const ListTile(
-                    leading: Icon(Icons.copyright),
-                    title: Text(copyrightNotice),
-                  ),
+                  const ListTile(leading: Icon(Icons.copyright), title: Text(copyrightNotice)),
                 ],
               ),
             ),
