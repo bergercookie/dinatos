@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import http.server
+import json
 import os
 import shutil
 import subprocess
@@ -31,8 +32,10 @@ import urllib.error
 import urllib.request
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 from playwright.sync_api import Locator, Page, sync_playwright
 from testcontainers.community.postgres import PostgresContainer
@@ -82,6 +85,27 @@ EXERCISES = [
     "Pull-Up",
     "Barbell Row",
 ]
+# Muscles each exercise trains, so the Stats page's muscle distribution has
+# something to show. Wire values (snake_case), as the API takes them.
+EXERCISE_MUSCLES: dict[str, tuple[list[str], list[str]]] = {
+    "Barbell Back Squat": (["quadriceps", "glutes"], ["hamstrings", "lower_back"]),
+    "Bench Press": (["chest"], ["triceps", "shoulders"]),
+    "Deadlift": (["hamstrings", "glutes", "lower_back"], ["traps", "forearms"]),
+    "Overhead Press": (["shoulders"], ["triceps"]),
+    "Pull-Up": (["lats"], ["biceps", "middle_back"]),
+    "Barbell Row": (["middle_back", "lats"], ["biceps"]),
+}
+# A push/pull/legs split, Monday/Wednesday/Friday: title, weekday offset from
+# Monday, and per exercise its starting weight (kg) and the gain per week.
+HISTORY_SPLIT = [
+    ("Push Day", 0, [("Bench Press", 60.0, 2.5), ("Overhead Press", 35.0, 1.25)]),
+    ("Pull Day", 2, [("Pull-Up", 0.0, 0.0), ("Barbell Row", 50.0, 2.5)]),
+    ("Leg Day", 4, [("Barbell Back Squat", 80.0, 2.5), ("Deadlift", 100.0, 5.0)]),
+]
+HISTORY_WEEKS = 10
+# (weeks ago, weekday offset) sessions that were skipped, so the charts are
+# not suspiciously perfect.
+HISTORY_SKIPPED = {(2, 4), (4, 2), (5, 0), (7, 4), (8, 2)}
 ROUTINE_NAME = "Push Day A"
 ROUTINE_DESCRIPTION = "Chest, shoulders, triceps"
 
@@ -91,6 +115,10 @@ SCREENSHOTS = {
     "exercise-view": ("exercise-view", "The exercise catalog"),
     "routine-creation": ("routine-creation", "Building a saved routine"),
     "routine-execution": ("routine-execution", "Logging an activity from it"),
+    "home-stats": ("home-stats", "Home: the last 30 days at a glance"),
+    "stats-overview": ("stats-overview", "Stats: frequency, duration and volume"),
+    "stats-muscles": ("stats-muscles", "Stats: muscle split and go-to exercises"),
+    "stats-lifts": ("stats-lifts", "Stats: strongest lifts"),
 }
 
 
@@ -197,6 +225,77 @@ def _serving_frontend(web_dir: Path) -> Iterator[None]:
     finally:
         server.shutdown()
         server.server_close()
+
+
+def _api(method: str, path: str, body: object = None, token: str | None = None) -> Any:
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{BACKEND_PORT}{path}",
+        method=method,
+        data=None if body is None else json.dumps(body).encode(),
+        headers={
+            "Content-Type": "application/json",
+            **({"Authorization": f"Bearer {token}"} if token else {}),
+        },
+    )
+    with urllib.request.urlopen(request, timeout=10) as response:  # noqa: S310
+        return json.loads(response.read())
+
+
+def _seed_history() -> None:
+    """Logs ten weeks of workouts for the demo account straight through the
+    API (the same one the app uses), so the Stats page has a history to chart.
+    Dates are offsets from the frozen "now", never the real clock, so the
+    output stays reproducible. Done through the API rather than the UI
+    because ~25 workouts clicked in one by one would take minutes.
+    """
+    login = _api("POST", "/auth/login", {"email": EMAIL, "password": PASSWORD})
+    token = str(login["access_token"])
+    exercises = _api("GET", "/exercises", token=token)
+    ids = {item["name"]: item["id"] for item in exercises}
+    for name, (primary, secondary) in EXERCISE_MUSCLES.items():
+        _api(
+            "PATCH",
+            f"/exercises/{ids[name]}",
+            {"primary_muscles": primary, "secondary_muscles": secondary},
+            token,
+        )
+
+    now = datetime.fromtimestamp(_FROZEN_NOW_MS / 1000, tz=UTC)
+    this_monday = (now - timedelta(days=now.weekday())).replace(
+        hour=7, minute=30, second=0, microsecond=0
+    )
+    for weeks_ago in range(HISTORY_WEEKS - 1, -1, -1):
+        progress = HISTORY_WEEKS - 1 - weeks_ago
+        for title, weekday, lifts in HISTORY_SPLIT:
+            if (weeks_ago, weekday) in HISTORY_SKIPPED:
+                continue
+            started = this_monday - timedelta(weeks=weeks_ago) + timedelta(days=weekday)
+            if started >= now:
+                continue
+            minutes = 45 + (weeks_ago * 7 + weekday * 3) % 25
+            exercises_body = []
+            for exercise_name, start_kg, gain in lifts:
+                kg = start_kg + gain * progress
+                weight = kg if kg > 0 else None
+                sets: list[dict[str, object]] = [
+                    {"weight_kg": weight, "reps": 8},
+                    {"weight_kg": weight, "reps": 8},
+                    {"weight_kg": weight, "reps": 6 + progress % 3},
+                ]
+                if exercise_name == lifts[0][0] and weight:
+                    sets.insert(0, {"set_type": "warmup", "weight_kg": weight * 0.6, "reps": 10})
+                exercises_body.append({"exercise_id": ids[exercise_name], "sets": sets})
+            _api(
+                "POST",
+                "/activities",
+                {
+                    "title": title,
+                    "started_at": started.isoformat(),
+                    "ended_at": (started + timedelta(minutes=minutes)).isoformat(),
+                    "exercises": exercises_body,
+                },
+                token,
+            )
 
 
 def _fill(locator: Locator, value: str) -> None:
@@ -310,6 +409,12 @@ def _screenshot(page: Page, path: Path, attempts: int = 8) -> None:
     path.write_bytes(previous)
 
 
+def _capture(page: Page, output_dir: Path, name: str) -> Path:
+    path = output_dir / f"{SCREENSHOTS[name][0]}.png"
+    _screenshot(page, path)
+    return path
+
+
 def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
     saved: dict[str, Path] = {}
 
@@ -413,6 +518,30 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             # confirms the whole path this script exercises still actually works.
             page.get_by_role("button", name="Create").click()
             page.wait_for_timeout(800)
+
+            # Seeded only now: giving the exercises muscles earlier would add
+            # a tall "Muscles targeted" chart to the forms above and change
+            # those screenshots. A reload makes Home fetch the new history.
+            _seed_history()
+            page.reload(wait_until="networkidle")
+            page.wait_for_timeout(1500)
+            _enable_semantics(page)
+            _goto_tab(page, "Home")
+            page.mouse.move(10, 10)
+            saved["home-stats"] = _capture(page, output_dir, "home-stats")
+
+            page.get_by_role("button", name="All stats").dispatch_event("click")
+            page.wait_for_timeout(800)
+            saved["stats-overview"] = _capture(page, output_dir, "stats-overview")
+
+            # Scroll the page's own list, then capture what comes into view.
+            page.mouse.move(640, 500)
+            page.mouse.wheel(0, 560)
+            page.wait_for_timeout(600)
+            saved["stats-muscles"] = _capture(page, output_dir, "stats-muscles")
+            page.mouse.wheel(0, 2000)
+            page.wait_for_timeout(600)
+            saved["stats-lifts"] = _capture(page, output_dir, "stats-lifts")
         except Exception:
             # A fixed, predictable path is the point -- this is a debugging
             # aid a person checks by hand after a local failure, not a

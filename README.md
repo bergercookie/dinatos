@@ -6,7 +6,8 @@ log against them. Inspired by Hevy, built to run on your own homelab.
 **Status:** a FastAPI + async SQLAlchemy backend (multi-user accounts with
 session-based auth, exercises, routines, activities, a profile, body
 measurements, a Hevy CSV importer) and a Flutter frontend against it (web,
-Android, and Linux desktop).
+Android, and Linux desktop) that also charts your training: frequency,
+workout time, muscle split, go-to exercises and best lifts.
 
 ## Screenshots
 
@@ -30,6 +31,26 @@ Android, and Linux desktop).
 <td align="center" width="50%">
 <img alt="Logging an activity from it" src="screenshots/routine-execution.png" width="380"><br>
 <sub>Logging an activity from it</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img alt="Home: the last 30 days at a glance" src="screenshots/home-stats.png" width="380"><br>
+<sub>Home: the last 30 days at a glance</sub>
+</td>
+<td align="center" width="50%">
+<img alt="Stats: frequency, duration and volume" src="screenshots/stats-overview.png" width="380"><br>
+<sub>Stats: frequency, duration and volume</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img alt="Stats: muscle split and go-to exercises" src="screenshots/stats-muscles.png" width="380"><br>
+<sub>Stats: muscle split and go-to exercises</sub>
+</td>
+<td align="center" width="50%">
+<img alt="Stats: strongest lifts" src="screenshots/stats-lifts.png" width="380"><br>
+<sub>Stats: strongest lifts</sub>
 </td>
 </tr>
 </table>
