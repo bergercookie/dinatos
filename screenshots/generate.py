@@ -219,13 +219,17 @@ def _fill(locator: Locator, value: str) -> None:
 
 
 def _enable_semantics(page: Page) -> None:
-    """Flutter web only builds its real (labelled, role-based) accessibility
-    tree after something clicks the placeholder button it renders for
-    exactly this purpose -- until then, Playwright's role/label locators
-    have nothing to find. `dispatch_event` rather than `.click()` because
-    the placeholder sits off-screen by design.
+    """Older Flutter web builds only create their real (labelled, role-based)
+    accessibility tree after something clicks the placeholder button they
+    render for exactly this purpose -- until then, Playwright's role/label
+    locators have nothing to find. `dispatch_event` rather than `.click()`
+    because the placeholder sits off-screen by design. Newer builds create
+    the tree up front and have no placeholder at all, so only click one that
+    exists (a bare dispatch_event would wait out its 30s timeout).
     """
-    page.locator("flt-semantics-placeholder").dispatch_event("click")
+    placeholder = page.locator("flt-semantics-placeholder")
+    if placeholder.count():
+        placeholder.dispatch_event("click")
     page.wait_for_timeout(300)
 
 

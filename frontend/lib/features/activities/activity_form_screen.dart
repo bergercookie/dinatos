@@ -262,11 +262,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
           ),
         ],
         const SizedBox(height: 16),
-        MuscleDistributionCard(
-          exercises: _exercises,
-          catalog: exercisesAsync,
-          showSetCount: true,
-        ),
+        MuscleDistributionCard(exercises: _exercises, catalog: exercisesAsync, showSetCount: true),
         const SizedBox(height: 16),
         Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),

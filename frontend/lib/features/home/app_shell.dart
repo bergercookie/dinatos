@@ -31,16 +31,12 @@ class AppShell extends ConsumerWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  void _goBranch(int index) => navigationShell.goBranch(
-    index,
-    initialLocation: index == navigationShell.currentIndex,
-  );
+  void _goBranch(int index) =>
+      navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final banner = LiveWorkoutBanner(
-      currentPath: GoRouterState.of(context).uri.path,
-    );
+    final banner = LiveWorkoutBanner(currentPath: GoRouterState.of(context).uri.path);
 
     if (MediaQuery.sizeOf(context).width >= _wideBreakpoint) {
       return Scaffold(
@@ -67,8 +63,7 @@ class AppShell extends ConsumerWidget {
                     child: IconButton(
                       tooltip: 'Log out',
                       icon: const Icon(Icons.logout),
-                      onPressed: () =>
-                          ref.read(authNotifierProvider.notifier).logout(),
+                      onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
                     ),
                   ),
                 ),
