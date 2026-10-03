@@ -3,13 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/api_config.dart';
 import '../../core/app_info.dart';
 import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
 import '../../core/update_check.dart';
 import '../../core/widgets/responsive_body.dart';
 
-/// UI (this app's) version, build commit, GitHub project and documentation
+/// Software version, the client's own app version when it isn't served by the
+/// backend (installed app rather than the browser), build commit, GitHub project and documentation
 /// links, and copyright notice.
 class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({super.key});
@@ -82,9 +84,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.info_outline),
-                    title: const Text('UI version'),
+                    title: const Text('Software version'),
                     subtitle: Text(appVersion),
                   ),
+                  if (!ApiConfig.isFixedToServingOrigin)
+                    ListTile(
+                      leading: const Icon(Icons.phone_android),
+                      title: const Text('App version'),
+                      subtitle: Text(appVersion),
+                    ),
                   _updateTile(),
                   ListTile(
                     leading: const Icon(Icons.commit),

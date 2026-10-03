@@ -52,4 +52,4 @@ session on the server, see [Getting started](getting-started.md#staying-signed-i
 documentation"** (Swagger UI) or **"API reference"** (ReDoc) -- the
 backend's own API reference, each opening in a new browser tab, useful if
 you're scripting something against your instance rather than using the app.
-**About** shows the UI version and the commit it was built from.
+**About** shows the software version (plus, in the installed apps -- `.deb`, AppImage, APK -- the app's own version) and the commit it was built from.
