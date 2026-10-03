@@ -83,6 +83,7 @@ async def list_exercises(
     search: str | None = None,
     muscle: MuscleGroup | None = None,
     equipment: Equipment | None = None,
+    is_custom: bool | None = None,
     limit: int | None = Query(None, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -95,6 +96,9 @@ async def list_exercises(
     "which exercises use this equipment" lookups the frontend offers from
     an exercise's own muscle/equipment chips -- `muscle` matches either a
     primary or secondary muscle, since both count as "trains this muscle".
+
+    `is_custom` narrows to only user-defined (`true`) or only built-in
+    (`false`) exercises; omitted, both are returned.
 
     `limit`/`offset` are opt-in: the pickers omit them and get every matching
     row in one shot, exactly as before pagination existed, since they need
@@ -112,6 +116,8 @@ async def list_exercises(
         query = query.where(Exercise.muscles.any(ExerciseMuscle.muscle == muscle))
     if equipment is not None:
         query = query.where(Exercise.equipment == equipment)
+    if is_custom is not None:
+        query = query.where(Exercise.is_custom.is_(is_custom))
     total = await db.scalar(select(func.count()).select_from(query.subquery()))
     response.headers["X-Total-Count"] = str(total or 0)
     if limit is not None:

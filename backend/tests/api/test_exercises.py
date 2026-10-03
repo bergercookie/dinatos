@@ -58,6 +58,24 @@ async def test_list_exercises_filters_by_search(client: AsyncClient) -> None:
     assert names == ["Bench Press (Dumbbell)", "Squat (Barbell)"]
 
 
+async def test_list_exercises_filters_by_built_in_or_custom(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    db.add(Exercise(name="Squat (Barbell)", is_custom=False))
+    await db.commit()
+    await client.post("/exercises", json={"name": "My Own Lift"})
+
+    custom = await client.get("/exercises", params={"is_custom": "true"})
+    assert [item["name"] for item in custom.json()] == ["My Own Lift"]
+    assert custom.headers["X-Total-Count"] == "1"
+
+    built_in = await client.get("/exercises", params={"is_custom": "false"})
+    assert [item["name"] for item in built_in.json()] == ["Squat (Barbell)"]
+
+    both = await client.get("/exercises")
+    assert [item["name"] for item in both.json()] == ["My Own Lift", "Squat (Barbell)"]
+
+
 async def test_list_exercises_without_limit_returns_everything(client: AsyncClient) -> None:
     for name in ["Squat (Barbell)", "Bench Press (Dumbbell)", "Deadlift (Barbell)"]:
         await client.post("/exercises", json={"name": name})

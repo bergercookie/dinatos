@@ -6,12 +6,13 @@ import '../../core/widgets/empty_state.dart';
 import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/muscle_group.dart';
+import 'exercises_providers.dart';
 
 /// Opens a picker over [exercises] and resolves with the chosen [Exercise],
 /// or null if dismissed without picking one -- replaces scrolling an
 /// unfiltered menu to find one exercise among the whole catalog. Narrows by
 /// name search, by the muscles an exercise trains (primary or secondary), and
-/// by equipment; within one filter any selected value matches, across
+/// by equipment, and by whether it is built-in or custom; within one filter any selected value matches, across
 /// filters all must.
 Future<Exercise?> showExercisePicker(BuildContext context, {required List<Exercise> exercises}) {
   return showModalBottomSheet<Exercise>(
@@ -36,6 +37,7 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
   String _query = '';
   final Set<MuscleGroup> _muscles = {};
   final Set<Equipment> _equipment = {};
+  ExerciseSource _source = ExerciseSource.all;
 
   bool _matches(Exercise e, String query) {
     if (query.isNotEmpty && !e.name.toLowerCase().contains(query)) return false;
@@ -45,7 +47,7 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
       return false;
     }
     if (_equipment.isNotEmpty && !_equipment.contains(e.equipment)) return false;
-    return true;
+    return _source.matches(e);
   }
 
   Widget _chipRow<T>(String label, List<T> values, Set<T> selected, String Function(T) labelOf) {
@@ -120,6 +122,21 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
               const SizedBox(height: AppSpacing.sm),
               _chipRow('Muscle', MuscleGroup.values, _muscles, (m) => m.label),
               _chipRow('Equipment', Equipment.values, _equipment, (e) => e.label),
+              Row(
+                children: [
+                  Text('Source', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(width: AppSpacing.sm),
+                  for (final source in ExerciseSource.values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.xs),
+                      child: ChoiceChip(
+                        label: Text(source.label),
+                        selected: _source == source,
+                        onSelected: (_) => setState(() => _source = source),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.sm),
               Expanded(
                 child: filtered.isEmpty

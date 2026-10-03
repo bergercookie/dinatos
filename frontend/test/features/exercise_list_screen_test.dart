@@ -106,4 +106,39 @@ void main() {
     expect(find.text('Bench Press'), findsOneWidget);
     expect(find.text('Squat'), findsNothing);
   });
+
+  testWidgets('the source chips ask the backend for only custom or only built-in exercises', (
+    tester,
+  ) async {
+    final dio = MockDio();
+    final requested = <Object?>[];
+    when(() => dio.get<List<dynamic>>('/exercises', queryParameters: any(named: 'queryParameters')))
+        .thenAnswer((invocation) async {
+          final params = invocation.namedArguments[#queryParameters] as Map;
+          requested.add(params['is_custom']);
+          return switch (params['is_custom']) {
+            true => _page([_exercise(2, 'My Lift')], 1),
+            _ => _page([_exercise(1, 'Squat'), _exercise(2, 'My Lift')], 2),
+          };
+        });
+
+    final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ExerciseListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Squat'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Custom'));
+    await tester.pumpAndSettle();
+
+    expect(requested.last, true);
+    expect(find.text('Squat'), findsNothing);
+    expect(find.text('My Lift'), findsOneWidget);
+  });
 }

@@ -22,6 +22,27 @@ final exerciseListProvider = FutureProvider.autoDispose<List<Exercise>>((ref) {
   return ref.watch(exercisesRepositoryProvider).list(search: search);
 });
 
+/// Which exercises to show: the whole catalog, only the built-in ones, or
+/// only the ones this person defined themselves.
+enum ExerciseSource {
+  all('All'),
+  builtIn('Built-in'),
+  custom('Custom');
+
+  const ExerciseSource(this.label);
+
+  final String label;
+
+  /// The backend's `is_custom` filter value; null means no filtering.
+  bool? get isCustom => switch (this) {
+    ExerciseSource.all => null,
+    ExerciseSource.builtIn => false,
+    ExerciseSource.custom => true,
+  };
+
+  bool matches(Exercise exercise) => isCustom == null || exercise.isCustom == isCustom;
+}
+
 const exercisePageSize = 40;
 
 class ExercisePageState {
@@ -33,6 +54,7 @@ class ExercisePageState {
     this.loadingMore = false,
     this.error,
     this.search = '',
+    this.source = ExerciseSource.all,
   });
 
   final List<Exercise> items;
@@ -42,6 +64,7 @@ class ExercisePageState {
   final bool loadingMore;
   final Object? error;
   final String search;
+  final ExerciseSource source;
 
   ExercisePageState copyWith({
     List<Exercise>? items,
@@ -52,6 +75,7 @@ class ExercisePageState {
     Object? error,
     bool clearError = false,
     String? search,
+    ExerciseSource? source,
   }) {
     return ExercisePageState(
       items: items ?? this.items,
@@ -61,6 +85,7 @@ class ExercisePageState {
       loadingMore: loadingMore ?? this.loadingMore,
       error: clearError ? null : (error ?? this.error),
       search: search ?? this.search,
+      source: source ?? this.source,
     );
   }
 }
@@ -86,6 +111,12 @@ class ExercisePagingNotifier extends StateNotifier<ExercisePageState> {
     });
   }
 
+  void setSource(ExerciseSource value) {
+    if (value == state.source) return;
+    state = state.copyWith(source: value);
+    unawaited(_load(reset: true));
+  }
+
   Future<void> loadMore() {
     if (state.loading || state.loadingMore || !state.hasMore) {
       return Future.value();
@@ -101,6 +132,7 @@ class ExercisePagingNotifier extends StateNotifier<ExercisePageState> {
     try {
       final page = await _repository.listPage(
         search: state.search,
+        isCustom: state.source.isCustom,
         limit: exercisePageSize,
         offset: reset ? 0 : state.items.length,
       );
