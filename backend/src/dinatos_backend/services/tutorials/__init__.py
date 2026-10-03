@@ -14,7 +14,12 @@ from dinatos_backend.services.tutorials.fallback import FallbackTutorialProvider
 from dinatos_backend.services.tutorials.free_exercise_db import FreeExerciseDbProvider
 from dinatos_backend.services.tutorials.workoutx import WorkoutXProvider
 
-__all__ = ["ExerciseTutorial", "TutorialProvider", "get_tutorial_provider_for_key"]
+__all__ = [
+    "ExerciseTutorial",
+    "TutorialProvider",
+    "get_tutorial_provider_for_key",
+    "get_workoutx_provider",
+]
 
 
 @lru_cache
@@ -26,6 +31,16 @@ def _default_provider() -> TutorialProvider:
 
 
 _user_providers: dict[str, TutorialProvider] = {}
+_workoutx_providers: dict[str, WorkoutXProvider] = {}
+
+
+def get_workoutx_provider(api_key: str) -> WorkoutXProvider:
+    """The raw (uncached, unwrapped) WorkoutX adapter for a key -- what
+    the GIF proxy endpoint needs, since GIF URLs require that same key.
+    """
+    if api_key not in _workoutx_providers:
+        _workoutx_providers[api_key] = WorkoutXProvider(api_key)
+    return _workoutx_providers[api_key]
 
 
 def get_tutorial_provider_for_key(api_key: str | None) -> TutorialProvider:
@@ -40,6 +55,6 @@ def get_tutorial_provider_for_key(api_key: str | None) -> TutorialProvider:
     if not api_key:
         return _default_provider()
     if api_key not in _user_providers:
-        workoutx = CachingTutorialProvider(WorkoutXProvider(api_key))
+        workoutx = CachingTutorialProvider(get_workoutx_provider(api_key))
         _user_providers[api_key] = FallbackTutorialProvider(workoutx, FreeExerciseDbProvider())
     return _user_providers[api_key]

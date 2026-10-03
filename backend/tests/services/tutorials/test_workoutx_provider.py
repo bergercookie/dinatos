@@ -48,7 +48,8 @@ async def test_get_tutorial_sends_the_api_key_header_and_parses_a_match() -> Non
     assert seen_headers["x-workoutx-key"] == "wx_secret"
     assert tutorial is not None
     assert tutorial.source == "workoutx"
-    assert tutorial.gif_urls == ["https://api.workoutxapp.com/v1/gifs/0001.gif"]
+    # Rewritten to the backend proxy: the raw URL 401s without the key.
+    assert tutorial.gif_urls == ["/exercises/media/workoutx/0001.gif"]
     assert tutorial.instructions == _MATCH["instructions"]
     assert tutorial.primary_muscles == ["Abs"]
     assert tutorial.secondary_muscles == ["Hip Flexors"]
@@ -64,7 +65,7 @@ async def test_get_tutorial_prefers_an_exact_name_match_among_results() -> None:
     tutorial = await provider.get_tutorial("3/4 Sit-up")
 
     assert tutorial is not None
-    assert tutorial.gif_urls == [_MATCH["gifUrl"]]
+    assert tutorial.gif_urls == ["/exercises/media/workoutx/0001.gif"]
 
 
 async def test_get_tutorial_returns_none_on_a_404() -> None:
@@ -100,7 +101,7 @@ async def test_get_tutorial_still_accepts_a_bare_array_response() -> None:
     tutorial = await provider.get_tutorial("3/4 Sit-up")
 
     assert tutorial is not None
-    assert tutorial.gif_urls == [_MATCH["gifUrl"]]
+    assert tutorial.gif_urls == ["/exercises/media/workoutx/0001.gif"]
 
 
 async def test_get_tutorial_raises_on_an_unauthorized_response() -> None:
@@ -113,3 +114,34 @@ async def test_get_tutorial_raises_on_an_unauthorized_response() -> None:
 
     with pytest.raises(httpx.HTTPStatusError):
         await provider.get_tutorial("3/4 Sit-up")
+
+
+async def test_get_gif_sends_the_key_and_returns_bytes_and_type() -> None:
+    seen: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["path"] = request.url.path
+        seen["key"] = request.headers["x-workoutx-key"]
+        return httpx.Response(200, content=b"GIF89a", headers={"content-type": "image/gif"})
+
+    content, content_type = await _provider(handler, api_key="wx_secret").get_gif("0001")
+
+    assert (content, content_type) == (b"GIF89a", "image/gif")
+    assert seen == {"path": "/v1/gifs/0001.gif", "key": "wx_secret"}
+
+
+async def test_get_gif_raises_on_an_unauthorized_response() -> None:
+    provider = _provider(lambda _request: httpx.Response(401, json={}))
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await provider.get_gif("0001")
+
+
+async def test_get_tutorial_leaves_an_unrecognised_gif_url_alone() -> None:
+    entry = {**_MATCH, "gifUrl": "https://cdn.example.test/other.webp"}
+    provider = _provider(lambda _request: httpx.Response(200, json=_wrapped([entry])))
+
+    tutorial = await provider.get_tutorial("3/4 Sit-up")
+
+    assert tutorial is not None
+    assert tutorial.gif_urls == ["https://cdn.example.test/other.webp"]

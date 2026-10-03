@@ -1,5 +1,5 @@
 from dinatos_backend.services import tutorials
-from dinatos_backend.services.tutorials import get_tutorial_provider_for_key
+from dinatos_backend.services.tutorials import get_tutorial_provider_for_key, get_workoutx_provider
 from dinatos_backend.services.tutorials.cache import CachingTutorialProvider
 from dinatos_backend.services.tutorials.fallback import FallbackTutorialProvider
 from dinatos_backend.services.tutorials.free_exercise_db import FreeExerciseDbProvider
@@ -27,3 +27,8 @@ def test_each_key_gets_its_own_workoutx_provider_with_a_fallback() -> None:
     assert isinstance(a._fallback, FreeExerciseDbProvider)
     assert get_tutorial_provider_for_key("key_a") is a
     assert get_tutorial_provider_for_key("key_b") is not a
+
+
+def test_workoutx_provider_is_reused_per_key() -> None:
+    assert get_workoutx_provider("key_gif") is get_workoutx_provider("key_gif")
+    assert get_workoutx_provider("key_gif") is not get_workoutx_provider("other_gif")

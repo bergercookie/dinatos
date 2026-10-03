@@ -1,11 +1,14 @@
+from collections.abc import Callable
+
 import httpx2 as httpx
 from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dinatos_backend.api.deps import get_tutorial_provider_for_user
+from dinatos_backend.api.deps import get_tutorial_provider_for_user, get_workoutx_provider_for_user
 from dinatos_backend.main import app
 from dinatos_backend.models.exercise import Exercise
 from dinatos_backend.services.tutorials import ExerciseTutorial
+from dinatos_backend.services.tutorials.workoutx import WorkoutXProvider
 
 
 class _FakeProvider:
@@ -392,3 +395,59 @@ async def test_get_exercise_tutorial_502_still_carries_cors_headers(client: Asyn
 
     assert response.status_code == 502
     assert response.headers["access-control-allow-origin"] == "*"
+
+
+def _workoutx_gif_provider(handler: Callable[[httpx.Request], httpx.Response]) -> WorkoutXProvider:
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="https://api.workoutxapp.com/v1"
+    )
+    return WorkoutXProvider("wx_test", client=client)
+
+
+async def test_workoutx_gif_is_proxied_with_the_users_key(client: AsyncClient) -> None:
+    seen: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["path"] = request.url.path
+        seen["key"] = request.headers["x-workoutx-key"]
+        return httpx.Response(200, content=b"GIF89a", headers={"content-type": "image/gif"})
+
+    provider = _workoutx_gif_provider(handler)
+    app.dependency_overrides[get_workoutx_provider_for_user] = lambda: provider
+
+    response = await client.get("/exercises/media/workoutx/0025.gif")
+
+    assert response.status_code == 200
+    assert response.content == b"GIF89a"
+    assert response.headers["content-type"] == "image/gif"
+    assert seen == {"path": "/v1/gifs/0025.gif", "key": "wx_test"}
+
+
+async def test_workoutx_gif_is_502_when_upstream_rejects_the_key(client: AsyncClient) -> None:
+    provider = _workoutx_gif_provider(lambda _request: httpx.Response(401, json={}))
+    app.dependency_overrides[get_workoutx_provider_for_user] = lambda: provider
+
+    response = await client.get("/exercises/media/workoutx/0025.gif")
+
+    assert response.status_code == 502
+
+
+async def test_workoutx_gif_is_404_without_a_saved_key(client: AsyncClient) -> None:
+    response = await client.get("/exercises/media/workoutx/0025.gif")
+
+    assert response.status_code == 404
+
+
+async def test_workoutx_gif_requires_auth(anonymous_client: AsyncClient) -> None:
+    response = await anonymous_client.get("/exercises/media/workoutx/0025.gif")
+
+    assert response.status_code in (401, 403)
+
+
+async def test_workoutx_gif_rejects_a_malformed_id(client: AsyncClient) -> None:
+    provider = _workoutx_gif_provider(lambda _request: httpx.Response(200, content=b"x"))
+    app.dependency_overrides[get_workoutx_provider_for_user] = lambda: provider
+
+    response = await client.get("/exercises/media/workoutx/a.b.gif")
+
+    assert response.status_code == 404
