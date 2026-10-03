@@ -32,6 +32,26 @@ void main() {
     expect(opened, [Uri.parse('https://github.com/bergercookie/dinatos')]);
   });
 
+  testWidgets('the Documentation row opens the docs in a new tab', (tester) async {
+    final opened = <Uri>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          urlOpenerProvider.overrideWithValue((uri) async {
+            opened.add(uri);
+            return true;
+          }),
+        ],
+        child: const MaterialApp(home: AboutScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('Documentation'));
+    await tester.pump();
+
+    expect(opened, [Uri.parse(docsUrl)]);
+  });
+
   group('check for updates', () {
     // `appVersion` is 'dev' under `flutter test` (no --dart-define), so these
     // drive the screen through `updateCheckProvider` directly where the
