@@ -96,3 +96,11 @@ def test_every_operation_is_summarized_for_the_docs() -> None:
     ]
 
     assert unsummarized == []
+
+
+async def test_swagger_ui_follows_the_dark_color_scheme(anonymous_client: AsyncClient) -> None:
+    # Swagger UI ships a light-only stylesheet and the Flutter app frames this
+    # page, so without the dark override it is a white sheet in a dark app.
+    body = (await anonymous_client.get("/docs")).text
+
+    assert "prefers-color-scheme: dark" in body
