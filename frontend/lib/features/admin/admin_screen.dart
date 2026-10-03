@@ -166,10 +166,7 @@ class _CreateUserDialogState extends ConsumerState<_CreateUserDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: _submitting ? null : _submit,
-          child: const Text('Create'),
-        ),
+        FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Create')),
       ],
     );
   }

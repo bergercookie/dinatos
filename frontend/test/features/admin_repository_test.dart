@@ -36,9 +36,8 @@ void main() {
       ),
     );
 
-    final user = await AdminRepository(
-      dio,
-    ).createUser(email: 'new@example.com', password: 'hunter22', isAdmin: true);
+    final user = await AdminRepository(dio)
+        .createUser(email: 'new@example.com', password: 'hunter22', isAdmin: true);
 
     expect(user.email, 'new@example.com');
     expect(user.isAdmin, isTrue);

@@ -96,8 +96,7 @@ class ProfileScreen extends ConsumerWidget {
         child: AsyncValueView(
           value: profileAsync,
           onRetry: () => ref.invalidate(profileProvider),
-          builder: (context, profile) =>
-              _ProfileForm(
+          builder: (context, profile) => _ProfileForm(
             email: email,
             isAdmin: isAdmin,
             profile: profile,
