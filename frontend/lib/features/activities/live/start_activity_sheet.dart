@@ -22,7 +22,7 @@ Future<void> showStartActivitySheet(BuildContext context, WidgetRef ref) async {
         children: [
           ListTile(
             leading: const Icon(Icons.list_alt_rounded),
-            title: const Text('Use workout'),
+            title: const Text('Use routine'),
             subtitle: const Text('Copy a saved routine: its exercises, sets and reps'),
             onTap: () => Navigator.of(context).pop(_StartChoice.routine),
           ),
