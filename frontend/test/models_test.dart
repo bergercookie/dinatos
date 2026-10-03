@@ -187,6 +187,39 @@ void main() {
   });
 
   group('HevyWorkoutImportResult/HevyMeasurementImportResult', () {
+    test('parse the created exercises with their guessed flags', () {
+      final workouts = HevyWorkoutImportResult.fromJson({
+        'activities_created': 1,
+        'exercises_created': 2,
+        'created_exercises': [
+          {
+            'id': 7,
+            'name': 'Zottman Curl (Dumbbell)',
+            'equipment': 'dumbbell',
+            'primary_muscles': ['biceps'],
+            'secondary_muscles': ['lower_back'],
+            'equipment_guessed': true,
+            'muscles_guessed': true,
+          },
+          {'id': 8, 'name': 'Homemade Thing'},
+        ],
+      });
+
+      final guessed = workouts.createdExercises.first;
+      expect(guessed.id, 7);
+      expect(guessed.equipment, Equipment.dumbbell);
+      expect(guessed.primaryMuscles, [MuscleGroup.biceps]);
+      expect(guessed.secondaryMuscles, [MuscleGroup.lowerBack]);
+      expect(guessed.equipmentGuessed, isTrue);
+      expect(guessed.musclesGuessed, isTrue);
+
+      final bare = workouts.createdExercises.last;
+      expect(bare.equipment, isNull);
+      expect(bare.primaryMuscles, isEmpty);
+      expect(bare.equipmentGuessed, isFalse);
+      expect(bare.musclesGuessed, isFalse);
+    });
+
     test('parse the backend\'s snake_case counts', () {
       final workouts = HevyWorkoutImportResult.fromJson({
         'activities_created': 75,
@@ -194,6 +227,8 @@ void main() {
       });
       expect(workouts.activitiesCreated, 75);
       expect(workouts.exercisesCreated, 3);
+      // Older backends send no created_exercises: it defaults to empty.
+      expect(workouts.createdExercises, isEmpty);
 
       final measurements = HevyMeasurementImportResult.fromJson({'measurements_created': 12});
       expect(measurements.measurementsCreated, 12);

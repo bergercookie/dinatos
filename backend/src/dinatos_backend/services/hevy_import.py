@@ -23,13 +23,19 @@ from io import StringIO
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
-from dinatos_backend.models.exercise import Exercise
+from dinatos_backend.models.exercise import Exercise, ExerciseMuscle
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.routine import SetType
-from dinatos_backend.schemas.imports import HevyMeasurementImportResult, HevyWorkoutImportResult
+from dinatos_backend.schemas.imports import (
+    HevyMeasurementImportResult,
+    HevyWorkoutImportResult,
+    ImportedExercise,
+)
+from dinatos_backend.services.hevy_exercise_infer import ExerciseInferrer
 from dinatos_backend.services.hevy_exercise_match import CatalogMatcher
 
 # Hevy writes the same logical timestamp two different ways depending on which
@@ -147,7 +153,7 @@ def _group_rows(rows: list[dict[str, str]]) -> list[_WorkoutGroup]:
 
 async def _get_or_create_exercises(
     db: AsyncSession, groups: list[_WorkoutGroup]
-) -> tuple[dict[str, Exercise], int]:
+) -> tuple[dict[str, Exercise], list[ImportedExercise]]:
     # An exercise's tracked-metric flags are inferred from every set imported
     # for it, so one heavy set with a weight doesn't get lost because an
     # earlier lookup only saw a bodyweight warmup.
@@ -169,22 +175,51 @@ async def _get_or_create_exercises(
     # A person's own exercise of exactly this name wins; otherwise Hevy's
     # built-ins are matched, best-effort, to the seeded catalog (see
     # `hevy_exercise_match`) so an import doesn't duplicate what's already
-    # there. Only what matches neither is created.
-    catalog = await db.execute(select(Exercise).where(Exercise.is_custom.is_(False)))
-    matcher = CatalogMatcher(list(catalog.scalars()))
+    # there. Only what matches neither is created, and gets its equipment and
+    # muscles guessed (see `hevy_exercise_infer`) since Hevy's CSV has none.
+    result = await db.execute(
+        select(Exercise)
+        .where(Exercise.is_custom.is_(False))
+        .options(selectinload(Exercise.muscles))
+    )
+    catalog = list(result.scalars())
+    matcher = CatalogMatcher(catalog)
+    inferrer = ExerciseInferrer(catalog)
 
-    created = 0
+    created: list[Exercise] = []
+    guesses: list[tuple[bool, bool]] = []
     by_name: dict[str, Exercise] = {}
     for name, flags in observed.items():
         result = await db.execute(select(Exercise).where(Exercise.name == name))
         exercise = result.scalar_one_or_none() or matcher.match(name)
         if exercise is None:
-            exercise = Exercise(name=name, **flags)
+            guess = inferrer.infer(name)
+            exercise = Exercise(
+                name=name,
+                **flags,
+                equipment=guess.equipment,
+                muscles=[
+                    *(ExerciseMuscle(muscle=m, is_primary=True) for m in guess.primary_muscles),
+                    *(ExerciseMuscle(muscle=m, is_primary=False) for m in guess.secondary_muscles),
+                ],
+            )
             db.add(exercise)
-            created += 1
+            created.append(exercise)
+            guesses.append((guess.equipment is not None, guess.has_muscles))
         by_name[name] = exercise
     await db.flush()
-    return by_name, created
+    return by_name, [
+        ImportedExercise(
+            id=exercise.id,
+            name=exercise.name,
+            equipment=exercise.equipment,
+            primary_muscles=exercise.primary_muscles,
+            secondary_muscles=exercise.secondary_muscles,
+            equipment_guessed=equipment_guessed,
+            muscles_guessed=muscles_guessed,
+        )
+        for exercise, (equipment_guessed, muscles_guessed) in zip(created, guesses, strict=True)
+    ]
 
 
 async def import_hevy_workouts(
@@ -192,7 +227,7 @@ async def import_hevy_workouts(
 ) -> HevyWorkoutImportResult:
     rows = list(csv.DictReader(StringIO(csv_text)))
     groups = _group_rows(rows)
-    exercise_by_name, exercises_created = await _get_or_create_exercises(db, groups)
+    exercise_by_name, created_exercises = await _get_or_create_exercises(db, groups)
 
     for group in groups:
         db.add(
@@ -228,7 +263,9 @@ async def import_hevy_workouts(
 
     await db.commit()
     return HevyWorkoutImportResult(
-        activities_created=len(groups), exercises_created=exercises_created
+        activities_created=len(groups),
+        exercises_created=len(created_exercises),
+        created_exercises=created_exercises,
     )
 
 

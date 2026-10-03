@@ -1,9 +1,11 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../../models/hevy_import_result.dart';
 import 'hevy_import_repository.dart';
 
 class HevyImportScreen extends ConsumerStatefulWidget {
@@ -16,6 +18,7 @@ class HevyImportScreen extends ConsumerStatefulWidget {
 class _HevyImportScreenState extends ConsumerState<HevyImportScreen> {
   bool _importingWorkouts = false;
   bool _importingMeasurements = false;
+  HevyWorkoutImportResult? _workoutResult;
 
   Future<void> _importWorkouts() => _pickAndImport(
     isWorkouts: true,
@@ -58,6 +61,7 @@ class _HevyImportScreenState extends ConsumerState<HevyImportScreen> {
     final repository = ref.read(hevyImportRepositoryProvider);
     if (isWorkouts) {
       final result = await repository.importWorkouts(bytes, filename, force: force);
+      if (mounted) setState(() => _workoutResult = result);
       _showMessage(
         'Imported ${result.activitiesCreated} activities '
         '(${result.exercisesCreated} new exercises).',
@@ -134,9 +138,78 @@ class _HevyImportScreenState extends ConsumerState<HevyImportScreen> {
                   : const Icon(Icons.straighten),
               label: const Text('Import measurements CSV'),
             ),
+            if (_workoutResult case final result? when result.createdExercises.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              ImportedExercisesReview(exercises: result.createdExercises),
+            ],
           ],
         ),
       ),
     );
+  }
+}
+
+/// Shown once a workouts import has finished and created custom exercises:
+/// asks the person to check the equipment/muscles we guessed for them, with
+/// a tap-through to each one's edit screen.
+class ImportedExercisesReview extends StatelessWidget {
+  const ImportedExercisesReview({super.key, required this.exercises});
+
+  final List<ImportedExercise> exercises;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = exercises.length;
+    return Card(
+      key: const Key('importedExercisesReview'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Please review $count new custom ${count == 1 ? 'exercise' : 'exercises'}',
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'These Hevy exercises did not match one of ours exactly, so we created them as '
+              'your own. We tried to match their equipment and muscle groups automatically, '
+              'but some guesses may be wrong. Tap an exercise to check and edit it.',
+            ),
+            const SizedBox(height: 8),
+            for (final exercise in exercises)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(exercise.name),
+                subtitle: Text(_summary(exercise)),
+                trailing: const Icon(Icons.edit_outlined),
+                onTap: () => context.go('/exercises/${exercise.id}/edit'),
+              ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => context.go('/exercises'),
+              icon: const Icon(Icons.list),
+              label: const Text('Open exercise list'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _summary(ImportedExercise exercise) {
+    final equipment = exercise.equipment == null
+        ? 'Equipment: not set'
+        : 'Equipment: ${exercise.equipment!.label}${exercise.equipmentGuessed ? ' (guessed)' : ''}';
+    final muscles = [
+      ...exercise.primaryMuscles.map((muscle) => muscle.label),
+      ...exercise.secondaryMuscles.map((muscle) => '${muscle.label} (secondary)'),
+    ];
+    final muscleText = muscles.isEmpty
+        ? 'Muscles: not set'
+        : 'Muscles: ${muscles.join(', ')}${exercise.musclesGuessed ? ' (guessed)' : ''}';
+    return '$equipment\n$muscleText';
   }
 }
