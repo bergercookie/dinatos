@@ -30,6 +30,9 @@ ignore = ["ANN401"]
 # S106: a throwaway testcontainers Postgres credential, not a real secret.
 "backend/tests_migrations/*" = ["S106"]
 "mcp_server/tests/*" = ["S101", "S104", "S105", "S106"]
+# S101: `assert` is how a browser test states what it expects; S105/S106: a
+# throwaway account's password, registered against a throwaway database.
+"e2e/*" = ["S101", "S105", "S106"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency injection is `Depends(...)` as an argument default by

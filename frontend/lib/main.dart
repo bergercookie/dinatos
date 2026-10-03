@@ -13,6 +13,7 @@ import 'core/theme.dart';
 import 'features/activities/live/live_session.dart';
 import 'features/activities/live/live_session_storage.dart';
 import 'features/activities/live/live_workout_notification.dart';
+import 'features/onboarding/onboarding_overlay.dart';
 
 /// A catch-all route so this renders regardless of the browser's current
 /// URL -- see the `AuthUnknown` branch below for why that matters.
@@ -78,6 +79,7 @@ class DinatosApp extends ConsumerWidget {
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
       routerConfig: router,
+      builder: (context, child) => OnboardingOverlay(router: router, child: child!),
     );
   }
 }

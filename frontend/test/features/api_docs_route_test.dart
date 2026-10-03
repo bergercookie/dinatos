@@ -140,6 +140,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('API documentation'), findsOneWidget);
+    // The profile list is longer than the test viewport.
+    await tester.ensureVisible(find.text('API documentation'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('API documentation'));
     await tester.pumpAndSettle();
 

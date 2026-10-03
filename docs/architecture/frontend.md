@@ -17,9 +17,52 @@ frontend/lib/
               routing (go_router), theme
   models/     Hand-written request/response types, one file per resource
   features/   One directory per resource (exercises, routines, activities,
-              profile, measurements, auth, home) -- each with its own
+              profile, measurements, auth, home, onboarding) -- each with its own
               repository (wraps Dio), Riverpod providers, and screens
 ```
+
+## The first-run tour is an overlay above the router, not a screen
+
+`features/onboarding/` walks a new account through setting units, saving a
+first routine and logging a first workout, by dimming everything but the
+real control to press next and pointing at it. It is wired in as
+`MaterialApp.router`'s `builder`, so one widget (`OnboardingOverlay`) sits
+above every route and no screen has to know a tour exists -- beyond
+wrapping the handful of widgets it points at in an `OnboardingTarget`,
+which draws and handles nothing itself, only registers where it is.
+
+Three decisions worth knowing before changing it:
+
+- **Steps complete by what the app did, not by what the user pressed.** A
+  step advances when the router reaches a path (`advanceOnLocation`) or the
+  app reports an event (`advanceOnEvent`, e.g. the profile was saved) --
+  never by a pointer listener on the highlighted widget. A mouse or finger
+  reaches the app as pointer events, but assistive technology (and a
+  browser test driving the accessibility tree) activates a control with a
+  semantic tap, which a pointer listener never sees; the tour would hang on
+  exactly the people who most need guidance to be correct. Pressing the
+  highlighted control is the real thing, so its normal effect is the signal.
+- **Only single-press steps are modal.** The overlay is above the app's own
+  `Navigator`, so anything the app opens in it -- a dropdown menu, the
+  exercise picker's bottom sheet -- renders *beneath* the dimming. A modal
+  step (everything outside the spotlight blocks input) is therefore only
+  used where one press is the whole step; steps that need the user to fill
+  something in leave the app usable and only draw the ring, with "Skip
+  step" as the way out if they get stuck.
+- **A missing target never traps the user.** A modal step blocks only once
+  its target has actually been found on screen -- in a visible branch, not
+  an inactive tab an `IndexedStack` is keeping alive. If the user wandered
+  off, the card still shows (docked, no dimming) and "Skip step"/"Skip
+  tour" always work.
+
+Completion is remembered per account in `shared_preferences`
+(`onboarding_seen_<user id>`), so a second account on the same device gets
+its own tour; Profile's "Take the tour again" restarts it. Its steps are
+data (`onboarding_steps.dart`), so adding or reordering one is an edit to
+that list plus an `OnboardingTarget` where it points.
+
+`e2e/` drives this in a real browser; see
+[CI and releases](../development/ci-and-releases.md).
 
 ## Auth mirrors the backend's design deliberately
 

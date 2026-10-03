@@ -11,6 +11,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import 'activities_providers.dart';
+import '../onboarding/onboarding_overlay.dart';
 import 'live/live_session.dart';
 import 'widgets/training_calendar_card.dart';
 
@@ -31,16 +32,19 @@ class ActivityListScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FloatingActionButton.extended(
-              heroTag: 'start-live-workout',
-              tooltip: 'Start an interactive session as you work out',
-              onPressed: () {
-                // Never clobber a workout already under way -- resume it.
-                if (!hasLiveWorkout) ref.read(liveActivityProvider.notifier).start();
-                context.go('/activities/live');
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: Text(hasLiveWorkout ? 'Resume workout' : 'Start workout'),
+            OnboardingTarget(
+              id: 'start-workout',
+              child: FloatingActionButton.extended(
+                heroTag: 'start-live-workout',
+                tooltip: 'Start an interactive session as you work out',
+                onPressed: () {
+                  // Never clobber a workout already under way -- resume it.
+                  if (!hasLiveWorkout) ref.read(liveActivityProvider.notifier).start();
+                  context.go('/activities/live');
+                },
+                icon: const Icon(Icons.play_arrow),
+                label: Text(hasLiveWorkout ? 'Resume workout' : 'Start workout'),
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             FloatingActionButton.extended(

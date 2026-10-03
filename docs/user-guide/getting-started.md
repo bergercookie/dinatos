@@ -28,6 +28,16 @@ up, either:
   account ever registered on a fresh instance becomes its admin
   automatically.
 
+## The first-run tour
+
+The first time you sign in, Dinatos offers a short guided tour: it
+dims the screen except for the one button to press next, and walks you
+through choosing your units, saving a first routine, and logging a first
+workout. You press the real buttons -- nothing is simulated -- and the tour
+moves on as you go. **Skip step** and **Skip tour** are always on the card;
+the tour is only offered once per account. To see it again, open the
+profile screen and choose **Take the tour again**.
+
 ## Staying signed in
 
 A session lasts **30 days**. There's no silent background refresh -- once a

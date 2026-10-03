@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_notifier.dart';
+import '../onboarding/onboarding_overlay.dart';
 import 'live_workout_banner.dart';
 
 /// Viewport width from which the shell swaps the bottom nav bar for a side
@@ -16,6 +17,9 @@ const _destinations = [
   (icon: Icons.straighten, label: 'Measurements'),
   (icon: Icons.person, label: 'Profile'),
 ];
+
+/// What the first-run tour calls a tab: `tab-home`, `tab-profile`, ...
+String _tabTarget(String label) => 'tab-${label.toLowerCase()}';
 
 /// Hosts the 5 top-level sections behind a single nav (bottom bar on narrow
 /// screens, side rail with a log-out button on wide ones), each with its own
@@ -48,9 +52,11 @@ class AppShell extends ConsumerWidget {
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (final d in _destinations)
+                  // Icon and label are both registered, so the tour's spotlight
+                  // covers the whole destination, not just its icon.
                   NavigationRailDestination(
-                    icon: Icon(d.icon),
-                    label: Text(d.label),
+                    icon: OnboardingTarget(id: _tabTarget(d.label), child: Icon(d.icon)),
+                    label: OnboardingTarget(id: _tabTarget(d.label), child: Text(d.label)),
                   ),
               ],
               trailing: Expanded(
@@ -93,7 +99,10 @@ class AppShell extends ConsumerWidget {
             onDestinationSelected: _goBranch,
             destinations: [
               for (final d in _destinations)
-                NavigationDestination(icon: Icon(d.icon), label: d.label),
+                OnboardingTarget(
+                  id: _tabTarget(d.label),
+                  child: NavigationDestination(icon: Icon(d.icon), label: d.label),
+                ),
             ],
           ),
         ],

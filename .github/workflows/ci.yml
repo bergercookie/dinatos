@@ -85,6 +85,30 @@ jobs:
           path: frontend/coverage/html/
           if-no-files-found: ignore
 
+  e2e:
+    # Like `screenshots`, needs the Flutter SDK, Docker and Playwright's
+    # browser -- its own job rather than part of `just check`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: extractions/setup-just@v4
+      - run: just e2e::install
+      - run: just e2e::lint
+      - run: just e2e::test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-debug
+          path: /tmp/dinatos-e2e-*.png
+          if-no-files-found: ignore
+
   screenshots:
     # The heaviest combination of the lot: the Flutter SDK (to build the
     # frontend), Docker (testcontainers' disposable Postgres), and Playwright's
