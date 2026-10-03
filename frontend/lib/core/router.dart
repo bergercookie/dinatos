@@ -19,6 +19,7 @@ import '../features/measurements/measurement_form_screen.dart';
 import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
 import '../features/profile/about_screen.dart';
+import '../features/stats/stats_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/routines/routine_form_screen.dart';
 import '../features/routines/routine_list_screen.dart';
@@ -109,6 +110,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(path: 'new', builder: (context, state) => const ActivityFormScreen()),
                   GoRoute(path: 'live', builder: (context, state) => const LiveActivityScreen()),
+                  GoRoute(path: 'stats', builder: (context, state) => const StatsScreen()),
                   GoRoute(
                     path: 'live/summary',
                     builder: (context, state) => const ActivitySummaryScreen(),
