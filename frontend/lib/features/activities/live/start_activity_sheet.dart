@@ -11,7 +11,7 @@ import 'start_routine_workout.dart';
 enum _StartChoice { routine, scratch }
 
 /// Offers the two ways to start an activity: copy one of the saved routines
-/// as is ("Use workout"), or start empty ("From scratch").
+/// as is ("Use routine"), or start empty ("From scratch").
 Future<void> showStartActivitySheet(BuildContext context, WidgetRef ref) async {
   final choice = await showModalBottomSheet<_StartChoice>(
     context: context,
