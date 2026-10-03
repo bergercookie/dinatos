@@ -124,7 +124,11 @@ jobs:
 
   linux-packages:
     needs: version
-    runs-on: ubuntu-latest
+    # Pinned to the oldest Ubuntu we support, not `ubuntu-latest`: the
+    # bundle links against the *build* machine's glibc, so a package built
+    # on 24.04 fails on 22.04 with `GLIBC_2.38 not found`. Building on the
+    # old release keeps it running on every newer one.
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -149,8 +153,25 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  # Install the .deb on each supported Ubuntu and start it, so a glibc (or
+  # other runtime) mismatch fails here rather than on a user's machine.
+  linux-smoke:
+    needs: [version, linux-packages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        image: ["ubuntu:22.04", "ubuntu:24.04"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dinatos-${{ needs.version.outputs.version }}-linux
+          path: dist
+      - run: packaging/linux/smoke-test-deb.sh dist/*.deb "${{ matrix.image }}"
+
   release:
-    needs: [version, docker, android-apk, linux-packages]
+    needs: [version, docker, android-apk, linux-packages, linux-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
