@@ -10,6 +10,14 @@ class ApiException implements Exception {
     if (data is Map && data['detail'] is String) {
       return ApiException(data['detail'] as String, statusCode: error.response?.statusCode);
     }
+    // A list: a 422 from request validation (`[{loc, msg, ...}]`), or from the
+    // backup restore (`[String, ...]`) -- one line each, rather than "Unexpected error."
+    if (data is Map && data['detail'] is List && (data['detail'] as List).isNotEmpty) {
+      final lines = (data['detail'] as List).map(
+        (item) => item is Map && item['msg'] is String ? item['msg'] as String : item.toString(),
+      );
+      return ApiException(lines.join('\n'), statusCode: error.response?.statusCode);
+    }
     if (error.type == DioExceptionType.connectionError ||
         error.type == DioExceptionType.connectionTimeout) {
       return const ApiException('Could not reach the server.');

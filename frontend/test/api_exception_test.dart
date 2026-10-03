@@ -31,4 +31,32 @@ void main() {
 
     expect(ApiException.fromDioException(dioError).message, 'Could not reach the server.');
   });
+
+  test('joins a list detail (request validation, backup problems) one per line', () {
+    final requestOptions = RequestOptions(path: '/profile/import');
+    DioException error(Object detail) => DioException(
+      requestOptions: requestOptions,
+      response: Response(requestOptions: requestOptions, statusCode: 422, data: {'detail': detail}),
+      type: DioExceptionType.badResponse,
+    );
+
+    expect(
+      ApiException.fromDioException(
+        error([
+          {
+            'loc': ['body', 'format'],
+            'msg': 'Input should be dinatos-user-export',
+          },
+          {
+            'loc': ['body'],
+            'other': 1,
+          },
+        ]),
+      ).message,
+      startsWith('Input should be dinatos-user-export\n'),
+    );
+    final backup = ApiException.fromDioException(error(['unknown table', 'users[0]: bad']));
+    expect(backup.message, 'unknown table\nusers[0]: bad');
+    expect(backup.statusCode, 422);
+  });
 }

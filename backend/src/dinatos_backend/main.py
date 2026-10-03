@@ -42,12 +42,18 @@ app = FastAPI(
     ),
     openapi_tags=[
         {"name": "auth", "description": "Registration, login and session revocation."},
-        {"name": "admin", "description": "Account administration (admins only)."},
+        {
+            "name": "admin",
+            "description": "Account administration and full-server backup/restore (admins only).",
+        },
         {"name": "exercises", "description": "The exercise catalog, shared by every user."},
         {"name": "routines", "description": "Routine templates: exercises and sets, no dates."},
         {"name": "activities", "description": "Logged instances of a workout, actually performed."},
         {"name": "measurements", "description": "Body weight, fat percentage and circumferences."},
-        {"name": "profile", "description": "Per-user display settings."},
+        {
+            "name": "profile",
+            "description": "Per-user settings; export and import of one's own data.",
+        },
         {"name": "imports", "description": "One-shot migration of a Hevy CSV export."},
     ],
 )
@@ -60,7 +66,9 @@ app.add_middleware(
     # `X-Total-Count` (GET /exercises' pagination total) is otherwise
     # invisible to browser JS on a cross-origin response -- only headers
     # named here are exposed, regardless of allow_headers above.
-    expose_headers=["X-Total-Count"],
+    # `Content-Disposition` likewise carries the filename of the backup/export
+    # downloads (`GET /admin/backup`, `GET /profile/export`).
+    expose_headers=["X-Total-Count", "Content-Disposition"],
 )
 app.include_router(auth.router)
 app.include_router(admin.router)

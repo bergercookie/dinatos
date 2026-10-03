@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dinatos_frontend/core/api_exception.dart';
+import 'package:dinatos_frontend/core/file_io.dart';
 import 'package:dinatos_frontend/features/admin/admin_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -66,5 +70,120 @@ void main() {
       AdminRepository(dio).createUser(email: 'a@example.com', password: 'hunter22', isAdmin: false),
       throwsA(isA<ApiException>().having((e) => e.isConflict, 'isConflict', isTrue)),
     );
+  });
+
+  group('backup', () {
+    test('downloadBackup returns the bytes under the server-suggested filename', () async {
+      final dio = buildMockDio();
+      when(() => dio.get<List<int>>('/admin/backup', options: any(named: 'options'))).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/admin/backup'),
+          statusCode: 200,
+          data: utf8.encode('{"format":"dinatos-backup"}'),
+          headers: Headers.fromMap({
+            'content-disposition': ['attachment; filename="dinatos-backup-1.json"'],
+          }),
+        ),
+      );
+
+      final file = await AdminRepository(dio).downloadBackup();
+
+      expect(file.name, 'dinatos-backup-1.json');
+      expect(utf8.decode(file.bytes), '{"format":"dinatos-backup"}');
+      final options =
+          verify(() => dio.get<List<int>>('/admin/backup', options: captureAny(named: 'options')))
+                  .captured
+                  .single
+              as Options;
+      expect(options.responseType, ResponseType.bytes);
+    });
+
+    test('downloadBackup uses a default name when the header is not visible', () async {
+      final dio = buildMockDio();
+      when(() => dio.get<List<int>>('/admin/backup', options: any(named: 'options'))).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/admin/backup'),
+          statusCode: 200,
+          data: [123, 125],
+        ),
+      );
+
+      expect((await AdminRepository(dio).downloadBackup()).name, 'dinatos-backup.json');
+    });
+
+    test('downloadBackup surfaces the server error (e.g. not an admin)', () async {
+      final dio = buildMockDio();
+      when(() => dio.get<List<int>>('/admin/backup', options: any(named: 'options'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/admin/backup'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/admin/backup'),
+            statusCode: 403,
+            data: {'detail': 'admin access required'},
+          ),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      await expectLater(
+        AdminRepository(dio).downloadBackup(),
+        throwsA(isA<ApiException>().having((e) => e.message, 'message', 'admin access required')),
+      );
+    });
+
+    test('restoreBackup uploads the file with confirm=true and parses the result', () async {
+      final dio = buildMockDio();
+      when(() => dio.post<Map<String, dynamic>>('/admin/backup/restore', data: any(named: 'data')))
+          .thenAnswer(
+            (_) async => Response(
+              requestOptions: RequestOptions(path: '/admin/backup/restore'),
+              statusCode: 200,
+              data: {
+                'rows': {'users': 3, 'routines': 4},
+                'session_kept': false,
+              },
+            ),
+          );
+
+      final result = await AdminRepository(dio)
+          .restoreBackup(FileContent('b.json', Uint8List.fromList([123, 125])));
+
+      expect(result.rows, {'users': 3, 'routines': 4});
+      expect(result.sessionKept, isFalse);
+      final form =
+          verify(
+                () => dio.post<Map<String, dynamic>>(
+                  '/admin/backup/restore',
+                  data: captureAny(named: 'data'),
+                ),
+              ).captured.single
+              as FormData;
+      expect(form.fields.map((e) => '${e.key}=${e.value}'), ['confirm=true']);
+      expect(form.files.single.key, 'file');
+      expect(form.files.single.value.filename, 'b.json');
+    });
+
+    test('restoreBackup surfaces a rejected document', () async {
+      final dio = buildMockDio();
+      when(() => dio.post<Map<String, dynamic>>('/admin/backup/restore', data: any(named: 'data')))
+          .thenThrow(
+            DioException(
+              requestOptions: RequestOptions(path: '/admin/backup/restore'),
+              response: Response(
+                requestOptions: RequestOptions(path: '/admin/backup/restore'),
+                statusCode: 422,
+                data: {
+                  'detail': ['unknown table "x"'],
+                },
+              ),
+              type: DioExceptionType.badResponse,
+            ),
+          );
+
+      await expectLater(
+        AdminRepository(dio).restoreBackup(FileContent('b.json', Uint8List(0))),
+        throwsA(isA<ApiException>().having((e) => e.message, 'message', 'unknown table "x"')),
+      );
+    });
   });
 }

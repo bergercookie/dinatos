@@ -9,12 +9,18 @@ import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_state.dart';
 import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
+import '../../core/file_io.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../../models/data_transfer_result.dart';
 import '../../models/profile.dart';
+import '../activities/activities_providers.dart';
+import '../exercises/exercises_providers.dart';
+import '../measurements/measurements_providers.dart';
+import '../routines/routines_providers.dart';
 import '../docs/api_docs_url.dart';
 import '../onboarding/onboarding_controller.dart';
 import '../onboarding/onboarding_overlay.dart';
@@ -140,6 +146,65 @@ class _WorkoutxKeyDialogState extends State<_WorkoutxKeyDialog> {
   }
 }
 
+/// Pops the chosen [UserImportMode], or null if cancelled. Replace is the
+/// destructive one and says exactly what it deletes.
+class _ImportModeDialog extends StatefulWidget {
+  const _ImportModeDialog({required this.fileName});
+
+  final String fileName;
+
+  @override
+  State<_ImportModeDialog> createState() => _ImportModeDialogState();
+}
+
+class _ImportModeDialogState extends State<_ImportModeDialog> {
+  UserImportMode _mode = UserImportMode.merge;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Import my data'),
+      content: SingleChildScrollView(
+        child: RadioGroup<UserImportMode>(
+          groupValue: _mode,
+          onChanged: (value) => setState(() => _mode = value ?? _mode),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('From "${widget.fileName}".'),
+              const SizedBox(height: AppSpacing.md),
+              const RadioListTile<UserImportMode>(
+                value: UserImportMode.merge,
+                title: Text('Merge'),
+                subtitle: Text(
+                  'Keep what you have and add what is missing. Routines with the same name, '
+                  'and activities or measurements at the same time, are skipped.',
+                ),
+              ),
+              const RadioListTile<UserImportMode>(
+                value: UserImportMode.replace,
+                title: Text('Replace my data'),
+                subtitle: Text(
+                  'First deletes ALL your routines, activities and measurements, then imports '
+                  'the file.',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _mode),
+          child: Text(_mode == UserImportMode.replace ? 'Replace and import' : 'Import'),
+        ),
+      ],
+    );
+  }
+}
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -239,6 +304,43 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     }
   }
 
+  Future<void> _exportData() async {
+    try {
+      final file = await ref.read(profileRepositoryProvider).exportMyData();
+      final saved = await ref.read(fileSaverProvider)(file);
+      if (saved) _showMessage('Your data was saved as ${file.name}.');
+    } on ApiException catch (error) {
+      _showMessage('Export failed: ${error.message}');
+    }
+  }
+
+  Future<void> _importData() async {
+    final file = await ref.read(jsonFilePickerProvider)();
+    if (file == null || !mounted) return;
+    final mode = await showDialog<UserImportMode>(
+      context: context,
+      builder: (context) => _ImportModeDialog(fileName: file.name),
+    );
+    if (mode == null) return;
+    try {
+      final result = await ref.read(profileRepositoryProvider).importMyData(file, mode);
+      ref.invalidate(profileProvider);
+      ref.invalidate(routineListProvider);
+      ref.invalidate(activityListProvider);
+      ref.invalidate(measurementListProvider);
+      ref.invalidate(exerciseListProvider);
+      ref.invalidate(exercisePagingProvider);
+      _showMessage(result.summary());
+    } on ApiException catch (error) {
+      _showMessage('Import failed, nothing was changed: ${error.message}');
+    }
+  }
+
+  void _showMessage(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
   @override
   Widget build(BuildContext context) {
     // Not a lazy `ListView`: the first-run tour looks up the Preferences card
@@ -313,6 +415,20 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                   subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => context.go('/profile/import-hevy'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.download_outlined),
+                  title: const Text('Export my data'),
+                  subtitle: const Text(
+                    'Save your settings, routines, activities and measurements as a file',
+                  ),
+                  onTap: _exportData,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.upload_file_outlined),
+                  title: const Text('Import my data'),
+                  subtitle: const Text('Load a file you exported from Dinatos'),
+                  onTap: _importData,
                 ),
                 ListTile(
                   leading: const Icon(Icons.explore_outlined),

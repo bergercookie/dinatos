@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/dio_provider.dart';
+import '../../core/file_io.dart';
+import '../../models/data_transfer_result.dart';
 import '../../models/user.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
@@ -36,6 +40,44 @@ class AdminRepository {
         data: {'email': email, 'password': password, 'is_admin': isAdmin},
       );
       return User.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// The whole server as one JSON file (`GET /admin/backup`). It contains
+  /// password hashes and API keys -- callers should say so.
+  Future<FileContent> downloadBackup() async {
+    try {
+      final response = await _dio.get<List<int>>(
+        '/admin/backup',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return FileContent(
+        filenameFromContentDisposition(
+          response.headers.value('content-disposition'),
+          'dinatos-backup.json',
+        ),
+        Uint8List.fromList(response.data!),
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// Replaces *everything* on the server with [backup]
+  /// (`POST /admin/backup/restore`). `confirm=true` is always sent: the
+  /// confirmation that matters is the dialog in front of calling this.
+  Future<BackupRestoreResult> restoreBackup(FileContent backup) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/admin/backup/restore',
+        data: FormData.fromMap({
+          'confirm': 'true',
+          'file': MultipartFile.fromBytes(backup.bytes, filename: backup.name),
+        }),
+      );
+      return BackupRestoreResult.fromJson(response.data!);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }

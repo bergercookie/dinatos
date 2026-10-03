@@ -42,6 +42,11 @@ doesn't work here (it's old enough to reject this repo's `mod`-based root
   module-boundary check, `hadolint` on the root `Dockerfile`, plus file
   hygiene hooks -- see `.pre-commit-config.yaml`; then the backend test
   suite; then a Sphinx docs build with warnings as errors).
+- Added a table or column? `just test` fails until a new table is in the
+  full-server backup's `BACKED_UP_TABLES` (`backend/src/dinatos_backend/
+  services/backup.py`); a user-owned field should also join the per-user
+  export (`schemas/backup.py`, `services/user_export.py`). See "Backup and
+  data export" in `docs/architecture/backend.md`.
 - Touched anything under `backend/alembic/versions/`? Also run
   `just backend test-migrations` (CI's `migrations` job) -- needs Docker; a
   sqlite-backed unit test structurally can't catch a Postgres-specific

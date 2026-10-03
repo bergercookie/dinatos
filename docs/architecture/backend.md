@@ -30,6 +30,9 @@ calling user's own data:
 - `/measurements` -- dated body-measurement entries, scoped to their owner.
 - `/imports/hevy/workouts` and `/imports/hevy/measurements` -- see
   "Hevy import" below.
+- `GET /admin/backup` and `POST /admin/backup/restore` (admin only), and
+  `GET /profile/export` and `POST /profile/import` (any user, own data only)
+  -- see "Backup and data export" below.
 
 ## API documentation
 
@@ -125,6 +128,94 @@ Argon2's slowness there would only cost real request latency for no
 security benefit. Never swap the two: Argon2 for the password, SHA-256 for
 the session token.
 
+## Backup and data export
+
+Two features share one idea -- a versioned JSON document with a `format`
+name, a `format_version`, `exported_at` and `app_version` (`schemas/backup.py`)
+-- and differ in everything else.
+
+### Full server backup (admin only)
+
+`GET /admin/backup` downloads every table as `{"tables": {name: [row, ...]}}`;
+`POST /admin/backup/restore` (multipart `file`, plus the form field
+`confirm=true` -- without it a 400, nothing read) **resets the whole server
+to that document**. The mechanics are in `services/backup.py`:
+
+- **Generic over the table metadata**: every column of every table in
+  `BACKED_UP_TABLES` is exported, rows carry their original primary keys,
+  enums as their value, timestamps as UTC ISO 8601. Adding a *column* needs no
+  change here. Adding a *table* does: `tests/services/test_backup_coverage.py`
+  fails until the table is in `BACKED_UP_TABLES` or in `EXCLUDED_TABLES` with
+  a reason. A column added after a backup was made is filled from its
+  nullable/default when restoring that older backup; bump `FORMAT_VERSION`
+  only for a change an old reader cannot interpret (a column or table
+  removed or re-meant).
+- **Validate, then replace.** `parse_backup` checks the whole document
+  before the database is touched: format name, version, exact table set,
+  every column's presence/type/length/enum, primary-key uniqueness, every
+  foreign key resolving, and at least one admin account (a backup that would
+  lock everyone out is refused). Any problem is a 422 listing them. Only then
+  does `restore_backup` delete every table (children first) and insert the
+  document (parents first), in **one transaction**: if the database still
+  rejects something (a unique constraint, say), everything rolls back and
+  the server is exactly as before.
+- **Postgres sequences.** Inserting explicit ids leaves each serial
+  sequence behind, so the next ordinary insert would collide.
+  `reset_sequences` runs a `setval(pg_get_serial_sequence(...), max(id)+1)`
+  per autoincrement key -- on Postgres only (sqlite derives the next rowid
+  from the table). The statements are unit-tested and the dialect switch is
+  tested with a stub, but no test runs them against a real Postgres.
+- **Secrets.** The backup contains password hashes and stored WorkoutX API
+  keys, in the clear, because restoring must give a working server. Treat the
+  file as a credential; the endpoint's docs and the app say so.
+- **Sessions.** `auth_sessions` is *excluded*: a row is a live login, so
+  a backup file must not carry them, and a restore must not resurrect old
+  ones. After a restore every login is gone, except **the calling admin's
+  own current session, which is kept iff the backup contains a user with
+  the same id *and* the same email** (`session_kept` in the response). Id
+  alone is not enough: on a fresh instance the backup's user 1 may be a
+  different person than the caller's user 1. If it is not kept the caller
+  is logged out like everyone else (their next request is a 401).
+
+### A user's own data (`/profile/export`, `/profile/import`)
+
+`services/user_export.py`. Not generic: it is a hand-shaped, id-free
+document (`UserExport`) of the profile settings, the exercises the data
+uses, routines, activities and body measurements. Never the password hash,
+sessions, Hevy import records, or the WorkoutX API key (it is a credential
+and stays on the server it was typed into; an import ignores one if a file
+smuggles it in).
+
+- **Exercises are global** (no owner), so "the user's custom exercises"
+  means the exercises their routines/activities reference. They travel with
+  their definition and are matched on import **by exact name**: an existing
+  entry (built-in or custom) is reused and never modified; an unknown name
+  is created as a custom exercise. Referring to an exercise the file does
+  not define and the server does not have is a 422.
+- **Ids are remapped.** Nothing in the file is a database id; an activity
+  names the routine it ran from by `routine_ref`, its 1-based position in
+  the file's `routines`.
+- **Merge (default)** keeps everything already in the account and skips what
+  is already present, so importing a file twice is harmless: a routine is
+  present if the caller has one with the same *name*, an activity if title
+  and start time match, a measurement if its timestamp matches. Presence is
+  judged against the account as it was before the import (two same-named
+  routines inside one file both arrive). An activity whose routine was
+  skipped as present is linked to the existing routine. **Replace**
+  (`?mode=replace`) first deletes the caller's routines, activities and
+  measurements. Profile settings are applied in both modes.
+- Every row written has `owner_id` set to the caller; nothing else in the
+  database is touched. A file is fully validated (shape by pydantic, then
+  references) before the first write, and applied in one transaction.
+
+**When you add a table or column**, update the backup: a new table goes in
+`BACKED_UP_TABLES` (the coverage test makes you); a new user-owned
+domain field also belongs in `schemas/backup.py`'s `Exported*` models and
+`services/user_export.py` (no test can know whether a new column is
+user-portable, so this one is on you -- the roundtrip tests in
+`tests/api/test_user_export_roundtrip.py` compare whole documents, so extend
+`tests/backup_seed.py` with a value for it).
+
 ## MCP server
 
 `mcp_server/` (package `dinatos-mcp`, entry point `dinatos-mcp`) exposes a
@@ -184,6 +275,32 @@ user's side. A `409` surfaces as a dialog naming the previous import's
 filename/timestamp and asking to confirm before retrying with `?force=true`
 -- `HevyImportRepository` is what turns that one status code into a typed
 `HevyImportAlreadyDoneException` instead of a generic error.
+
+### Guessing metadata for created exercises
+
+Hevy's CSV has only an exercise *title* -- no equipment, no muscles. A title
+that matches nothing in the seeded catalog (`hevy_exercise_match`) becomes a
+custom exercise, and `services/hevy_exercise_infer.py` guesses its metadata,
+deterministically and without any network/LLM call:
+
+- **Equipment** from Hevy's parenthesised suffix ("Row (Dumbbell)"), mapped
+  onto the `Equipment` enum; an unknown suffix is ignored and equipment words
+  in the name ("Dumbbell Row") are the fallback.
+- **Muscles** from the seeded catalog's most similar exercises: names are
+  compared as word sets with equipment/filler words stripped (Dice
+  coefficient, threshold 0.6), and up to three close neighbours vote,
+  weighted by similarity. If no neighbour qualifies, a small ordered
+  movement-keyword table (row -> back, curl -> biceps, ...) is tried; if
+  that finds nothing either, the muscles stay empty rather than wrong.
+
+Only seeded exercises are ever neighbours -- never a person's own, or earlier
+guesses -- so a result doesn't depend on what else was imported. The guesses
+are saved on the new exercise and the workouts response lists every created
+exercise in `created_exercises` with `equipment_guessed`/`muscles_guessed`
+flags; the import screen turns that into a "please review these" card linking
+to each exercise's edit screen. Re-importing creates nothing (and so reports
+nothing): existing exercises, including ones the person has since edited, are
+never re-inferred.
 
 ## Exercise tutorials
 
