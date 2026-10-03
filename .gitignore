@@ -20,3 +20,4 @@ docs/_build/
 
 # Claude Code's own local state
 .claude/
+release.jks
