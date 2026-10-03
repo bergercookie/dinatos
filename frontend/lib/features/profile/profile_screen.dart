@@ -10,6 +10,7 @@ import '../../core/auth/auth_state.dart';
 import '../../core/design_tokens.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
+import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/profile.dart';
@@ -348,6 +349,39 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: _editWorkoutxKey,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        const _SectionHeader('Appearance'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: SegmentedButton<ThemeMode>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                  value: ThemeMode.system,
+                  icon: Icon(Icons.brightness_auto_outlined),
+                  label: Text('System'),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  icon: Icon(Icons.light_mode_outlined),
+                  label: Text('Light'),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  icon: Icon(Icons.dark_mode_outlined),
+                  label: Text('Dark'),
+                ),
+              ],
+              selected: {ref.watch(themeModeProvider)},
+              onSelectionChanged: (selection) async {
+                final mode = selection.first;
+                ref.read(themeModeProvider.notifier).state = mode;
+                await ref.read(themeModeStorageProvider).write(mode);
+              },
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
