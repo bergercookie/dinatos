@@ -10,6 +10,7 @@ import 'core/router.dart';
 import 'core/server_url_provider.dart';
 import 'core/server_url_storage.dart';
 import 'core/theme.dart';
+import 'core/theme_mode_provider.dart';
 import 'features/activities/live/live_session.dart';
 import 'features/activities/live/live_session_storage.dart';
 import 'features/activities/live/live_workout_notification.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
   // build-time default that then flips underneath it a moment later.
   final storedServerUrl = await ServerUrlStorage().read();
   final storedAllowInsecureTls = await InsecureTlsStorage().read();
+  final storedThemeMode = await const ThemeModeStorage().read();
   const liveSessionStorage = PrefsLiveSessionStorage();
   final restoredLiveSession = await liveSessionStorage.read();
   runApp(
@@ -43,6 +45,7 @@ Future<void> main() async {
         restoredLiveSessionProvider.overrideWithValue(restoredLiveSession),
         if (storedServerUrl != null) serverUrlProvider.overrideWith((ref) => storedServerUrl),
         allowInsecureTlsProvider.overrideWith((ref) => storedAllowInsecureTls),
+        themeModeProvider.overrideWith((ref) => storedThemeMode),
       ],
       child: const DinatosApp(),
     ),
@@ -56,6 +59,7 @@ class DinatosApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     ref.watch(liveWorkoutNotificationSyncProvider);
 
     if (authState is AuthUnknown) {
@@ -70,6 +74,7 @@ class DinatosApp extends ConsumerWidget {
       return MaterialApp.router(
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
+        themeMode: themeMode,
         routerConfig: _loadingRouter,
       );
     }
@@ -78,6 +83,7 @@ class DinatosApp extends ConsumerWidget {
       title: 'Dinatos',
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
+      themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) => OnboardingOverlay(router: router, child: child!),
     );
