@@ -67,6 +67,9 @@ doesn't work here (it's old enough to reject this repo's `mod`-based root
 
 ## Reporting bugs / proposing changes
 
+Security vulnerabilities are the exception: don't open a public issue, follow
+[`SECURITY.md`](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md) instead.
+
 Open a GitHub issue or PR against `main`. For anything beyond a small fix,
 opening an issue first to agree on the approach saves a rewritten PR later
 -- especially for anything touching the domain model or the API surface,
