@@ -14,6 +14,9 @@ repos:
       - id: check-json
       - id: check-toml
       - id: check-merge-conflict
+      # Shell scripts: a shebang means it must be executable and vice versa.
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
       - id: check-added-large-files
         # The vendored free-exercise-db dataset (~1MB of exercise metadata,
         # see backend/src/dinatos_backend/data/NOTICE.md) is legitimate,
@@ -29,6 +32,22 @@ repos:
     rev: v2.15.1
     hooks:
       - id: hadolint
+
+  # Shell scripts (backend/docker-entrypoint.sh, packaging/linux/*.sh,
+  # tools/*.sh). Like hadolint these ship as prebuilt-binary wheels, so no
+  # system shellcheck/shfmt is needed. shellcheck finds bugs (quoting, unset
+  # vars, bad portability for the POSIX `#!/bin/sh` entrypoint); shfmt only
+  # checks formatting (-d prints the diff and fails, never rewrites).
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=style, --external-sources]
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.11.0-1
+    hooks:
+      - id: shfmt
+        args: [--diff, --indent, "2"]
 
   - repo: local
     hooks:

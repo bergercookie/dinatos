@@ -48,7 +48,7 @@ INSTALLED_SIZE="$(du -sk "${STAGE}/usr" | cut -f1)"
 # the C library (see `ldd` on the built binary) -- flutter's own engine
 # and app code (libflutter_linux_gtk.so, libapp.so) are bundled in lib/
 # next to the binary, not system-installed, so they aren't Depends here.
-cat > "${STAGE}/DEBIAN/control" <<EOF
+cat >"${STAGE}/DEBIAN/control" <<EOF
 Package: ${PKG_NAME}
 Version: ${VERSION}
 Section: contrib/misc

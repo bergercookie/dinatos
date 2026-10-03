@@ -15,15 +15,15 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 echo "Installing devbox for Dinatos development..."
 
 if command -v devbox >/dev/null 2>&1; then
-    echo "devbox is already installed: $(devbox --version)"
+  echo "devbox is already installed: $(devbox --version)"
 else
-    echo "Downloading and installing devbox..."
-    curl -fsSL https://get.jetpack.io/devbox | bash
+  echo "Downloading and installing devbox..."
+  curl -fsSL https://get.jetpack.io/devbox | bash
 fi
 
 if [ ! -f "$REPO_ROOT/devbox.json" ]; then
-    echo "Error: devbox.json not found in $REPO_ROOT" >&2
-    exit 1
+  echo "Error: devbox.json not found in $REPO_ROOT" >&2
+  exit 1
 fi
 
 cd "$REPO_ROOT"

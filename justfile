@@ -34,7 +34,7 @@ install: backend::install mcp_server::install
 # Everything CI runs for the backend, the MCP server, and docs (not the frontend -- see AGENTS.md).
 check: lint backend::test mcp_server::test docs::docs
 
-# Every pre-commit hook over the whole tree: ruff, mypy, tach, file hygiene.
+# Every pre-commit hook over the whole tree: ruff, mypy, tach, shellcheck/shfmt, file hygiene.
 lint:
     uvx pre-commit run --all-files
 
