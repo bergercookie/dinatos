@@ -21,7 +21,9 @@ void main() {
       ),
     );
 
-    expect(find.text('UI version'), findsOneWidget);
+    expect(find.text('Software version'), findsOneWidget);
+    // flutter test is not a browser served by the backend, so the client row shows.
+    expect(find.text('App version'), findsOneWidget);
     expect(find.text(githubUrl), findsOneWidget);
 
     await tester.tap(find.text('GitHub project'));
