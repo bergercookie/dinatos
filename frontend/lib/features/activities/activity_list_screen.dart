@@ -12,6 +12,7 @@ import '../../core/widgets/responsive_body.dart';
 import '../../models/activity.dart';
 import 'activities_providers.dart';
 import '../onboarding/onboarding_overlay.dart';
+import '../stats/stats_summary_card.dart';
 import 'live/live_session.dart';
 import 'widgets/training_calendar_card.dart';
 
@@ -83,12 +84,18 @@ class ActivityListScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   AppSpacing.xxl,
                 ),
-                // +1 for the calendar/streak card, pinned above the list itself.
-                itemCount: data.length + 1,
+                // +2 for the stats and calendar/streak cards, pinned above the list itself.
+                itemCount: data.length + 2,
                 separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) {
-                  if (index == 0) return TrainingCalendarCard(activities: data);
-                  final activity = data[index - 1];
+                  if (index == 0) {
+                    return StatsSummaryCard(
+                      activities: data,
+                      onOpenStats: () => context.go('/activities/stats'),
+                    );
+                  }
+                  if (index == 1) return TrainingCalendarCard(activities: data);
+                  final activity = data[index - 2];
                   return AppListCard(
                     leading: const AppIconAvatar(icon: Icons.history_rounded),
                     title: activity.title,
