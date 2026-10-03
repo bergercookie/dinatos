@@ -28,7 +28,7 @@ Android, and Linux desktop).
 <sub>Building a saved routine</sub>
 </td>
 <td align="center" width="50%">
-<img alt="Logging an activity from a routine" src="screenshots/routine-execution.png" width="380"><br>
+<img alt="Logging an activity from it" src="screenshots/routine-execution.png" width="380"><br>
 <sub>Logging an activity from it</sub>
 </td>
 </tr>

@@ -254,8 +254,17 @@ def _create_exercise(page: Page, name: str) -> None:
     page.wait_for_timeout(500)
 
 
+# Top-level destinations, in the order the shell draws them.
+_TABS = ["Exercises", "Routines", "Home", "Measurements", "Settings"]
+
+
 def _goto_tab(page: Page, name: str) -> None:
-    page.get_by_role("tab", name=name).click()
+    """The wide layout's side rail is not in the accessibility tree at all (no
+    role, no label), so it is pressed where it is drawn: equal-height
+    destinations down the left edge. Same workaround as e2e/test_onboarding.py;
+    this viewport is wide, so the bottom bar's `tab` role is never an option.
+    """
+    page.mouse.click(51, 34 + 64 * _TABS.index(name))
     page.wait_for_timeout(300)
 
 
@@ -317,7 +326,8 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.wait_for_timeout(300)
             bench = page.get_by_role("group", name="Bench Press")
             for _ in range(3):
-                bench.get_by_role("button", name="Add set").click()
+                bench.get_by_role("button", name="Add set").dispatch_event("click")
+                page.wait_for_timeout(250)
             _fill_set(bench, 0, "40", "10")
             _fill_set(bench, 1, "60", "8")
             _fill_set(bench, 2, "60", "8")
@@ -329,7 +339,8 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.wait_for_timeout(300)
             overhead = page.get_by_role("group", name="Overhead Press")
             for _ in range(2):
-                overhead.get_by_role("button", name="Add set").click()
+                overhead.get_by_role("button", name="Add set").dispatch_event("click")
+                page.wait_for_timeout(250)
             _fill_set(overhead, 0, "40", "8")
             _fill_set(overhead, 1, "45", "6")
 
@@ -341,7 +352,7 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             page.wait_for_timeout(1000)
 
             _goto_tab(page, "Home")
-            page.get_by_role("button", name="New activity").click()
+            page.get_by_role("button", name="Log a past activity").click()
             page.wait_for_timeout(400)
             _fill(page.get_by_role("textbox", name="Title"), ROUTINE_NAME)
             page.get_by_role("button", name="Start from a saved routine").click()
@@ -351,6 +362,12 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
 
             # A realistic tweak: the last Overhead Press set went a little
             # heavier than planned that day.
+            # The form is taller than the viewport now; the field sits at its very
+            # bottom edge, where the click lands on the wrong set. Scroll it
+            # comfortably into view first.
+            page.mouse.move(690, 500)
+            page.mouse.wheel(0, 250)
+            page.wait_for_timeout(500)
             activity_overhead = page.get_by_role("group", name="Overhead Press")
             _fill(activity_overhead.get_by_role("textbox", name="kg").nth(1), "47.5")
 
@@ -380,7 +397,7 @@ def _readme_block(names: list[str]) -> str:
         stem, caption = SCREENSHOTS[name]
         cells.append(
             f'<td align="center" width="50%">\n'
-            f'<img src="screenshots/{stem}.png" width="380"><br>\n'
+            f'<img alt="{caption}" src="screenshots/{stem}.png" width="380"><br>\n'
             f"<sub>{caption}</sub>\n"
             f"</td>"
         )
