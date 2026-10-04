@@ -34,6 +34,12 @@ calling user's own data:
 - `/profile` -- one row per user (`GET`/`PATCH`, no id in the path: always
   the caller's own).
 - `/measurements` -- dated body-measurement entries, scoped to their owner.
+  One flat row per entry (every value nullable), in three loose groups: the
+  basics and a smart scale's totals (weight, fat %, muscle/bone mass, water %,
+  BMI, visceral fat, DCI kcal, metabolic age), its segmental analysis (fat %
+  and muscle kg per arm, leg and trunk) and tape circumferences. Flat rather
+  than separate tables because one weigh-in or tape session is one dated
+  entry, and the backup is generic over columns; the grouping is the UI's.
 - `/imports/hevy/workouts` and `/imports/hevy/measurements` -- see
   "Hevy import" below.
 - `GET /admin/backup` and `POST /admin/backup/restore` (admin only), and

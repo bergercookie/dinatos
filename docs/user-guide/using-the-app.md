@@ -84,6 +84,21 @@ Track body measurements (weight, and whatever else you choose) separately
 from routines (the **Body** tab), each with its own date. Useful for watching
 trends independent of any single gym session.
 
+Every field is optional, so an entry holds only what you measured that day.
+The form groups them into three sections:
+
+- **Body composition** -- weight and body fat %, plus what a smart scale
+  reports as a whole: muscle mass, bone mass, water %, BMI, visceral fat,
+  DCI (daily calorie intake, kcal) and metabolic age.
+- **Segmental analysis** -- fat % and muscle mass (kg) of each arm, each leg
+  and the trunk, as a smart scale's segmental readout gives them.
+- **Tape measurements** -- circumferences: neck, shoulders, chest, biceps,
+  forearms, abdomen, waist, hips, thighs and calves.
+
+A weigh-in on a gym scale fills the first two; a tape session only the third.
+Values are stored exactly as you type them; nothing is calculated or
+cross-checked (BMI, say, is whatever the scale told you).
+
 ## Profile
 
 Your account-level settings: change your Server URL, log out (ends the
