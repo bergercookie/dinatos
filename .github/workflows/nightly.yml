@@ -1,7 +1,8 @@
 name: Nightly
 
 # Once a day, cut a prerelease of main -- but only if main has moved since
-# the previous nightly. The tag is `nightly-YYYYMMDD`, deliberately outside
+# the previous nightly (a manual run with `force` skips that check). No new
+# `v*` tag is needed. The tag is `nightly-YYYYMMDD`, deliberately outside
 # the `v*` namespace: it never triggers release.yml's tag trigger, never
 # competes with real versions for "latest", and sorts by date on its own.
 # The packaged version is `<base>-nightly.YYYYMMDD`, where <base> is the
@@ -38,16 +39,24 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: |
           set -euo pipefail
+          # Never skip because today's tag is taken: a second release the same
+          # day (a manual run, or new commits after the scheduled one) gets
+          # `nightly-YYYYMMDD.2`, `.3`, ... so the tag and version stay unique.
           tag="nightly-$(date -u +%Y%m%d)"
+          date_tag="$tag"
+          n=1
+          while git rev-parse -q --verify "refs/tags/$tag" >/dev/null; do
+            n=$((n + 1)); tag="$date_tag.$n"
+          done
           last="$(git tag --list 'nightly-*' --sort=-creatordate | head -n1)"
-          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo "$tag already exists"; changed=false
-          elif [ "$FORCE" != "true" ] && [ -n "$last" ] \
-               && [ "$(git rev-parse "$last^{commit}")" = "$(git rev-parse HEAD)" ]; then
+          if [ "$FORCE" != "true" ] && [ -n "$last" ] \
+             && [ "$(git rev-parse "$last^{commit}")" = "$(git rev-parse HEAD)" ]; then
             echo "No commits since $last"; changed=false
           else
             changed=true
           fi
+          # The version is named after the newest v* tag, whether or not a new
+          # one was pushed since the last nightly: nightlies never wait on a tag.
           base="$(git tag --list 'v*' --sort=-v:refname | head -n1)"
           base="${base#v}"
           base="${base:-$(sed -n 's/^version = "\(.*\)"/\1/p' backend/pyproject.toml | head -n1)}"
@@ -74,5 +83,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' \
-            | grep '^nightly-' | sort -r | tail -n +15 \
+            | grep '^nightly-' | sort -rV | tail -n +15 \
             | xargs -r -n1 gh release delete --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
