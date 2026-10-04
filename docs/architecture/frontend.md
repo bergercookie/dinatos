@@ -217,6 +217,37 @@ count, and reps count only for a set with no load. The live screen only flags
 an exercise that has history (nothing to have beaten otherwise); the summary
 screen counts a first-ever set as a record, as it always did.
 
+## "Which athlete do you resemble?" is a best-effort estimate, computed on the device
+
+`features/personas/` compares the person with a few hand-picked athlete
+archetypes (sprinter, distance runner, weightlifter, javelin thrower,
+bodybuilder, gymnast) and draws two overlaid shapes on a radar chart: how close
+their *body* is to each, and how close their *training* is. Like the stats page
+it has no endpoint -- it reads the measurements, activities, exercise catalog
+and profile height the app already loads. The numbers in `persona_profiles.dart`
+are rough on purpose; this is meant to be fun and explainable, not sports
+science, and the page says so.
+
+- **Body.** `computeBodyFeatures` turns the latest value of each measurement
+  field (not just the newest entry: people log partial sets) into ratios --
+  FFMI, body fat, waist and thigh/arm over height, shoulders over waist -- so
+  a short and a tall person with the same build compare alike. Each feature
+  scores a bell curve around the archetype's typical value (one tolerance away
+  is about 60%), weighted (height counts half), and the body score is the
+  weighted mean. Fewer than three known features means no score rather than a
+  guess; the page lists which inputs would unlock more.
+- **Training.** Every non-warm-up set goes into exactly one of five focuses
+  (max strength, muscle building, explosive, endurance, bodyweight & skill) by
+  its weight, reps, distance, time and exercise name (`classifySet`). A cardio
+  set counts one set-equivalent per three minutes, otherwise an hour of running
+  would weigh the same as one bench set. The score is one minus the total
+  variation distance between the person's mix and the archetype's, i.e. how
+  much of their training already overlaps it. Under ten set-equivalents there is
+  no score.
+- **Known limitation.** The reference bodies are generic adult-male proportions
+  because the app does not know anyone's sex; the page warns about it. Adding a
+  profile field and per-sex targets would be the fix.
+
 ## The web target needs the backend's CORS middleware
 
 A browser enforces CORS on cross-origin requests, and the frontend's origin
