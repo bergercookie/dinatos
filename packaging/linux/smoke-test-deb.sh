@@ -18,9 +18,18 @@ docker run --rm -v "${DEB}:/pkg/dinatos.deb:ro" "${IMAGE}" bash -euo pipefail -c
 
   # Every shared object must resolve and fit this distro'\''s glibc: the
   # dynamic loader reports an unmet GLIBC_x.y requirement as "not found".
+  #
+  # One exemption: libdartjni.so (the `jni` package'\''s native hook) links
+  # libjvm.so, which only a JDK provides. Nothing on desktop calls into JNI --
+  # it is Android plumbing that rides along in the bundle -- so the library is
+  # never loaded and a missing JVM is not a defect of the package.
   missing=0
   for f in /usr/lib/dinatos/dinatos_frontend /usr/lib/dinatos/lib/*.so; do
-    if out="$(ldd "$f" 2>&1 | grep -E "not found|version .* not found")"; then
+    out="$(ldd "$f" 2>&1 | grep -E "not found|version .* not found" || true)"
+    if [ "$(basename "$f")" = libdartjni.so ]; then
+      out="$(printf "%s" "$out" | grep -v "libjvm.so" || true)"
+    fi
+    if [ -n "$out" ]; then
       echo "FAIL: $f"; echo "$out"; missing=1
     fi
   done
