@@ -35,7 +35,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final activities = ref.watch(activityListProvider);
     // Not `exerciseListProvider`: that one is filtered by the exercise
     // search box, which would silently change names and muscles here.
-    final catalog = ref.watch(_fullCatalogProvider);
+    final catalog = ref.watch(fullCatalogProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -86,6 +86,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   )
                 else ...[
                   _Overview(stats: stats),
+                  _PersonaCard(onOpen: () => context.go('/activities/personas')),
                   _SectionCard(
                     title: 'Workouts per week',
                     subtitle: 'Last $statsWeeklyChartWeeks weeks, oldest to newest',
@@ -149,8 +150,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   }
 }
 
-/// The whole catalog, unfiltered; only this screen uses it.
-final _fullCatalogProvider = FutureProvider.autoDispose<List<Exercise>>(
+/// The whole catalog, unfiltered; for the screens that derive things from
+/// logged exercises (this one and the athlete-match page).
+final fullCatalogProvider = FutureProvider.autoDispose<List<Exercise>>(
   (ref) => ref.watch(exercisesRepositoryProvider).list(),
 );
 
@@ -213,6 +215,29 @@ class _Overview extends StatelessWidget {
             children: [for (final tile in tiles) SizedBox(width: width, child: tile)],
           );
         },
+      ),
+    );
+  }
+}
+
+/// The way in to the athlete-match page.
+class _PersonaCard extends StatelessWidget {
+  const _PersonaCard({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ListTile(
+        leading: const Icon(Icons.radar),
+        title: const Text('Which athlete do you resemble?'),
+        subtitle: const Text(
+          'Compare your body and your training with sprinters, lifters and more',
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onOpen,
       ),
     );
   }
