@@ -57,6 +57,26 @@ enum BodyFeature {
     decimals: 2,
     weight: 1,
     hint: 'Biceps circumference divided by height; a proxy for arm size.',
+  ),
+  muscleIndex(
+    label: 'Muscle mass index',
+    unit: '',
+    decimals: 1,
+    weight: 1,
+    hint:
+        'The scale\'s muscle mass divided by height in metres squared. Scales define '
+        '"muscle" differently, so compare readings from the same one.',
+  ),
+  lowerBodyMuscle(
+    label: 'Lower-body muscle share',
+    unit: '%',
+    decimals: 0,
+    weight: 1,
+    percent: true,
+    hint:
+        'Leg muscle as a share of arm plus leg muscle, from the scale\'s segmental '
+        'readout: sprinters and lifters are leg-heavy, gymnasts and bodybuilders '
+        'more upper-body.',
   );
 
   const BodyFeature({
@@ -65,6 +85,7 @@ enum BodyFeature {
     required this.decimals,
     required this.weight,
     required this.hint,
+    this.percent = false,
   });
 
   final String label;
@@ -77,7 +98,11 @@ enum BodyFeature {
   final double weight;
   final String hint;
 
-  String format(double value) => '${value.toStringAsFixed(decimals)}${unit.isEmpty ? '' : unit}';
+  /// The value is a fraction (0 to 1) that reads better as a percentage.
+  final bool percent;
+
+  String format(double value) =>
+      '${(percent ? value * 100 : value).toStringAsFixed(decimals)}${unit.isEmpty ? '' : unit}';
 }
 
 /// A persona's typical value for a [BodyFeature]. [tolerance] is how far off
@@ -156,6 +181,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.40, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.33, 0.04),
       BodyFeature.armToHeight: BodyTarget(0.19, 0.025),
+      BodyFeature.muscleIndex: BodyTarget(19.5, 2.5),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.77, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.25,
@@ -178,6 +205,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.30, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.28, 0.035),
       BodyFeature.armToHeight: BodyTarget(0.16, 0.025),
+      BodyFeature.muscleIndex: BodyTarget(16.5, 2),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.76, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.05,
@@ -200,6 +229,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.40, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.35, 0.04),
       BodyFeature.armToHeight: BodyTarget(0.20, 0.03),
+      BodyFeature.muscleIndex: BodyTarget(21, 2.5),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.76, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.50,
@@ -222,6 +253,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.40, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.32, 0.04),
       BodyFeature.armToHeight: BodyTarget(0.185, 0.025),
+      BodyFeature.muscleIndex: BodyTarget(20, 2.5),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.72, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.35,
@@ -244,6 +277,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.60, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.36, 0.04),
       BodyFeature.armToHeight: BodyTarget(0.23, 0.03),
+      BodyFeature.muscleIndex: BodyTarget(22.5, 2.5),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.7, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.10,
@@ -266,6 +301,8 @@ const personas = <Persona>[
       BodyFeature.shoulderToWaist: BodyTarget(1.55, 0.15),
       BodyFeature.thighToHeight: BodyTarget(0.31, 0.04),
       BodyFeature.armToHeight: BodyTarget(0.20, 0.03),
+      BodyFeature.muscleIndex: BodyTarget(19, 2.5),
+      BodyFeature.lowerBodyMuscle: BodyTarget(0.68, 0.04),
     },
     training: {
       TrainingFocus.maxStrength: 0.15,
