@@ -176,7 +176,8 @@ class _Headline extends StatelessWidget {
               bestTraining,
               bestTraining?.trainingScore,
             ),
-            if (analysis.missingInputs.isNotEmpty && analysis.bodyFeatures.length < 7)
+            if (analysis.missingInputs.isNotEmpty &&
+                analysis.bodyFeatures.length < BodyFeature.values.length)
               Text(
                 'Add ${_list(analysis.missingInputs)} to your measurements to sharpen the '
                 'body match.',
@@ -565,7 +566,8 @@ class _HowItWorks extends StatelessWidget {
           Text(
             'Body: your latest measurements are turned into ratios (muscularity from weight, '
             'body fat and height; waist, shoulders, thigh and arm against height or waist) and '
-            'compared with each archetype. The closer a ratio is to the archetype\'s, the more '
+            'compared with each archetype. A smart scale\'s muscle mass and its arm and leg '
+            'muscle readouts add a muscle index and a lower-body muscle share. The closer a ratio is to the archetype\'s, the more '
             'it counts towards the match; height counts for less. You need at least '
             '$minBodyFeatures of them.',
           ),

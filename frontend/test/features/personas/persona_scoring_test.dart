@@ -59,6 +59,38 @@ void main() {
       expect(features[BodyFeature.armToHeight], closeTo(36 / 180, 1e-9));
     });
 
+    test('uses the smart scale\'s muscle mass and segmental muscle', () {
+      final features = computeBodyFeatures([
+        BodyMeasurement(
+          measuredAt: DateTime(2026, 6, 1),
+          muscleMassKg: 55.125,
+          leftArmMuscleKg: 3,
+          rightArmMuscleKg: 3.4,
+          leftLegMuscleKg: 9,
+          rightLegMuscleKg: 9.4,
+        ),
+      ], heightCm: 175);
+
+      expect(features[BodyFeature.muscleIndex], closeTo(55.125 / 1.75 / 1.75, 1e-9));
+      // Legs 9.2 against arms 3.2 (each averaged over both sides).
+      expect(features[BodyFeature.lowerBodyMuscle], closeTo(9.2 / 12.4, 1e-9));
+    });
+
+    test('segmental muscle needs both an arm and a leg reading', () {
+      final features = computeBodyFeatures([
+        BodyMeasurement(measuredAt: DateTime(2026, 6, 1), rightArmMuscleKg: 3.2),
+      ], heightCm: 175);
+      expect(features.containsKey(BodyFeature.lowerBodyMuscle), isFalse);
+      expect(features.containsKey(BodyFeature.muscleIndex), isFalse);
+    });
+
+    test('one logged side stands in for the limb', () {
+      final features = computeBodyFeatures([
+        BodyMeasurement(measuredAt: DateTime(2026, 6, 1), rightArmMuscleKg: 3, leftLegMuscleKg: 9),
+      ]);
+      expect(features[BodyFeature.lowerBodyMuscle], closeTo(0.75, 1e-9));
+    });
+
     test('a field missing from the newest entry falls back to an older one', () {
       final features = computeBodyFeatures([
         BodyMeasurement(measuredAt: DateTime(2026, 1, 1), fatPercent: 15),
@@ -82,7 +114,15 @@ void main() {
       missingBodyInputs([
         BodyMeasurement(measuredAt: DateTime(2026, 6, 1), weightKg: 80, leftThighCm: 60),
       ], heightCm: null),
-      ['height (in your profile)', 'body fat %', 'waist', 'shoulders', 'biceps'],
+      [
+        'height (in your profile)',
+        'body fat %',
+        'waist',
+        'shoulders',
+        'biceps',
+        'muscle mass',
+        'arm and leg muscle (segmental)',
+      ],
     );
   });
 
@@ -187,6 +227,41 @@ void main() {
         expect(m.bodyScore, inInclusiveRange(0, 100));
         expect(m.trainingScore, isNull);
       }
+    });
+
+    test('leg-heavy muscle favours a sprinter, upper-body-heavy a gymnast', () {
+      PersonaMatch match(PersonaAnalysis a, String id) =>
+          a.matches.firstWhere((m) => m.persona.id == id);
+      PersonaAnalysis analyse(double armKg, double legKg) => PersonaAnalysis.compute(
+        activities: const [],
+        measurements: [
+          BodyMeasurement(
+            measuredAt: DateTime(2026, 9, 1),
+            muscleMassKg: 58,
+            rightArmMuscleKg: armKg,
+            rightLegMuscleKg: legKg,
+            // Enough other features to clear the minimum for a score.
+            weightKg: 72,
+            fatPercent: 9,
+          ),
+        ],
+        heightCm: 176,
+        now: _now,
+      );
+
+      final legHeavy = analyse(2.8, 9.6);
+      final armHeavy = analyse(4.2, 8.8);
+      expect(legHeavy.bodyFeatures[BodyFeature.lowerBodyMuscle], greaterThan(0.75));
+      expect(armHeavy.bodyFeatures[BodyFeature.lowerBodyMuscle], lessThan(0.7));
+      // The same body otherwise: only the limb split moves the two personas.
+      final legGap = match(legHeavy, 'sprinter').bodyScore! - match(legHeavy, 'gymnast').bodyScore!;
+      final armGap = match(armHeavy, 'sprinter').bodyScore! - match(armHeavy, 'gymnast').bodyScore!;
+      expect(legGap, greaterThan(armGap));
+      final row = match(
+        legHeavy,
+        'sprinter',
+      ).bodyRows.firstWhere((r) => r.feature == BodyFeature.lowerBodyMuscle);
+      expect(BodyFeature.lowerBodyMuscle.format(row.ideal), '77%');
     });
 
     test('too few measurements gives no body score but still lists the rows', () {

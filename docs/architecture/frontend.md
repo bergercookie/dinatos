@@ -235,7 +235,12 @@ science, and the page says so.
   scores a bell curve around the archetype's typical value (one tolerance away
   is about 60%), weighted (height counts half), and the body score is the
   weighted mean. Fewer than three known features means no score rather than a
-  guess; the page lists which inputs would unlock more.
+  guess; the page lists which inputs would unlock more. A smart scale's data
+  adds two more: a muscle index (its muscle mass over height squared) and the
+  lower-body muscle share (leg over arm-plus-leg segmental muscle, which
+  separates leg-heavy builds like sprinters and lifters from upper-body-heavy
+  ones like gymnasts). Scales define "muscle" differently, so the muscle index
+  targets are only approximate.
 - **Training.** Every non-warm-up set goes into exactly one of five focuses
   (max strength, muscle building, explosive, endurance, bodyweight & skill) by
   its weight, reps, distance, time and exercise name (`classifySet`). A cardio

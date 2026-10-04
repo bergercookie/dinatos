@@ -67,6 +67,11 @@ Map<BodyFeature, double> computeBodyFeatures(
   final shoulder = latest((m) => m.shoulderCm);
   final thigh = limb((m) => m.leftThighCm, (m) => m.rightThighCm);
   final arm = limb((m) => m.leftBicepCm, (m) => m.rightBicepCm);
+  final muscle = latest((m) => m.muscleMassKg);
+  // The scale's segmental muscle readout: how much of the muscle in the limbs
+  // sits in the legs. Needs at least one arm and one leg reading.
+  final armMuscle = limb((m) => m.leftArmMuscleKg, (m) => m.rightArmMuscleKg);
+  final legMuscle = limb((m) => m.leftLegMuscleKg, (m) => m.rightLegMuscleKg);
 
   return {
     BodyFeature.height: ?height,
@@ -77,6 +82,10 @@ Map<BodyFeature, double> computeBodyFeatures(
     if (shoulder != null && waist != null) BodyFeature.shoulderToWaist: shoulder / waist,
     if (height != null && thigh != null) BodyFeature.thighToHeight: thigh / height,
     if (height != null && arm != null) BodyFeature.armToHeight: arm / height,
+    if (height != null && muscle != null)
+      BodyFeature.muscleIndex: muscle / math.pow(height / 100, 2),
+    if (armMuscle != null && legMuscle != null)
+      BodyFeature.lowerBodyMuscle: legMuscle / (armMuscle + legMuscle),
   };
 }
 
@@ -93,6 +102,10 @@ List<String> missingBodyInputs(List<BodyMeasurement> measurements, {double? heig
     if (!has((m) => m.shoulderCm)) 'shoulders',
     if (!has((m) => m.leftThighCm) && !has((m) => m.rightThighCm)) 'thigh',
     if (!has((m) => m.leftBicepCm) && !has((m) => m.rightBicepCm)) 'biceps',
+    if (!has((m) => m.muscleMassKg)) 'muscle mass',
+    if (!(has((m) => m.leftArmMuscleKg) || has((m) => m.rightArmMuscleKg)) ||
+        !(has((m) => m.leftLegMuscleKg) || has((m) => m.rightLegMuscleKg)))
+      'arm and leg muscle (segmental)',
   ];
 }
 
