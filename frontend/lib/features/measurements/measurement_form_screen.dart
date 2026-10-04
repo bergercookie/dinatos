@@ -22,13 +22,77 @@ class MeasurementFormScreen extends ConsumerStatefulWidget {
   ConsumerState<MeasurementFormScreen> createState() => _MeasurementFormScreenState();
 }
 
-/// One controller per numeric field, keyed the same as the model's
-/// constructor parameters -- 16 near-identical body-part measurements are
-/// inherent to this schema, not something worth abstracting away from a
-/// user's perspective (each is independently optional and editable).
+/// One labelled number field of the form; [key] is the field's name in the
+/// API (and in [BodyMeasurement.toJson]), which is also what keys its
+/// controller.
+class _FieldSpec {
+  const _FieldSpec(this.key, this.label, {this.whole = false});
+
+  final String key;
+  final String label;
+
+  /// A whole number (years, kcal): no decimal point on the keyboard.
+  final bool whole;
+}
+
+/// A titled group of fields. Storage is flat (one row per entry), but the
+/// three groups are different kinds of entry: a smart-scale weigh-in fills
+/// the first two, a tape session only the last.
+class _Section {
+  const _Section(this.title, this.hint, this.fields);
+
+  final String title;
+  final String hint;
+  final List<_FieldSpec> fields;
+}
+
+const _sections = [
+  _Section('Body composition', 'Weight and the totals a smart scale reports.', [
+    _FieldSpec('weight_kg', 'Weight (kg)'),
+    _FieldSpec('fat_percent', 'Body fat (%)'),
+    _FieldSpec('muscle_mass_kg', 'Muscle mass (kg)'),
+    _FieldSpec('bone_mass_kg', 'Bone mass (kg)'),
+    _FieldSpec('water_percent', 'Water (%)'),
+    _FieldSpec('bmi', 'BMI'),
+    _FieldSpec('visceral_fat', 'Visceral fat (rating)'),
+    _FieldSpec('dci_kcal', 'DCI (kcal)', whole: true),
+    _FieldSpec('metabolic_age', 'Metabolic age (years)', whole: true),
+  ]),
+  _Section('Segmental analysis', 'Fat and muscle of each limb and the trunk, from a smart scale.', [
+    _FieldSpec('right_arm_fat_percent', 'Right arm fat (%)'),
+    _FieldSpec('right_arm_muscle_kg', 'Right arm muscle (kg)'),
+    _FieldSpec('left_arm_fat_percent', 'Left arm fat (%)'),
+    _FieldSpec('left_arm_muscle_kg', 'Left arm muscle (kg)'),
+    _FieldSpec('right_leg_fat_percent', 'Right leg fat (%)'),
+    _FieldSpec('right_leg_muscle_kg', 'Right leg muscle (kg)'),
+    _FieldSpec('left_leg_fat_percent', 'Left leg fat (%)'),
+    _FieldSpec('left_leg_muscle_kg', 'Left leg muscle (kg)'),
+    _FieldSpec('trunk_fat_percent', 'Trunk fat (%)'),
+    _FieldSpec('trunk_muscle_kg', 'Trunk muscle (kg)'),
+  ]),
+  _Section('Tape measurements', 'Circumferences, measured with a tape.', [
+    _FieldSpec('neck_cm', 'Neck (cm)'),
+    _FieldSpec('shoulder_cm', 'Shoulders (cm)'),
+    _FieldSpec('chest_cm', 'Chest (cm)'),
+    _FieldSpec('left_bicep_cm', 'Left bicep (cm)'),
+    _FieldSpec('right_bicep_cm', 'Right bicep (cm)'),
+    _FieldSpec('left_forearm_cm', 'Left forearm (cm)'),
+    _FieldSpec('right_forearm_cm', 'Right forearm (cm)'),
+    _FieldSpec('abdomen_cm', 'Abdomen (cm)'),
+    _FieldSpec('waist_cm', 'Waist (cm)'),
+    _FieldSpec('hips_cm', 'Hips (cm)'),
+    _FieldSpec('left_thigh_cm', 'Left thigh (cm)'),
+    _FieldSpec('right_thigh_cm', 'Right thigh (cm)'),
+    _FieldSpec('left_calf_cm', 'Left calf (cm)'),
+    _FieldSpec('right_calf_cm', 'Right calf (cm)'),
+  ]),
+];
+
+final _allFields = [for (final section in _sections) ...section.fields];
+
 class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
   DateTime _measuredAt = DateTime.now();
-  final _controllers = {for (final field in _fields) field: TextEditingController()};
+  final _controllers = {for (final field in _allFields) field.key: TextEditingController()};
   bool _submitting = false;
   String? _error;
   bool _loadedInitialValues = false;
@@ -39,61 +103,11 @@ class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
     if (_loadedInitialValues) return;
     _loadedInitialValues = true;
     _measuredAt = measurement.measuredAt.toLocal();
-    _controllers['weightKg']!.text = measurement.weightKg?.toString() ?? '';
-    _controllers['fatPercent']!.text = measurement.fatPercent?.toString() ?? '';
-    _controllers['neckCm']!.text = measurement.neckCm?.toString() ?? '';
-    _controllers['shoulderCm']!.text = measurement.shoulderCm?.toString() ?? '';
-    _controllers['chestCm']!.text = measurement.chestCm?.toString() ?? '';
-    _controllers['leftBicepCm']!.text = measurement.leftBicepCm?.toString() ?? '';
-    _controllers['rightBicepCm']!.text = measurement.rightBicepCm?.toString() ?? '';
-    _controllers['leftForearmCm']!.text = measurement.leftForearmCm?.toString() ?? '';
-    _controllers['rightForearmCm']!.text = measurement.rightForearmCm?.toString() ?? '';
-    _controllers['abdomenCm']!.text = measurement.abdomenCm?.toString() ?? '';
-    _controllers['waistCm']!.text = measurement.waistCm?.toString() ?? '';
-    _controllers['hipsCm']!.text = measurement.hipsCm?.toString() ?? '';
-    _controllers['leftThighCm']!.text = measurement.leftThighCm?.toString() ?? '';
-    _controllers['rightThighCm']!.text = measurement.rightThighCm?.toString() ?? '';
-    _controllers['leftCalfCm']!.text = measurement.leftCalfCm?.toString() ?? '';
-    _controllers['rightCalfCm']!.text = measurement.rightCalfCm?.toString() ?? '';
+    final json = measurement.toJson();
+    for (final field in _allFields) {
+      _controllers[field.key]!.text = json[field.key]?.toString() ?? '';
+    }
   }
-
-  static const _fields = [
-    'weightKg',
-    'fatPercent',
-    'neckCm',
-    'shoulderCm',
-    'chestCm',
-    'leftBicepCm',
-    'rightBicepCm',
-    'leftForearmCm',
-    'rightForearmCm',
-    'abdomenCm',
-    'waistCm',
-    'hipsCm',
-    'leftThighCm',
-    'rightThighCm',
-    'leftCalfCm',
-    'rightCalfCm',
-  ];
-
-  static const _labels = {
-    'weightKg': 'Weight (kg)',
-    'fatPercent': 'Body fat (%)',
-    'neckCm': 'Neck (cm)',
-    'shoulderCm': 'Shoulders (cm)',
-    'chestCm': 'Chest (cm)',
-    'leftBicepCm': 'Left bicep (cm)',
-    'rightBicepCm': 'Right bicep (cm)',
-    'leftForearmCm': 'Left forearm (cm)',
-    'rightForearmCm': 'Right forearm (cm)',
-    'abdomenCm': 'Abdomen (cm)',
-    'waistCm': 'Waist (cm)',
-    'hipsCm': 'Hips (cm)',
-    'leftThighCm': 'Left thigh (cm)',
-    'rightThighCm': 'Right thigh (cm)',
-    'leftCalfCm': 'Left calf (cm)',
-    'rightCalfCm': 'Right calf (cm)',
-  };
 
   double? _value(String field) => double.tryParse(_controllers[field]!.text);
 
@@ -120,25 +134,10 @@ class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
       _submitting = true;
       _error = null;
     });
-    final measurement = BodyMeasurement(
-      measuredAt: _measuredAt,
-      weightKg: _value('weightKg'),
-      fatPercent: _value('fatPercent'),
-      neckCm: _value('neckCm'),
-      shoulderCm: _value('shoulderCm'),
-      chestCm: _value('chestCm'),
-      leftBicepCm: _value('leftBicepCm'),
-      rightBicepCm: _value('rightBicepCm'),
-      leftForearmCm: _value('leftForearmCm'),
-      rightForearmCm: _value('rightForearmCm'),
-      abdomenCm: _value('abdomenCm'),
-      waistCm: _value('waistCm'),
-      hipsCm: _value('hipsCm'),
-      leftThighCm: _value('leftThighCm'),
-      rightThighCm: _value('rightThighCm'),
-      leftCalfCm: _value('leftCalfCm'),
-      rightCalfCm: _value('rightCalfCm'),
-    );
+    final measurement = BodyMeasurement.fromJson({
+      'measured_at': _measuredAt.toUtc().toIso8601String(),
+      for (final field in _allFields) field.key: _value(field.key),
+    });
     final repository = ref.read(measurementsRepositoryProvider);
     try {
       if (_isEditing) {
@@ -217,15 +216,25 @@ class _MeasurementFormScreenState extends ConsumerState<MeasurementFormScreen> {
           onTap: _pickDate,
         ),
         const SizedBox(height: 8),
-        for (final field in _fields)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: TextField(
-              controller: _controllers[field],
-              decoration: InputDecoration(labelText: _labels[field]),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
+        for (final section in _sections) ...[
+          const SizedBox(height: AppSpacing.lg),
+          Text(section.title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            section.hint,
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final field in section.fields)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: TextField(
+                controller: _controllers[field.key],
+                decoration: InputDecoration(labelText: field.label),
+                keyboardType: TextInputType.numberWithOptions(decimal: !field.whole),
+              ),
+            ),
+        ],
         if (_error != null) ...[
           const SizedBox(height: AppSpacing.md),
           ErrorBanner(message: _error!),

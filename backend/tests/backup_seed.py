@@ -181,7 +181,17 @@ async def populate(
         client,
         alice,
         "/measurements",
-        {"measured_at": "2026-02-01T07:00:00Z", "weight_kg": 70.4, "fat_percent": 14.5},
+        {
+            "measured_at": "2026-02-01T07:00:00Z",
+            "weight_kg": 70.4,
+            "fat_percent": 14.5,
+            # A smart-scale weigh-in, so the round-trips cover those columns too.
+            "muscle_mass_kg": 55.1,
+            "metabolic_age": 27,
+            "dci_kcal": 2410,
+            "right_arm_muscle_kg": 3.2,
+            "trunk_fat_percent": 16.3,
+        },
     )
     await post(
         client, bob, "/measurements", {"measured_at": "2026-01-02T07:00:00Z", "weight_kg": 90}
