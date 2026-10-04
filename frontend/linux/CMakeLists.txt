@@ -74,6 +74,19 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# The plugin libraries are installed next to libflutter_linux_gtk.so (as
+# FILES, below, so CMake never rewrites their rpath), and they link against it.
+# Left alone they keep the *build tree's* path to it as their RUNPATH, which
+# only resolves on the machine that built them -- `ldd` on an installed
+# package reports "libflutter_linux_gtk.so => not found". Give them the same
+# relocatable rpath the bundle's other libraries have. The app itself is
+# unaffected (CMAKE_INSTALL_RPATH above); this is for the plugins' own lookups.
+foreach(plugin ${FLUTTER_PLUGIN_LIST})
+  set_target_properties(${plugin}_plugin PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "$ORIGIN")
+endforeach(plugin)
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build

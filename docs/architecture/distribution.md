@@ -80,6 +80,24 @@ Xvfb (`packaging/linux/smoke-test-deb.sh`, also runnable locally with
 Docker) and gates the release on it. Raise the build image only together
 with the minimum supported Ubuntu.
 
+The smoke test runs `ldd` on every library in the bundle, in isolation, which
+turned up two things worth knowing:
+
+- The plugin libraries (`flutter_secure_storage`, `url_launcher`) are installed
+  as plain files, so CMake never rewrites their rpath, and left alone it is the
+  *build tree's* path to `libflutter_linux_gtk.so` -- fine on the machine that
+  built them, `not found` anywhere else. `frontend/linux/CMakeLists.txt` gives
+  them `$ORIGIN`, like the rest of the bundle.
+- `libdartjni.so` (the `jni` package's native hook) links `libjvm.so`, which
+  only a JDK has. Nothing on desktop uses JNI, so the library is never loaded
+  and the smoke test exempts exactly that one dependency; every other
+  unresolved library still fails it.
+
+Starting the app in the container is what found a third: the engine reaches
+`libgles2`/`libegl1` through libepoxy's `dlopen`, which no link-time check
+sees, so the `.deb` declares them as dependencies -- without them the app
+aborts with `Couldn't open libGLESv2.so.2`.
+
 `flutter create --platforms=linux .` on an existing project is not purely
 additive: it rewrote `.metadata`'s migration list to contain only `linux`,
 silently dropping the existing `android`/`web` entries, which had to be

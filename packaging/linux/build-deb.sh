@@ -48,6 +48,11 @@ INSTALLED_SIZE="$(du -sk "${STAGE}/usr" | cut -f1)"
 # the C library (see `ldd` on the built binary) -- flutter's own engine
 # and app code (libflutter_linux_gtk.so, libapp.so) are bundled in lib/
 # next to the binary, not system-installed, so they aren't Depends here.
+# libegl1/libgles2 are the exception to "what ldd shows": the engine reaches
+# them through libepoxy, which dlopen()s them at startup, so no link-time
+# check sees them -- but without libgles2 the app aborts on launch with
+# "Couldn't open libGLESv2.so.2" (found by the smoke test starting it in a
+# clean container).
 cat >"${STAGE}/DEBIAN/control" <<EOF
 Package: ${PKG_NAME}
 Version: ${VERSION}
@@ -55,7 +60,7 @@ Section: contrib/misc
 Priority: optional
 Architecture: ${ARCH}
 Installed-Size: ${INSTALLED_SIZE}
-Depends: libgtk-3-0, libsecret-1-0
+Depends: libgtk-3-0, libsecret-1-0, libegl1, libgles2
 Maintainer: Dinatos contributors <https://github.com/bergercookie/dinatos>
 Description: Self-hosted workout tracker
  Dinatos is a self-hosted workout tracker: exercises, routines, and the
