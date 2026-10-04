@@ -88,10 +88,12 @@ turned up two things worth knowing:
   *build tree's* path to `libflutter_linux_gtk.so` -- fine on the machine that
   built them, `not found` anywhere else. `frontend/linux/CMakeLists.txt` gives
   them `$ORIGIN`, like the rest of the bundle.
-- `libdartjni.so` (the `jni` package's native hook) links `libjvm.so`, which
-  only a JDK has. Nothing on desktop uses JNI, so the library is never loaded
-  and the smoke test exempts exactly that one dependency; every other
-  unresolved library still fails it.
+- `libdartjni.so` (the `jni` package's native half, pulled in transitively by
+  `path_provider_android`) links `libjvm.so`, which only a JDK has. Nothing on
+  desktop uses JNI -- Android's `path_provider` implementation never runs here
+  -- so the library is just an unloadable file, and `CMakeLists.txt` leaves it
+  out of the bundle. Every library in the bundle must resolve on a clean
+  machine; the smoke test has no exemptions.
 
 Starting the app in the container is what found a third: the engine reaches
 `libgles2`/`libegl1` through libepoxy's `dlopen`, which no link-time check
