@@ -113,6 +113,16 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
+# libdartjni.so is the `jni` package's native half, pulled in transitively by
+# path_provider_android -- Android's implementation, which never runs here (the
+# Linux one is path_provider_linux). It links libjvm.so, which only a JDK
+# provides, so shipping it just adds an unloadable library to the package and
+# an unresolved dependency for anything that inspects the bundle.
+# (Matched on the target, not the file name: at this point the list holds
+# generator expressions -- the `jni` package sets $<TARGET_FILE:jni> -- and
+# the file name only exists once the target is built.)
+list(FILTER PLUGIN_BUNDLED_LIBRARIES EXCLUDE REGEX "TARGET_FILE:jni>$")
+
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
