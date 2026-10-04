@@ -32,11 +32,11 @@ analyze:
 
 # Apply the formatter.
 fmt:
-    dart format --line-length 100 lib test
+    dart format lib test
 
 # Fail if the formatter would change anything, without writing.
 check-format:
-    dart format --line-length 100 --set-exit-if-changed lib test
+    dart format --set-exit-if-changed lib test
 
 # Everything CI runs for the frontend.
 check: check-format analyze test

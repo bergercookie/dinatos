@@ -19,6 +19,12 @@ analyzer:
     - windows/**
     - macos/**
 
+# `dart format` (and IDE format-on-save) reads the line length from here, so a
+# bare `dart format` matches `just frontend fmt` instead of reflowing every
+# file at the 80-column default.
+formatter:
+  page_width: 100
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
