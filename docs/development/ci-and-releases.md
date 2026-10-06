@@ -82,6 +82,11 @@ the same Docker image, `.deb`/AppImage and APK.
   version>-nightly.YYYYMMDD` (plus the same `.N` suffix when the tag has one).
   A nightly is built from `main` and named after the newest tag whether or not
   a tag was pushed since the previous nightly.
+- **Python package**: the Docker build stamps the version into the backend's
+  `pyproject.toml`, so the API, its OpenAPI document and backups report it
+  (`__version__` reads the installed package's metadata). A nightly's
+  `<base>-nightly.YYYYMMDD[.N]` is not valid PEP 440, so the package carries it
+  as `<base>.devYYYYMMDD[N]`.
 - **Docker**: tagged with that version and the moving `nightly` tag;
   `latest` only ever follows stable releases.
 - Only the 14 newest nightly releases (and their tags) are kept. Old
