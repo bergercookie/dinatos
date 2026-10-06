@@ -166,100 +166,132 @@ class LiveActivityScreen extends ConsumerWidget {
         ),
       ),
       body: ResponsiveBody(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.xxl,
-          ),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _StatTile(
-                    icon: Icons.timer_outlined,
-                    label: 'Time',
-                    // `until: pausedAt` freezes the display while paused.
-                    value: ElapsedTimer(
-                      since: session.clockOrigin,
-                      until: session.pausedAt,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    trailingIcon: session.isPaused ? Icons.pause_circle_outline : null,
-                    onTap: () => _showStopwatchControls(context, ref),
+        // Slivers rather than one ListView, so the exercises can be a
+        // SliverReorderableList that auto-scrolls this same scroll view while
+        // a card is dragged to the edge.
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatTile(
+                          icon: Icons.timer_outlined,
+                          label: 'Time',
+                          // `until: pausedAt` freezes the display while paused.
+                          value: ElapsedTimer(
+                            since: session.clockOrigin,
+                            until: session.pausedAt,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          trailingIcon: session.isPaused ? Icons.pause_circle_outline : null,
+                          onTap: () => _showStopwatchControls(context, ref),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: _StatTile(
+                          icon: Icons.checklist_rounded,
+                          label: 'Sets done',
+                          value: Text(
+                            '${session.totalSets}',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: _StatTile(
+                          icon: Icons.fitness_center,
+                          label: 'Volume lifted',
+                          value: Text(
+                            '${session.totalVolumeKg.toStringAsFixed(0)} kg',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _StatTile(
-                    icon: Icons.checklist_rounded,
-                    label: 'Sets done',
-                    value: Text(
-                      '${session.totalSets}',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _StatTile(
-                    icon: Icons.fitness_center,
-                    label: 'Volume lifted',
-                    value: Text(
-                      '${session.totalVolumeKg.toStringAsFixed(0)} kg',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            MuscleDistributionCard(exercises: session.exercises, catalog: exercisesAsync),
-            const SizedBox(height: AppSpacing.lg),
-            Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
-            for (var i = 0; i < session.exercises.length; i++)
-              _LiveExerciseCard(
-                key: ValueKey(
-                  itemKeyOf(uid: session.exercises[i].uid, id: session.exercises[i].id, index: i),
-                ),
-                index: i,
-                count: session.exercises.length,
-                exercise: session.exercises[i],
-                supersetLabel: labels[i],
-                catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
-                  (e) => e.id == session.exercises[i].exerciseId,
-                  orElse: () => Exercise(name: '#${session.exercises[i].exerciseId}'),
-                ),
-              ),
-            const SizedBox(height: AppSpacing.sm),
-            AsyncValueView(
-              value: exercisesAsync,
-              builder: (context, allExercises) => OnboardingTarget(
-                id: 'live-add-exercise',
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final exercise = await showExercisePicker(context, exercises: allExercises);
-                    if (exercise != null) {
-                      ref.read(liveActivityProvider.notifier).addExercise(exercise.id!);
-                    }
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add exercise'),
-                ),
+                  const SizedBox(height: AppSpacing.md),
+                  MuscleDistributionCard(exercises: session.exercises, catalog: exercisesAsync),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text('Exercises', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                ]),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            OnboardingTarget(
-              id: 'live-finish',
-              child: FilledButton.icon(
-                onPressed: () {
-                  ref.read(liveActivityProvider.notifier).finish();
-                  context.go('/activities/live/summary');
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              sliver: SliverReorderableList(
+                itemCount: session.exercises.length,
+                onReorderItem: (oldIndex, newIndex) {
+                  if (newIndex != oldIndex) {
+                    ref.read(liveActivityProvider.notifier).moveExercise(oldIndex, newIndex);
+                  }
                 },
-                icon: const Icon(Icons.flag_outlined),
-                label: const Text('Finish workout'),
+                itemBuilder: (context, i) {
+                  final key = ValueKey(
+                    itemKeyOf(uid: session.exercises[i].uid, id: session.exercises[i].id, index: i),
+                  );
+                  // Long-press-and-drag anywhere on the card (a plain drag
+                  // would fight scrolling and the text fields).
+                  return ReorderableDelayedDragStartListener(
+                    key: key,
+                    index: i,
+                    child: _LiveExerciseCard(
+                      index: i,
+                      count: session.exercises.length,
+                      exercise: session.exercises[i],
+                      supersetLabel: labels[i],
+                      catalogExercise: exercisesAsync.valueOrNull?.firstWhere(
+                        (e) => e.id == session.exercises[i].exerciseId,
+                        orElse: () => Exercise(name: '#${session.exercises[i].exerciseId}'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxl),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: AppSpacing.sm),
+                  AsyncValueView(
+                    value: exercisesAsync,
+                    builder: (context, allExercises) => OnboardingTarget(
+                      id: 'live-add-exercise',
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final exercise = await showExercisePicker(
+                            context,
+                            exercises: allExercises,
+                          );
+                          if (exercise != null) {
+                            ref.read(liveActivityProvider.notifier).addExercise(exercise.id!);
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add exercise'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  OnboardingTarget(
+                    id: 'live-finish',
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        ref.read(liveActivityProvider.notifier).finish();
+                        context.go('/activities/live/summary');
+                      },
+                      icon: const Icon(Icons.flag_outlined),
+                      label: const Text('Finish workout'),
+                    ),
+                  ),
+                ]),
               ),
             ),
           ],
@@ -333,7 +365,6 @@ class _StatTile extends StatelessWidget {
 /// never waits on, or fails because of, the network.
 class _LiveExerciseCard extends ConsumerWidget {
   const _LiveExerciseCard({
-    super.key,
     required this.index,
     required this.count,
     required this.exercise,
