@@ -235,6 +235,11 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                 previous: last != null && i < last.sets.length ? last.sets[i] : null,
                 record: i < recordFlags.length ? recordFlags[i] : null,
                 weightEnabled: catalog?.equipment != Equipment.bodyOnly,
+                // Until the catalog loads, show the defaults (weight x reps).
+                showWeight: catalog?.tracksWeight ?? true,
+                showReps: catalog?.tracksReps ?? true,
+                showDistance: catalog?.tracksDistance ?? false,
+                showDuration: catalog?.tracksDuration ?? false,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -379,10 +384,21 @@ class ActivitySetRow extends StatelessWidget {
     this.weightEnabled = true,
     this.previous,
     this.record,
+    this.showWeight = true,
+    this.showReps = true,
+    this.showDistance = false,
+    this.showDuration = false,
   });
 
   final int index;
   final ActivitySet set;
+
+  /// Which measurements the exercise tracks (see `Exercise.tracks*`); only
+  /// those get a field.
+  final bool showWeight;
+  final bool showReps;
+  final bool showDistance;
+  final bool showDuration;
 
   /// The same-numbered set from the last session, shown as the fields' hints.
   final ActivitySet? previous;
@@ -433,31 +449,63 @@ class ActivitySetRow extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: _NumberField(
-              value: set.weightKg,
-              label: 'kg',
-              hint: _hint(previous?.weightKg),
-              floating: floating,
-              enabled: weightEnabled,
-              decimal: true,
-              onChanged: (value) => onChanged(set.copyWith(weightKg: value)),
+          if (showWeight) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.weightKg,
+                label: 'kg',
+                hint: _hint(previous?.weightKg),
+                floating: floating,
+                enabled: weightEnabled,
+                decimal: true,
+                onChanged: (value) => onChanged(set.copyWith(weightKg: value)),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: _NumberField(
-              value: set.reps?.toDouble(),
-              label: 'reps',
-              hint: _hint(previous?.reps),
-              floating: floating,
-              decimal: false,
-              onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
+            const SizedBox(width: 8),
+          ],
+          if (showReps) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.reps?.toDouble(),
+                label: 'reps',
+                hint: _hint(previous?.reps),
+                floating: floating,
+                decimal: false,
+                onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
+          ],
+          if (showDistance) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.distanceKm,
+                label: 'km',
+                hint: _hint(previous?.distanceKm),
+                floating: floating,
+                decimal: true,
+                onChanged: (value) => onChanged(set.copyWith(distanceKm: value)),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (showDuration) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.durationSeconds?.toDouble(),
+                label: 'sec',
+                hint: _hint(previous?.durationSeconds),
+                floating: floating,
+                decimal: false,
+                onChanged: (value) => onChanged(set.copyWith(durationSeconds: value?.round())),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             flex: 2,
             child: _NumberField(
