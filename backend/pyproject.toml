@@ -15,6 +15,7 @@ dependencies = [
     # imports it unconditionally (services/tutorials/__init__.py imports
     # WorkoutXProvider at module load), so a production install needs it too.
     "httpx2>=2.13.1",
+    "mcp>=1.6,<2",
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
     "python-multipart>=0.0.9",
