@@ -280,6 +280,25 @@ void main() {
     expect(order.indexOf('Row'), lessThan(order.indexOf('Bench Press')));
   });
 
+  testWidgets('long-press-dragging a card down reorders the exercises', (tester) async {
+    final container = await _pump(tester, _dio(historyOffline: true));
+    final notifier = container.read(liveActivityProvider.notifier);
+    notifier.addExercise(1);
+    notifier.addExercise(2);
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(tester.getCenter(find.text('Bench Press')));
+    await tester.pump(const Duration(milliseconds: 600));
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 400));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(container.read(liveActivityProvider)!.exercises.map((e) => e.exerciseId), [2, 1]);
+  });
+
   testWidgets('a routine superset is carried into the workout and labelled', (tester) async {
     final container = await _pump(tester, _dio(historyOffline: true));
     container
