@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/design_tokens.dart';
 import '../../core/widgets/app_list_card.dart';
@@ -6,6 +7,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../models/equipment.dart';
 import '../../models/exercise.dart';
 import '../../models/muscle_group.dart';
+import '../activities/activities_providers.dart';
 import 'exercises_providers.dart';
 
 /// Opens a picker over [exercises] and resolves with the chosen [Exercise],
@@ -13,7 +15,8 @@ import 'exercises_providers.dart';
 /// unfiltered menu to find one exercise among the whole catalog. Narrows by
 /// name search, by the muscles an exercise trains (primary or secondary), and
 /// by equipment, and by whether it is built-in or custom; within one filter any selected value matches, across
-/// filters all must.
+/// filters all must. Results are ordered by how often the person has logged
+/// each exercise, most-used first (the catalog's own order breaks ties).
 Future<Exercise?> showExercisePicker(BuildContext context, {required List<Exercise> exercises}) {
   return showModalBottomSheet<Exercise>(
     context: context,
@@ -23,16 +26,16 @@ Future<Exercise?> showExercisePicker(BuildContext context, {required List<Exerci
   );
 }
 
-class _ExercisePickerSheet extends StatefulWidget {
+class _ExercisePickerSheet extends ConsumerStatefulWidget {
   const _ExercisePickerSheet({required this.exercises});
 
   final List<Exercise> exercises;
 
   @override
-  State<_ExercisePickerSheet> createState() => _ExercisePickerSheetState();
+  ConsumerState<_ExercisePickerSheet> createState() => _ExercisePickerSheetState();
 }
 
-class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
+class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   final _searchController = TextEditingController();
   String _query = '';
   final Set<MuscleGroup> _muscles = {};
@@ -89,7 +92,14 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
-    final filtered = widget.exercises.where((e) => _matches(e, query)).toList();
+    final usage = ref.watch(exerciseUsageProvider).valueOrNull ?? const <int, int>{};
+    // List.sort is not stable, so tie-break on the catalog position.
+    final order = {for (var i = 0; i < widget.exercises.length; i++) widget.exercises[i]: i};
+    final filtered = widget.exercises.where((e) => _matches(e, query)).toList()
+      ..sort((a, b) {
+        final byUse = (usage[b.id] ?? 0).compareTo(usage[a.id] ?? 0);
+        return byUse != 0 ? byUse : order[a]!.compareTo(order[b]!);
+      });
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
