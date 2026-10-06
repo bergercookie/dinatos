@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/activities/activity_form_screen.dart';
 import '../features/admin/admin_screen.dart';
+import '../features/api_keys/api_keys_screen.dart';
 import '../features/activities/activity_list_screen.dart';
 import '../features/activities/live/activity_summary_screen.dart';
 import '../features/activities/live/live_activity_screen.dart';
@@ -161,6 +162,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => const HevyImportScreen(),
                   ),
                   GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
+                  GoRoute(path: 'api-keys', builder: (context, state) => const ApiKeysScreen()),
                   GoRoute(path: 'admin', builder: (context, state) => const AdminScreen()),
                 ],
               ),
