@@ -41,7 +41,8 @@ class _AuthRefreshNotifier extends ChangeNotifier {
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefreshNotifier(ref);
   return GoRouter(
-    initialLocation: '/exercises',
+    // The Home tab (the activities list) is where the app opens.
+    initialLocation: '/activities',
     refreshListenable: refresh,
     redirect: (context, state) {
       final authState = ref.read(authNotifierProvider);
@@ -53,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/login';
       }
       if (loggingIn) {
-        return '/exercises';
+        return '/activities';
       }
       return null;
     },
