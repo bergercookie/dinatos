@@ -273,6 +273,42 @@ _HarnessState _state(WidgetTester tester) => tester.state<_HarnessState>(find.by
 
 void _cardTests() {
   group('set rows', () {
+    testWidgets('tapping the set type steps warm-up > normal > drop set > failure', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
+      );
+      expect(_state(tester).exercise.sets.single.setType, SetType.normal);
+
+      Future<void> tapType() async {
+        await tester.tap(find.bySemanticsLabel(RegExp('Set type')));
+        await tester.pump();
+      }
+
+      final seen = <SetType>[];
+      for (var i = 0; i < 5; i++) {
+        await tapType();
+        seen.add(_state(tester).exercise.sets.single.setType);
+      }
+      expect(seen, [
+        SetType.dropset,
+        SetType.failure,
+        SetType.warmup,
+        SetType.normal,
+        SetType.dropset,
+      ]);
+    });
+
+    testWidgets('the set options menu no longer lists set types', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
+      );
+      await tester.tap(find.byTooltip('Set options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove set'), findsOneWidget);
+      expect(find.text('dropset'), findsNothing);
+      expect(find.text('warmup'), findsNothing);
+    });
+
     testWidgets('there is no RPE field', (tester) async {
       await tester.pumpWidget(
         const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
@@ -293,21 +329,6 @@ void _cardTests() {
 
       expect(_state(tester).exercise.sets.single.weightKg, 62.5);
       expect(_state(tester).exercise.sets.single.reps, 85);
-    });
-
-    testWidgets('the set options menu changes the type, marking a non-normal set', (tester) async {
-      await tester.pumpWidget(
-        const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
-      );
-      expect(find.text('W'), findsNothing);
-
-      await tester.tap(find.byTooltip('Set options'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('warmup'));
-      await tester.pumpAndSettle();
-
-      expect(_state(tester).exercise.sets.single.setType, SetType.warmup);
-      expect(find.text('W'), findsOneWidget);
     });
 
     testWidgets('a body-weight exercise has no plate calculator and no weight field', (

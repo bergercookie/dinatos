@@ -424,23 +424,44 @@ class ActivitySetRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 32,
+            width: 40,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${index + 1}.'),
-                if (set.setType != SetType.normal)
-                  Tooltip(
-                    message: set.setType.name,
-                    child: Text(
-                      set.setType.name[0].toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: scheme.primary,
+                // Tapping steps warm-up > normal > drop set > failure > ...
+                Tooltip(
+                  message: '${set.setType.name} set -- tap to change',
+                  child: Semantics(
+                    button: true,
+                    label: 'Set type: ${set.setType.name}',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      onTap: () => onChanged(set.copyWith(setType: set.setType.next)),
+                      child: Container(
+                        width: 28,
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          color: set.setType == SetType.normal
+                              ? scheme.surfaceContainerHighest
+                              : scheme.primaryContainer,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          set.setType.letter,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: set.setType == SetType.normal
+                                ? scheme.onSurfaceVariant
+                                : scheme.onPrimaryContainer,
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                ),
                 if (record != null && record.any)
                   Tooltip(
                     message: 'New personal record',
@@ -509,22 +530,13 @@ class ActivitySetRow extends StatelessWidget {
           PopupMenuButton<Object>(
             tooltip: 'Set options',
             onSelected: (value) {
-              if (value is SetType) {
-                onChanged(set.copyWith(setType: value));
-              } else if (value == _SetAction.plateCalculator) {
+              if (value == _SetAction.plateCalculator) {
                 showPlateCalculator(context, targetKg: set.weightKg);
               } else if (value == _SetAction.remove) {
                 onRemove();
               }
             },
             itemBuilder: (context) => [
-              for (final type in SetType.values)
-                CheckedPopupMenuItem<Object>(
-                  value: type,
-                  checked: type == set.setType,
-                  child: Text(type.name),
-                ),
-              const PopupMenuDivider(),
               if (weightEnabled)
                 const PopupMenuItem<Object>(
                   value: _SetAction.plateCalculator,
