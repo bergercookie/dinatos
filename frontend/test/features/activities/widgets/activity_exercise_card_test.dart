@@ -19,7 +19,64 @@ Response<List<dynamic>> _exercisesResponse(List<Map<String, dynamic>> items) => 
   data: items,
 );
 
+Widget _card(Exercise catalog) => MaterialApp(
+  home: Scaffold(
+    body: SingleChildScrollView(
+      child: ActivityExerciseCard(
+        exercise: const ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1)]),
+        catalogExercise: catalog,
+        onChanged: (_) {},
+        onRemove: () {},
+      ),
+    ),
+  ),
+);
+
 void main() {
+  testWidgets('a duration-only exercise shows a duration field, not weight or reps', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _card(
+        const Exercise(
+          id: 1,
+          name: 'Plank',
+          tracksWeight: false,
+          tracksReps: false,
+          tracksDuration: true,
+        ),
+      ),
+    );
+    expect(find.widgetWithText(TextField, 'sec'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsNothing);
+    expect(find.widgetWithText(TextField, 'kg'), findsNothing);
+  });
+
+  testWidgets('a distance + duration exercise shows both fields', (tester) async {
+    await tester.pumpWidget(
+      _card(
+        const Exercise(
+          id: 1,
+          name: 'Run',
+          tracksWeight: false,
+          tracksReps: false,
+          tracksDistance: true,
+          tracksDuration: true,
+        ),
+      ),
+    );
+    expect(find.widgetWithText(TextField, 'km'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'sec'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsNothing);
+  });
+
+  testWidgets('a default exercise still shows weight and reps only', (tester) async {
+    await tester.pumpWidget(_card(const Exercise(id: 1, name: 'Bench Press')));
+    expect(find.widgetWithText(TextField, 'kg'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'sec'), findsNothing);
+  });
+
   testWidgets("tapping an exercise's equipment chip lists other exercises using it", (
     tester,
   ) async {
