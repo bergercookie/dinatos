@@ -36,6 +36,10 @@ from dinatos_backend.schemas.backup import (
     FullBackup,
 )
 
+# Columns that existed in earlier versions and have since been dropped: a backup
+# made back then still restores, the value simply isn't kept.
+_REMOVED_COLUMNS: dict[str, set[str]] = {"activity_sets": {"rpe"}}
+
 BACKED_UP_TABLES: tuple[str, ...] = (
     "users",
     "user_profile",
@@ -142,7 +146,7 @@ def _parse_row(table: Table, raw: Any, problems: list[str], where: str) -> dict[
         problems.append(f"{where}: must be an object")
         return None
     start = len(problems)
-    for key in raw.keys() - table.columns.keys():
+    for key in raw.keys() - table.columns.keys() - _REMOVED_COLUMNS.get(table.name, set()):
         problems.append(f"{where}: unknown column {key!r}")
     row: dict[str, Any] = {}
     for column in table.columns:

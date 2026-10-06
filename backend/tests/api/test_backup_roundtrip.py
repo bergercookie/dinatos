@@ -376,3 +376,14 @@ async def test_restoring_a_nearly_empty_backup(client: AsyncClient) -> None:
     assert response.status_code == 200, response.text
     assert response.json()["rows"]["routines"] == 0
     assert (await client.get("/routines")).json() == []
+
+
+async def test_a_backup_from_before_rpe_was_dropped_still_restores(client: AsyncClient) -> None:
+    document = await _export(client)
+    for row in document["tables"]["activity_sets"]:
+        row["rpe"] = 8.5  # the column an older server still exported
+
+    response = await _restore(client, document)
+    assert response.status_code == 200, response.text
+    restored = await _export(client)
+    assert all("rpe" not in row for row in restored["tables"]["activity_sets"])

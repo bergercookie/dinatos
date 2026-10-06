@@ -52,7 +52,7 @@ void main() {
       ActivityExercise(
         exerciseId: 7,
         notes: 'felt heavy',
-        sets: [ActivitySet(setType: SetType.warmup, weightKg: 42.5, reps: 8, rpe: 7.5)],
+        sets: [ActivitySet(setType: SetType.warmup, weightKg: 42.5, reps: 8)],
       ),
     ],
   );
@@ -72,7 +72,6 @@ void main() {
     expect(exercise.sets.single.setType, SetType.warmup);
     expect(exercise.sets.single.weightKg, 42.5);
     expect(exercise.sets.single.reps, 8);
-    expect(exercise.sets.single.rpe, 7.5);
   });
 
   test('isSaved/savedActivityId/savedTitle survive a round trip too', () {
@@ -119,7 +118,7 @@ void main() {
         0,
         before.state!.exercises[0].copyWith(
           notes: 'tempo 3-1-1',
-          sets: [const ActivitySet(weightKg: 62.5, reps: 8, rpe: 8)],
+          sets: [const ActivitySet(weightKg: 62.5, reps: 8)],
         ),
       );
       before.finish();
@@ -143,7 +142,6 @@ void main() {
       expect(session.exercises.map((e) => e.supersetGroup), [1, 1]);
       expect(session.exercises[0].notes, 'tempo 3-1-1');
       expect(session.exercises[0].sets.single.weightKg, 62.5);
-      expect(session.exercises[0].sets.single.rpe, 8);
       // Restored items get fresh row identities, so editing them is safe.
       final uids = [
         for (final e in session.exercises) e.uid,

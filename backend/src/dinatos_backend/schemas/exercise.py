@@ -60,7 +60,6 @@ class ExerciseHistorySet(BaseModel):
     reps: int | None
     distance_km: float | None
     duration_seconds: int | None
-    rpe: float | None
 
 
 class ExerciseHistoryEntry(BaseModel):

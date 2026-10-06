@@ -81,7 +81,7 @@ async def test_log_activity_with_nested_exercises_and_sets(client: DinatosClient
                 exercise_id=exercise_id,
                 sets=[
                     ActivitySetInput(set_type=SetType.normal, weight_kg=40, reps=10),
-                    ActivitySetInput(set_type=SetType.dropset, weight_kg=30, reps=12, rpe=9),
+                    ActivitySetInput(set_type=SetType.dropset, weight_kg=30, reps=12),
                 ],
             )
         ],

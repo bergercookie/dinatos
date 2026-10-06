@@ -76,7 +76,7 @@ void main() {
           'reps': 10,
           'distance_km': null,
           'duration_seconds': null,
-          'rpe': 7.5,
+          'rpe': 7.5, // an older server still sends it; it is ignored
         },
       ],
     });
@@ -84,6 +84,5 @@ void main() {
     expect(entry.activityId, 4);
     expect(entry.startedAt, DateTime.utc(2026, 9, 1, 10));
     expect(entry.sets.single.setType, SetType.warmup);
-    expect(entry.sets.single.rpe, 7.5);
   });
 }

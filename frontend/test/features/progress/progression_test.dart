@@ -4,8 +4,8 @@ import 'package:dinatos_frontend/models/exercise_history.dart';
 import 'package:dinatos_frontend/models/set_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-ActivitySet _set(double? kg, int? reps, {SetType type = SetType.normal, double? rpe}) =>
-    ActivitySet(weightKg: kg, reps: reps, setType: type, rpe: rpe);
+ActivitySet _set(double? kg, int? reps, {SetType type = SetType.normal}) =>
+    ActivitySet(weightKg: kg, reps: reps, setType: type);
 
 ExerciseHistoryEntry _entry(List<ActivitySet> sets, {int day = 1, int id = 1}) =>
     ExerciseHistoryEntry(
@@ -117,14 +117,6 @@ void main() {
       expect(suggestion.weightKg, 60);
       expect(suggestion.reps, 8);
       expect(suggestion.message, contains('aim for 8 on every set'));
-    });
-
-    test('repeats a load that was logged as near-maximal effort', () {
-      final suggestion = suggestOverload(_entry([_set(100, 5, rpe: 9.5), _set(100, 5, rpe: 10)]))!;
-
-      expect(suggestion.kind, SuggestionKind.repeatWeight);
-      expect(suggestion.weightKg, 100);
-      expect(suggestion.message, contains('RPE 9.75'));
     });
 
     test('steps by 1 kg under 20 kg', () {

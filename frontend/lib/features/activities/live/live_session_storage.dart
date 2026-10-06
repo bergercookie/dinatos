@@ -71,7 +71,6 @@ ActivityExercise _exerciseFromJson(Map<String, dynamic> json) => ActivityExercis
       reps: set['reps'] as int?,
       distanceKm: (set['distance_km'] as num?)?.toDouble(),
       durationSeconds: set['duration_seconds'] as int?,
-      rpe: (set['rpe'] as num?)?.toDouble(),
     );
   }).toList(),
 );

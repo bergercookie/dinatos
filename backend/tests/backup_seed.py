@@ -146,7 +146,7 @@ async def populate(
                     "superset_group": 1,
                     "notes": "PR",
                     "sets": [
-                        {"weight_kg": 82.5, "reps": 5, "rpe": 8.5},
+                        {"weight_kg": 82.5, "reps": 5},
                         {"set_type": "dropset", "weight_kg": 60, "reps": 8},
                     ],
                 },

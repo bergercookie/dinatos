@@ -156,7 +156,6 @@ async def export_user_data(db: AsyncSession, user: User, app_version: str) -> Us
                                 reps=s.reps,
                                 distance_km=s.distance_km,
                                 duration_seconds=s.duration_seconds,
-                                rpe=s.rpe,
                             )
                             for s in item.sets
                         ],

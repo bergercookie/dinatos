@@ -26,7 +26,7 @@ import 'widgets/activity_exercise_card.dart';
 /// `routines` uses.
 ///
 /// Weight/reps/set-type are the only per-set fields this form edits;
-/// distance/duration/RPE stay whatever they already were (null for a new
+/// distance/duration stay whatever they already were (null for a new
 /// set) -- a deliberately smaller v1 surface, not an oversight.
 class ActivityFormScreen extends ConsumerStatefulWidget {
   const ActivityFormScreen({super.key, this.activityId});

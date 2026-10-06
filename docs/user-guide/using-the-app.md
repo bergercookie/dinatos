@@ -56,8 +56,7 @@ sets that are still empty. The weight and reps fields hint at the same set
 from last time.
 
 A trophy appears on a set that beats your all-time best weight for that
-exercise (warm-ups never count). Each set also has an optional **RPE** (how
-hard it was, 1-10), and the **⋮** next to it sets its type or opens the
+exercise (warm-ups never count). The **⋮** next to a set sets its type or opens the
 **plate calculator** -- which plates to put on each side of the bar for that
 weight (a 20 kg bar by default; change it for yours). The exercise's own **⋮**
 menu adds a note, and opens its **progress** page.
