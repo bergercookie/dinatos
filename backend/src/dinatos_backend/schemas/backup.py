@@ -61,6 +61,7 @@ class ExportedActivitySet(_ExportedSet):
     reps: int | None = None
     distance_km: float | None = None
     duration_seconds: int | None = None
+    completed: bool = True
 
 
 class ExportedExercise(BaseModel):

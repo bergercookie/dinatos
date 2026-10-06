@@ -168,9 +168,62 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'kg').at(2), '82.5');
     await tester.pumpAndSettle();
 
+    // Nothing is ticked off yet, so nothing can be a record.
+    expect(find.byIcon(Icons.emoji_events), findsNothing);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byKey(const ValueKey('set-done')).at(i));
+      await tester.pumpAndSettle();
+    }
+
     // 80 only ties the record; 82.5 beats it once; the second 82.5 only ties that.
     expect(find.byIcon(Icons.emoji_events), findsOneWidget);
     expect(find.byTooltip('New personal record'), findsOneWidget);
+  });
+
+  testWidgets('a set counts once it is ticked off, and its row turns green', (tester) async {
+    final container = await _pump(tester, _dio());
+    final notifier = container.read(liveActivityProvider.notifier);
+    notifier.addExercise(1);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add set'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'kg'), '100');
+    await tester.enterText(find.widgetWithText(TextField, 'reps'), '5');
+    await tester.pumpAndSettle();
+
+    Color? rowColor() {
+      final row = find.ancestor(
+        of: find.byKey(const ValueKey('set-done')),
+        matching: find.byType(Container),
+      );
+      for (final element in row.evaluate()) {
+        final decoration = (element.widget as Container).decoration;
+        if (decoration is BoxDecoration && decoration.borderRadius != null) return decoration.color;
+      }
+      return null;
+    }
+
+    // Not ticked: not completed, not counted, no tint.
+    var session = container.read(liveActivityProvider)!;
+    expect(session.exercises.single.sets.single.completed, isFalse);
+    expect(session.totalSets, 0);
+    expect(session.totalVolumeKg, 0);
+    expect(rowColor(), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('set-done')));
+    await tester.pumpAndSettle();
+    session = container.read(liveActivityProvider)!;
+    expect(session.exercises.single.sets.single.completed, isTrue);
+    expect(session.totalSets, 1);
+    expect(session.totalVolumeKg, 500);
+    final green = rowColor();
+    expect(green, isNotNull);
+    expect(green!.g, greaterThan(green.r)); // green-dominant
+
+    await tester.tap(find.byKey(const ValueKey('set-done')));
+    await tester.pumpAndSettle();
+    expect(container.read(liveActivityProvider)!.totalSets, 0);
+    expect(rowColor(), isNull);
   });
 
   testWidgets('logging works with no server: no hints, no trophies, nothing blocked', (

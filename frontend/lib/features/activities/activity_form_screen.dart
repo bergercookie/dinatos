@@ -87,6 +87,7 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
                       setType: s.setType,
                       weightKg: s.targetWeightKg,
                       reps: s.targetReps,
+                      completed: false,
                     ),
                   )
                   .toList(),

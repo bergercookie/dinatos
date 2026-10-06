@@ -400,3 +400,30 @@ async def test_an_export_from_before_rpe_was_dropped_still_imports(client: Async
     response = await client.post("/profile/import", json=document)
     assert response.status_code == 200, response.text
     assert response.json()["created"]["activities"] == 1
+
+
+async def test_the_completed_flag_survives_an_export_and_import(client: AsyncClient) -> None:
+    document = {
+        "format": "dinatos-user-export",
+        "format_version": 1,
+        "exported_at": "2026-01-01T00:00:00Z",
+        "app_version": "0.0.1",
+        "profile": {},
+        "exercises": [{"name": "Ticked Lift"}],
+        "activities": [
+            {
+                "title": "Mixed",
+                "started_at": "2026-01-01T10:00:00Z",
+                "exercises": [
+                    {
+                        "exercise": "Ticked Lift",
+                        "sets": [{"reps": 5}, {"reps": 5, "completed": False}],
+                    }
+                ],
+            }
+        ],
+    }
+    assert (await client.post("/profile/import", json=document)).status_code == 200
+    exported = (await client.get("/profile/export")).json()
+    sets = exported["activities"][0]["exercises"][0]["sets"]
+    assert [s["completed"] for s in sets] == [True, False]

@@ -177,7 +177,7 @@ class TrainingMix {
       }
       for (final entry in activity.exercises) {
         final exercise = catalogById[entry.exerciseId];
-        for (final set in entry.sets) {
+        for (final set in entry.completedSets) {
           if (set.setType == SetType.warmup) continue;
           final classified = classifySet(exercise, set);
           if (classified == null) continue;

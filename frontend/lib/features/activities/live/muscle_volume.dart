@@ -27,7 +27,7 @@ Map<MuscleGroup, double> computeMuscleVolumes(
     final exercise = catalogById[activityExercise.exerciseId];
     if (exercise == null) continue;
 
-    for (final set in activityExercise.sets) {
+    for (final set in activityExercise.completedSets) {
       final reps = set.reps;
       if (reps == null || reps <= 0) continue;
       final setVolume = (set.weightKg ?? 0) > 0 ? set.weightKg! * reps : reps.toDouble();

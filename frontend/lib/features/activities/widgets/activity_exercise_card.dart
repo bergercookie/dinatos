@@ -81,10 +81,16 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
       _exercise.copyWith(
         sets: [
           ..._exercise.sets,
-          ActivitySet(uid: nextUid()),
+          ActivitySet(uid: nextUid(), completed: false),
         ],
       ),
     );
+  }
+
+  List<SetRecord> _recordFlags(ExerciseRecords records) {
+    final done = detectSetRecords([..._exercise.completedSets], records);
+    var next = 0;
+    return [for (final set in _exercise.sets) set.completed ? done[next++] : const SetRecord()];
   }
 
   void _removeSetAt(int index) {
@@ -101,7 +107,7 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
         sets: applySuggestion(
           _exercise.sets,
           suggestion,
-          newSet: () => ActivitySet(uid: nextUid()),
+          newSet: () => ActivitySet(uid: nextUid(), completed: false),
         ),
       ),
     );
@@ -132,9 +138,9 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
     final last = history == null || history.isEmpty ? null : history.first;
     final suggestion = suggestOverload(last);
     final records = widget.records;
-    final recordFlags = records == null
-        ? const <SetRecord>[]
-        : detectSetRecords(_exercise.sets, records);
+    // Only ticked-off sets can set a record, and only they raise the bar for
+    // the sets after them.
+    final recordFlags = records == null ? const <SetRecord>[] : _recordFlags(records);
     final inSuperset = widget.supersetLabel != null;
 
     return Card(
@@ -374,6 +380,13 @@ class _MetadataChip extends StatelessWidget {
 
 enum _SetAction { plateCalculator, remove }
 
+Color _doneGreen(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green.shade600;
+
+/// The tint of a completed set's row: clearly green in both themes, light
+/// enough to keep the numbers readable.
+Color _completedGreen(BuildContext context) => _doneGreen(context).withValues(alpha: 0.2);
+
 class ActivitySetRow extends StatelessWidget {
   const ActivitySetRow({
     super.key,
@@ -419,8 +432,14 @@ class ActivitySetRow extends StatelessWidget {
     final record = this.record;
     final previous = this.previous;
     final floating = previous == null ? null : FloatingLabelBehavior.always;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        // A distinct green once the set is ticked off as done.
+        color: set.completed ? _completedGreen(context) : null,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
       child: Row(
         children: [
           SizedBox(
@@ -462,7 +481,7 @@ class ActivitySetRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (record != null && record.any)
+                if (record != null && record.any && set.completed)
                   Tooltip(
                     message: 'New personal record',
                     child: Icon(Icons.emoji_events, size: 16, color: scheme.tertiary),
@@ -527,6 +546,17 @@ class ActivitySetRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
+          Tooltip(
+            message: set.completed ? 'Done -- tap to undo' : 'Mark set as done',
+            child: Checkbox(
+              key: const ValueKey('set-done'),
+              value: set.completed,
+              activeColor: _doneGreen(context),
+              visualDensity: VisualDensity.compact,
+              semanticLabel: set.completed ? 'Set done' : 'Mark set as done',
+              onChanged: (value) => onChanged(set.copyWith(completed: value ?? false)),
+            ),
+          ),
           PopupMenuButton<Object>(
             tooltip: 'Set options',
             onSelected: (value) {

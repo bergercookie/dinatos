@@ -9,6 +9,7 @@ import 'package:dinatos_frontend/models/routine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _completedTests();
   group('Routine', () {
     test('round-trips through fromJson/toJson for a nested exercise/set', () {
       final json = {
@@ -232,6 +233,30 @@ void main() {
 
       final measurements = HevyMeasurementImportResult.fromJson({'measurements_created': 12});
       expect(measurements.measurementsCreated, 12);
+    });
+  });
+}
+
+void _completedTests() {
+  group('ActivitySet.completed', () {
+    test('an older server\'s set without the flag counts as done', () {
+      final set = ActivitySet.fromJson({'id': 1, 'position': 0, 'set_type': 'normal'});
+      expect(set.completed, isTrue);
+    });
+
+    test('is sent to the server, and survives copyWith', () {
+      const set = ActivitySet(reps: 5, completed: false);
+      expect(set.toJson()['completed'], false);
+      expect(set.copyWith(reps: 6).completed, isFalse);
+      expect(set.copyWith(completed: true).completed, isTrue);
+    });
+
+    test('an exercise lists only its completed sets', () {
+      const exercise = ActivityExercise(
+        exerciseId: 1,
+        sets: [ActivitySet(reps: 5), ActivitySet(reps: 6, completed: false)],
+      );
+      expect(exercise.completedSets.map((s) => s.reps), [5]);
     });
   });
 }

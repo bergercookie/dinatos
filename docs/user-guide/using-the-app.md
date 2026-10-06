@@ -55,10 +55,17 @@ otherwise aim for the best set's reps on all of them. **Use** fills it into the
 sets that are still empty. The weight and reps fields hint at the same set
 from last time.
 
-A trophy appears on a set that beats your all-time best weight for that
-exercise (warm-ups never count). The **⋮** next to a set sets its type or opens the
-**plate calculator** -- which plates to put on each side of the bar for that
-weight (a 20 kg bar by default; change it for yours). The exercise's own **⋮**
+Tick the box at the end of a set when you have done it: its row turns green,
+and only ticked sets count -- towards the workout's totals, your records, the
+statistics and what the app suggests next time. A set you have not ticked is
+treated as not done.
+
+The small letter beside a set's number is its type (**W**armup, **N**ormal,
+**D**rop set, **F**ailure); tap it to step to the next one. A trophy appears on a
+ticked set that beats your all-time best weight for that exercise (warm-ups
+never count). The **⋮** next to a set opens the **plate calculator** -- which
+plates to put on each side of the bar for that weight (a 20 kg bar by default;
+change it for yours) -- or removes the set. The exercise's own **⋮**
 menu adds a note, and opens its **progress** page.
 
 ### If you lose your connection
