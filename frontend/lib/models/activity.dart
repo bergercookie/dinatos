@@ -15,7 +15,6 @@ class ActivitySet {
     this.reps,
     this.distanceKm,
     this.durationSeconds,
-    this.rpe,
   });
 
   factory ActivitySet.fromJson(Map<String, dynamic> json) => ActivitySet(
@@ -26,7 +25,6 @@ class ActivitySet {
     reps: json['reps'] as int?,
     distanceKm: (json['distance_km'] as num?)?.toDouble(),
     durationSeconds: json['duration_seconds'] as int?,
-    rpe: (json['rpe'] as num?)?.toDouble(),
   );
 
   final int? id;
@@ -39,7 +37,6 @@ class ActivitySet {
   final int? reps;
   final double? distanceKm;
   final int? durationSeconds;
-  final double? rpe;
 
   Map<String, dynamic> toJson() => {
     'set_type': setType.toJson(),
@@ -47,7 +44,6 @@ class ActivitySet {
     'reps': reps,
     'distance_km': distanceKm,
     'duration_seconds': durationSeconds,
-    'rpe': rpe,
   };
 
   ActivitySet copyWith({
@@ -56,7 +52,6 @@ class ActivitySet {
     Object? reps = _unset,
     Object? distanceKm = _unset,
     Object? durationSeconds = _unset,
-    Object? rpe = _unset,
   }) => ActivitySet(
     id: id,
     uid: uid,
@@ -68,7 +63,6 @@ class ActivitySet {
     durationSeconds: identical(durationSeconds, _unset)
         ? this.durationSeconds
         : durationSeconds as int?,
-    rpe: identical(rpe, _unset) ? this.rpe : rpe as double?,
   );
 }
 

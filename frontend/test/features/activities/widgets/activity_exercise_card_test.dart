@@ -273,32 +273,13 @@ _HarnessState _state(WidgetTester tester) => tester.state<_HarnessState>(find.by
 
 void _cardTests() {
   group('set rows', () {
-    testWidgets('RPE is recorded, and a value outside 1-10 is flagged and not recorded', (
-      tester,
-    ) async {
+    testWidgets('there is no RPE field', (tester) async {
       await tester.pumpWidget(
         const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
       );
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '8.5');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, 8.5);
-      expect(find.text('1–10'), findsNothing);
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '11');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, isNull);
-      expect(find.text('1–10'), findsOneWidget);
-      // The field keeps what was typed, so the error has something to point at.
-      expect(
-        tester.widget<TextField>(find.widgetWithText(TextField, 'RPE')).controller!.text,
-        '11',
-      );
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, isNull);
-      expect(find.text('1–10'), findsNothing);
+      expect(find.widgetWithText(TextField, 'RPE'), findsNothing);
+      expect(find.widgetWithText(TextField, 'kg'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'reps'), findsOneWidget);
     });
 
     testWidgets('a field takes digits only, and reps no decimal point', (tester) async {

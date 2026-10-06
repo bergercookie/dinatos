@@ -523,7 +523,6 @@ async def test_exercise_history_lists_own_sessions_newest_first(client: AsyncCli
             "reps": 5,
             "distance_km": None,
             "duration_seconds": None,
-            "rpe": None,
         }
     ]
 

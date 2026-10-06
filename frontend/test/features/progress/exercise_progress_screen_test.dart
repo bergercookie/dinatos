@@ -27,7 +27,6 @@ Map<String, dynamic> _session(int day, double? kg, int reps, {int count = 3}) =>
         'reps': reps,
         'distance_km': null,
         'duration_seconds': null,
-        'rpe': null,
       },
   ],
 };

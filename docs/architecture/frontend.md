@@ -203,7 +203,7 @@ pure functions so they are unit-tested without a widget
 - **A suggestion** -- a simple double progression: if every working set at the
   top weight got the same reps, add weight (2.5 kg, or 1 kg under 20 kg); if
   not, hold the weight and aim for the best set's reps on every set; if the
-  logged RPE was 9.5 or more, repeat; for a body-weight exercise, one more
+  for a body-weight exercise, one more
   rep. Warm-ups, and drop/failure sets when there are normal ones, are not a
   baseline. Tapping *Use* fills only values that are still empty.
 - **A plateau** -- the best session (by estimated 1RM, or best reps when there

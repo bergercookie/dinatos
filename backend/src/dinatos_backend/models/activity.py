@@ -74,6 +74,5 @@ class ActivitySet(Base):
     reps: Mapped[int | None]
     distance_km: Mapped[float | None]
     duration_seconds: Mapped[int | None]
-    rpe: Mapped[float | None]
 
     activity_exercise: Mapped[ActivityExercise] = relationship(back_populates="sets")
