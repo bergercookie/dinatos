@@ -8,10 +8,12 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import HTMLResponse, Response
+from starlette.routing import Route
 from starlette.types import Scope
 
 from dinatos_backend import __version__
 from dinatos_backend.api.lifespan import lifespan
+from dinatos_backend.api.mcp import mcp_gateway
 from dinatos_backend.api.routers import (
     activities,
     admin,
@@ -80,6 +82,12 @@ app.include_router(activities.router)
 app.include_router(profile.router)
 app.include_router(measurements.router)
 app.include_router(imports.router)
+# The MCP server (streamable HTTP), for LLM clients that take a URL and an API
+# key. Routes, not a Mount: `/mcp` must answer as itself, not redirect to `/mcp/`.
+for _mcp_path in ("/mcp", "/mcp/"):
+    app.router.routes.append(
+        Route(_mcp_path, endpoint=mcp_gateway, methods=["GET", "POST", "DELETE", "OPTIONS"])
+    )
 
 
 @app.get("/health")

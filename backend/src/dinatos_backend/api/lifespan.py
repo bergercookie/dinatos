@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from dinatos_backend.api.mcp import mcp_gateway
 from dinatos_backend.db import async_session_factory
 from dinatos_backend.services.auth import bootstrap_admin_user
 from dinatos_backend.services.exercise import bootstrap_default_exercises
@@ -25,4 +26,5 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         # Exercises first: a new account's starter routines are built from them.
         await bootstrap_default_exercises(db)
         await bootstrap_admin_user(db)
-    yield
+    async with mcp_gateway.running():
+        yield
