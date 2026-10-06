@@ -527,6 +527,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                       openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.vpn_key_outlined),
+                  title: const Text('API keys'),
+                  subtitle: const Text('For the MCP server and other tools -- no password needed'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/profile/api-keys'),
+                ),
+                ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('About'),
                   subtitle: const Text('Version, build and license'),
