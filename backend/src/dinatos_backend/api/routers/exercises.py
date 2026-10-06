@@ -237,6 +237,7 @@ async def get_exercise_records(
             Activity.owner_id == user.id,
             ActivityExercise.exercise_id == exercise_id,
             ActivitySet.set_type != SetType.warmup,
+            ActivitySet.completed.is_(True),
         )
     )
     max_weight_kg, max_reps = result.one()
@@ -264,7 +265,7 @@ async def get_exercise_history(
         .distinct()
         .limit(limit)
     )
-    return [
+    entries = [
         ExerciseHistoryEntry(
             activity_id=activity.id,
             activity_title=activity.title,
@@ -280,10 +281,14 @@ async def get_exercise_history(
                 for performed in activity.exercises
                 if performed.exercise_id == exercise_id
                 for item in performed.sets
+                if item.completed
             ],
         )
         for activity in result.scalars().unique()
     ]
+    # A session in which none of this exercise's sets was ticked off is not a
+    # session of it yet.
+    return [entry for entry in entries if entry.sets]
 
 
 @router.patch("/{exercise_id}", response_model=ExerciseRead)

@@ -26,6 +26,8 @@ class ExerciseHistoryEntry {
         reps: set['reps'] as int?,
         distanceKm: (set['distance_km'] as num?)?.toDouble(),
         durationSeconds: set['duration_seconds'] as int?,
+        // The server only lists sets that were done.
+        completed: true,
       );
     }).toList(),
   );

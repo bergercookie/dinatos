@@ -11,6 +11,7 @@ class ActivitySetBase(BaseModel):
     reps: int | None = None
     distance_km: float | None = None
     duration_seconds: int | None = None
+    completed: bool = True
 
 
 class ActivitySetCreate(ActivitySetBase):

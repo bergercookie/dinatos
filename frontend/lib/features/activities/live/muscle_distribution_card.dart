@@ -34,7 +34,7 @@ class MuscleDistributionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalSets = exercises.fold<int>(0, (sum, e) => sum + e.sets.length);
+    final totalSets = exercises.fold<int>(0, (sum, e) => sum + e.completedSets.length);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

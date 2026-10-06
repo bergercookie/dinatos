@@ -75,16 +75,18 @@ class LiveActivitySession {
   /// Persisted with the session, so it survives the app being killed.
   final String? pendingTitle;
 
-  /// How many sets have been logged so far, across every exercise -- sets are
-  /// added as they're performed, so each one counts as completed.
-  int get totalSets => exercises.fold<int>(0, (sum, exercise) => sum + exercise.sets.length);
+  /// How many sets have been completed (ticked off) so far, across every
+  /// exercise.
+  int get totalSets =>
+      exercises.fold<int>(0, (sum, exercise) => sum + exercise.completedSets.length);
 
   /// Sum of reps across every set logged so far, regardless of weight --
   /// distinct from [totalVolumeKg], which is zero for a set with no weight
   /// tracked (e.g. bodyweight work) even though real reps were done.
   int get totalReps => exercises.fold<int>(
     0,
-    (sum, exercise) => sum + exercise.sets.fold<int>(0, (setSum, set) => setSum + (set.reps ?? 0)),
+    (sum, exercise) =>
+        sum + exercise.completedSets.fold<int>(0, (setSum, set) => setSum + (set.reps ?? 0)),
   );
 
   /// Sum of weight x reps across every set logged so far -- sets missing
@@ -95,7 +97,7 @@ class LiveActivitySession {
     0,
     (sum, exercise) =>
         sum +
-        exercise.sets.fold<double>(0, (setSum, set) {
+        exercise.completedSets.fold<double>(0, (setSum, set) {
           final weight = set.weightKg;
           final reps = set.reps;
           if (weight == null || reps == null) return setSum;
@@ -180,6 +182,7 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
                   reps: set.targetReps,
                   distanceKm: set.targetDistanceKm,
                   durationSeconds: set.targetDurationSeconds,
+                  completed: false,
                 ),
             ],
           ),

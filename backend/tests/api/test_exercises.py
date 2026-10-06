@@ -550,3 +550,47 @@ async def test_exercise_history_merges_an_exercise_logged_twice_in_one_activity(
 
 async def test_exercise_history_is_404_for_a_missing_exercise(client: AsyncClient) -> None:
     assert (await client.get("/exercises/999/history")).status_code == 404
+
+
+async def test_only_completed_sets_count_for_records_and_history(client: AsyncClient) -> None:
+    exercise_id = (await client.post("/exercises", json={"name": "Squat (Barbell)"})).json()["id"]
+    created = await client.post(
+        "/activities",
+        json={
+            "title": "Session",
+            "started_at": "2026-09-01T10:00:00Z",
+            "exercises": [
+                {
+                    "exercise_id": exercise_id,
+                    "sets": [
+                        {"weight_kg": 60, "reps": 8},  # completed unless it says otherwise
+                        {"weight_kg": 200, "reps": 30, "completed": False},
+                    ],
+                }
+            ],
+        },
+    )
+    sets = created.json()["exercises"][0]["sets"]
+    assert [s["completed"] for s in sets] == [True, False]
+
+    records = await client.get(f"/exercises/{exercise_id}/records")
+    assert records.json() == {"max_weight_kg": 60.0, "max_reps": 8}
+    history = (await client.get(f"/exercises/{exercise_id}/history")).json()
+    assert [s["weight_kg"] for s in history[0]["sets"]] == [60.0]
+
+    # A session with nothing ticked off is not a session of the exercise yet.
+    await client.post(
+        "/activities",
+        json={
+            "title": "Planned only",
+            "started_at": "2026-09-02T10:00:00Z",
+            "exercises": [
+                {
+                    "exercise_id": exercise_id,
+                    "sets": [{"weight_kg": 100, "reps": 5, "completed": False}],
+                }
+            ],
+        },
+    )
+    history = (await client.get(f"/exercises/{exercise_id}/history")).json()
+    assert [entry["activity_title"] for entry in history] == ["Session"]

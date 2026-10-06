@@ -133,7 +133,7 @@ class TrainingStats {
         if (seen.add(entry.exerciseId)) {
           sessionsByExercise[entry.exerciseId] = (sessionsByExercise[entry.exerciseId] ?? 0) + 1;
         }
-        for (final set in entry.sets) {
+        for (final set in entry.completedSets) {
           totalSets++;
           setsByExercise[entry.exerciseId] = (setsByExercise[entry.exerciseId] ?? 0) + 1;
           final weight = set.weightKg ?? 0;

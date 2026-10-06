@@ -108,7 +108,7 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       for (final exerciseId in session.exercises.map((e) => e.exerciseId).toSet()) {
         final sets = session.exercises
             .where((e) => e.exerciseId == exerciseId)
-            .expand((e) => e.sets)
+            .expand((e) => e.completedSets)
             .toList();
         final prior = await repository.getRecords(exerciseId);
         final flags = detectSetRecords(sets, prior, requirePrior: false);

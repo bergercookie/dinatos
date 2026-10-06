@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String
+from sqlalchemy import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dinatos_backend.models.base import Base, TimestampMixin
@@ -74,5 +75,9 @@ class ActivitySet(Base):
     reps: Mapped[int | None]
     distance_km: Mapped[float | None]
     duration_seconds: Mapped[int | None]
+    # Ticked off by the person as done. Only completed sets count towards
+    # records, history and totals; a set logged after the fact (an import,
+    # the API, the MCP server) is completed unless it says otherwise.
+    completed: Mapped[bool] = mapped_column(default=True, server_default=sa_true())
 
     activity_exercise: Mapped[ActivityExercise] = relationship(back_populates="sets")

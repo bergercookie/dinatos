@@ -15,6 +15,7 @@ class ActivitySet {
     this.reps,
     this.distanceKm,
     this.durationSeconds,
+    this.completed = true,
   });
 
   factory ActivitySet.fromJson(Map<String, dynamic> json) => ActivitySet(
@@ -25,6 +26,8 @@ class ActivitySet {
     reps: json['reps'] as int?,
     distanceKm: (json['distance_km'] as num?)?.toDouble(),
     durationSeconds: json['duration_seconds'] as int?,
+    // Older servers have no such flag: everything they hold was done.
+    completed: json['completed'] as bool? ?? true,
   );
 
   final int? id;
@@ -38,12 +41,19 @@ class ActivitySet {
   final double? distanceKm;
   final int? durationSeconds;
 
+  /// Ticked off as done. Only ticked sets count towards totals, records and
+  /// statistics. Defaults to true -- a set logged after the fact was done --
+  /// while the screens that add a set to a workout in progress create it
+  /// unticked (`completed: false`).
+  final bool completed;
+
   Map<String, dynamic> toJson() => {
     'set_type': setType.toJson(),
     'weight_kg': weightKg,
     'reps': reps,
     'distance_km': distanceKm,
     'duration_seconds': durationSeconds,
+    'completed': completed,
   };
 
   ActivitySet copyWith({
@@ -52,6 +62,7 @@ class ActivitySet {
     Object? reps = _unset,
     Object? distanceKm = _unset,
     Object? durationSeconds = _unset,
+    bool? completed,
   }) => ActivitySet(
     id: id,
     uid: uid,
@@ -63,6 +74,7 @@ class ActivitySet {
     durationSeconds: identical(durationSeconds, _unset)
         ? this.durationSeconds
         : durationSeconds as int?,
+    completed: completed ?? this.completed,
   );
 }
 
@@ -100,6 +112,9 @@ class ActivityExercise {
   final int? supersetGroup;
   final String? notes;
   final List<ActivitySet> sets;
+
+  /// The sets that were actually done (ticked off); the rest are only planned.
+  Iterable<ActivitySet> get completedSets => sets.where((s) => s.completed);
 
   Map<String, dynamic> toJson() => {
     'exercise_id': exerciseId,

@@ -71,6 +71,8 @@ ActivityExercise _exerciseFromJson(Map<String, dynamic> json) => ActivityExercis
       reps: set['reps'] as int?,
       distanceKm: (set['distance_km'] as num?)?.toDouble(),
       durationSeconds: set['duration_seconds'] as int?,
+      // A session saved before sets could be ticked off: all of it was done.
+      completed: set['completed'] as bool? ?? true,
     );
   }).toList(),
 );

@@ -46,6 +46,9 @@ class ActivitySetInput(BaseModel):
     reps: int | None = None
     distance_km: float | None = None
     duration_seconds: int | None = None
+    # A set you are logging after the fact was done; pass false for one that was
+    # planned but not performed.
+    completed: bool = True
 
 
 class ActivityExerciseInput(BaseModel):
