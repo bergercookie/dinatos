@@ -4,6 +4,7 @@ rely on that.
 """
 
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
+from dinatos_backend.models.api_key import ApiKey
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.base import Base, TimestampMixin
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
@@ -17,6 +18,7 @@ __all__ = [
     "Activity",
     "ActivityExercise",
     "ActivitySet",
+    "ApiKey",
     "AuthSession",
     "Base",
     "BodyMeasurement",

@@ -15,6 +15,7 @@ from dinatos_backend.api.lifespan import lifespan
 from dinatos_backend.api.routers import (
     activities,
     admin,
+    api_keys,
     auth,
     exercises,
     imports,
@@ -71,6 +72,7 @@ app.add_middleware(
     expose_headers=["X-Total-Count", "Content-Disposition"],
 )
 app.include_router(auth.router)
+app.include_router(api_keys.router)
 app.include_router(admin.router)
 app.include_router(exercises.router)
 app.include_router(routines.router)

@@ -42,6 +42,7 @@ _REMOVED_COLUMNS: dict[str, set[str]] = {"activity_sets": {"rpe"}}
 
 BACKED_UP_TABLES: tuple[str, ...] = (
     "users",
+    "api_keys",
     "user_profile",
     "exercises",
     "exercise_muscles",
