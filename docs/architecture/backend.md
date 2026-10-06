@@ -251,26 +251,55 @@ user-portable, so this one is on you -- the roundtrip tests in
 `tests/api/test_user_export_roundtrip.py` compare whole documents, so extend
 `tests/backup_seed.py` with a value for it).
 
+## API keys
+
+A person can create named API keys (`POST /api-keys`; **Settings > API keys** in
+the app) for tools to act as them -- chiefly the MCP server -- instead of
+handing a tool their password or a login session. A key is `dnk_` plus 32
+random bytes. As with sessions, **only a SHA-256 of it is stored**
+(`models/api_key.py`, `services/api_keys.py`): the create response is the one
+and only time the key is shown, and what listing returns is the name, creation
+and last-use times and the key's last three characters (`suffix`), enough to
+tell keys apart. Deleting a key revokes it at once. `last_used_at` is refreshed
+at most once a minute, so using a key is not a write on every request.
+
+`get_current_user` (`api/deps.py`) accepts either credential: the `dnk_` prefix
+selects the key lookup, anything else the session lookup. What a key
+**cannot** do is anything behind `get_session_user`, which accepts a login
+session only: manage keys (so a leaked key cannot mint more or hide itself),
+log out, and every `/admin/*` route (so a key cannot back up or restore the
+server). At most 25 keys per account.
+
 ## MCP server
 
-`mcp_server/` (package `dinatos-mcp`, entry point `dinatos-mcp`) exposes a
-handful of the endpoints above -- exercises, routines, activities -- as MCP
-tools, so an LLM harness (Claude Desktop, or any other MCP client) can
-create exercises, build routine templates and log activities on someone's
-behalf. It's deliberately its own `uv` project (own `pyproject.toml`,
-`uv.lock`, virtualenv), not a module inside `dinatos_backend`: it's a
-*client* of this API, the same as the Flutter app or a `curl` script, so it
-depends on this package only in its own tests (to spin up the real FastAPI
-app in-process over an ASGI transport, rather than a live server) -- never
-at runtime, where it talks HTTP like anyone else.
+The API hosts an MCP server itself, at `/mcp` (streamable HTTP, `api/mcp.py`),
+so an MCP client needs only the server's URL and an API key -- nothing to
+install. It is stateless (the key travels with every request), which lets it sit
+behind any proxy. `McpGateway` authenticates each request -- only `dnk_` API
+keys, checked against the database up front so a bad key fails at connection
+time -- and each tool then calls the ordinary REST API **in-process** with that
+same key over an ASGI transport. The MCP therefore does exactly what the app can
+for that person, with the same validation and ownership rules, and no second set
+of business logic to keep in step. Its transport is started and stopped by the
+app's lifespan (`McpGateway.running()`); a fresh one is built each time, so tests
+can start it per test.
 
-Authentication reuses the session mechanism above unchanged: `DinatosClient`
-(`mcp_server/src/dinatos_mcp/client.py`) either carries a bearer token given
-directly (`DINATOS_MCP_TOKEN`), or logs in lazily on first use with an email
-and password (`DINATOS_MCP_EMAIL`/`DINATOS_MCP_PASSWORD`) and caches the
-token it gets back for the process's lifetime -- there's no separate
-service-account concept, no API key scheme of its own to maintain. See
-`docs/user-guide/mcp-server.md` for how to point an LLM harness at it.
+The tools are plain wrappers over endpoints (exercises, routines, activities)
+plus `get_persona_stats`, which runs `services/personas.py`: a Python port of
+the app's on-device persona scoring (`frontend/lib/features/personas/`). The two
+implementations are kept honest by a shared fixture
+(`frontend/test/fixtures/persona_parity.json`) that both test suites run -- change
+the scoring in one and the other's test fails until it matches.
+
+`mcp_server/` (package `dinatos-mcp`, entry point `dinatos-mcp`) is a small stdio
+**proxy** to that endpoint, for clients that can only launch a local program. It
+defines no tools: it lists and calls whatever the server offers, so the two can
+never disagree. It is configured with `DINATOS_MCP_BASE_URL` and
+`DINATOS_MCP_API_KEY` only -- API-key auth is the single way in; there is no
+email/password or session-token option. It is still its own `uv` project and
+depends on `dinatos_backend` only in its tests, which run it against the real
+app in-process. `docs/user-guide/mcp-server.md` covers pointing a harness at
+either.
 
 ## Hevy import
 

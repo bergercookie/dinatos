@@ -17,8 +17,8 @@ dinatos-mcp = "dinatos_mcp.__main__:main"
 [dependency-groups]
 dev = [
     # Only for tests: spins up the real FastAPI app in-process (ASGI
-    # transport, no network) so DinatosClient is exercised against real
-    # request/response shapes instead of hand-rolled fixtures -- same idea
+    # transport, no network) so the proxy is exercised against the real
+    # /mcp endpoint instead of hand-rolled fixtures -- same idea
     # as backend/tests/conftest.py's own `client` fixture.
     "dinatos-backend",
     "aiosqlite>=0.20",

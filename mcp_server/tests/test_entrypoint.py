@@ -1,13 +1,29 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import pytest
 
-from dinatos_mcp import server
-from dinatos_mcp.__main__ import main
+from dinatos_mcp import __main__ as entrypoint
 
 
-def test_runs_the_server_over_stdio(monkeypatch: pytest.MonkeyPatch) -> None:
-    called: dict[str, str] = {}
-    monkeypatch.setattr(server.mcp, "run", lambda **kwargs: called.update(kwargs))
+def test_serves_over_stdio(monkeypatch: pytest.MonkeyPatch) -> None:
+    ran: list[tuple[object, object]] = []
 
-    main()
+    class FakeServer:
+        def create_initialization_options(self) -> str:
+            return "options"
 
-    assert called == {"transport": "stdio"}
+        async def run(self, read: object, write: object, options: object) -> None:
+            ran.append((read, write))
+            assert options == "options"
+
+    @asynccontextmanager
+    async def fake_stdio() -> AsyncIterator[tuple[str, str]]:
+        yield ("read", "write")
+
+    monkeypatch.setattr(entrypoint, "build_server", FakeServer)
+    monkeypatch.setattr(entrypoint, "stdio_server", fake_stdio)
+
+    entrypoint.main()
+
+    assert ran == [("read", "write")]
