@@ -1,8 +1,10 @@
+import 'package:dinatos_frontend/features/activities/activities_providers.dart';
 import 'package:dinatos_frontend/features/exercises/exercise_picker.dart';
 import 'package:dinatos_frontend/models/equipment.dart';
 import 'package:dinatos_frontend/models/exercise.dart';
 import 'package:dinatos_frontend/models/muscle_group.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _exercises = [
@@ -28,16 +30,19 @@ final _exercises = [
   Exercise(id: 4, name: 'Pull-up', isCustom: false),
 ];
 
-Future<Exercise?> _open(WidgetTester tester) async {
+Future<Exercise?> _open(WidgetTester tester, {Map<int, int> usage = const {}}) async {
   Exercise? picked;
   await tester.pumpWidget(
-    MaterialApp(
-      home: Builder(
-        builder: (context) => ElevatedButton(
-          onPressed: () async {
-            picked = await showExercisePicker(context, exercises: _exercises);
-          },
-          child: const Text('Add exercise'),
+    ProviderScope(
+      overrides: [exerciseUsageProvider.overrideWith((ref) async => usage)],
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () async {
+              picked = await showExercisePicker(context, exercises: _exercises);
+            },
+            child: const Text('Add exercise'),
+          ),
         ),
       ),
     ),
@@ -65,6 +70,26 @@ Future<void> _tapChip(WidgetTester tester, int row, String label) async {
 }
 
 void main() {
+  testWidgets('matches are ordered by how often each exercise is used', (tester) async {
+    await _open(tester, usage: {3: 5, 2: 2});
+
+    double y(String name) => tester.getTopLeft(find.text(name)).dy;
+    // Curl (5 uses) > Squat (2) > the never-used Bench Press.
+    expect(y('Dumbbell Curl'), lessThan(y('Squat')));
+    expect(y('Squat'), lessThan(y('Bench Press')));
+  });
+
+  testWidgets('a search keeps the usage order among its matches', (tester) async {
+    await _open(tester, usage: {4: 9});
+    await tester.enterText(find.byType(TextField), 'u');
+    await tester.pump();
+
+    double y(String name) => tester.getTopLeft(find.text(name)).dy;
+    // "Squat", "Dumbbell Curl" and "Pull-up" contain a u; Pull-up is used most.
+    expect(y('Pull-up'), lessThan(y('Squat')));
+    expect(y('Squat'), lessThan(y('Dumbbell Curl')));
+  });
+
   testWidgets('lists every exercise with no search term entered', (tester) async {
     await _open(tester);
 
@@ -96,13 +121,16 @@ void main() {
   testWidgets('tapping an exercise resolves the picker with it', (tester) async {
     Exercise? picked;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => ElevatedButton(
-            onPressed: () async {
-              picked = await showExercisePicker(context, exercises: _exercises);
-            },
-            child: const Text('Add exercise'),
+      ProviderScope(
+        overrides: [exerciseUsageProvider.overrideWith((ref) async => const {})],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                picked = await showExercisePicker(context, exercises: _exercises);
+              },
+              child: const Text('Add exercise'),
+            ),
           ),
         ),
       ),

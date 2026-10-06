@@ -19,7 +19,64 @@ Response<List<dynamic>> _exercisesResponse(List<Map<String, dynamic>> items) => 
   data: items,
 );
 
+Widget _card(Exercise catalog) => MaterialApp(
+  home: Scaffold(
+    body: SingleChildScrollView(
+      child: ActivityExerciseCard(
+        exercise: const ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1)]),
+        catalogExercise: catalog,
+        onChanged: (_) {},
+        onRemove: () {},
+      ),
+    ),
+  ),
+);
+
 void main() {
+  testWidgets('a duration-only exercise shows a duration field, not weight or reps', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _card(
+        const Exercise(
+          id: 1,
+          name: 'Plank',
+          tracksWeight: false,
+          tracksReps: false,
+          tracksDuration: true,
+        ),
+      ),
+    );
+    expect(find.widgetWithText(TextField, 'sec'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsNothing);
+    expect(find.widgetWithText(TextField, 'kg'), findsNothing);
+  });
+
+  testWidgets('a distance + duration exercise shows both fields', (tester) async {
+    await tester.pumpWidget(
+      _card(
+        const Exercise(
+          id: 1,
+          name: 'Run',
+          tracksWeight: false,
+          tracksReps: false,
+          tracksDistance: true,
+          tracksDuration: true,
+        ),
+      ),
+    );
+    expect(find.widgetWithText(TextField, 'km'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'sec'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsNothing);
+  });
+
+  testWidgets('a default exercise still shows weight and reps only', (tester) async {
+    await tester.pumpWidget(_card(const Exercise(id: 1, name: 'Bench Press')));
+    expect(find.widgetWithText(TextField, 'kg'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'reps'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'sec'), findsNothing);
+  });
+
   testWidgets("tapping an exercise's equipment chip lists other exercises using it", (
     tester,
   ) async {
@@ -216,32 +273,13 @@ _HarnessState _state(WidgetTester tester) => tester.state<_HarnessState>(find.by
 
 void _cardTests() {
   group('set rows', () {
-    testWidgets('RPE is recorded, and a value outside 1-10 is flagged and not recorded', (
-      tester,
-    ) async {
+    testWidgets('there is no RPE field', (tester) async {
       await tester.pumpWidget(
         const _Harness(initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet()])),
       );
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '8.5');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, 8.5);
-      expect(find.text('1–10'), findsNothing);
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '11');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, isNull);
-      expect(find.text('1–10'), findsOneWidget);
-      // The field keeps what was typed, so the error has something to point at.
-      expect(
-        tester.widget<TextField>(find.widgetWithText(TextField, 'RPE')).controller!.text,
-        '11',
-      );
-
-      await tester.enterText(find.widgetWithText(TextField, 'RPE'), '');
-      await tester.pump();
-      expect(_state(tester).exercise.sets.single.rpe, isNull);
-      expect(find.text('1–10'), findsNothing);
+      expect(find.widgetWithText(TextField, 'RPE'), findsNothing);
+      expect(find.widgetWithText(TextField, 'kg'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'reps'), findsOneWidget);
     });
 
     testWidgets('a field takes digits only, and reps no decimal point', (tester) async {

@@ -276,7 +276,6 @@ async def get_exercise_history(
                     reps=item.reps,
                     distance_km=item.distance_km,
                     duration_seconds=item.duration_seconds,
-                    rpe=item.rpe,
                 )
                 for performed in activity.exercises
                 if performed.exercise_id == exercise_id

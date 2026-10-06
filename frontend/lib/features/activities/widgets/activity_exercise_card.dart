@@ -15,7 +15,7 @@ import '../../progress/progression.dart';
 import 'plate_calculator.dart';
 
 /// One exercise's card within an activity being built up -- its name, its
-/// sets so far (weight/reps/RPE/set-type), and controls to add/remove either.
+/// sets so far (weight/reps/set-type), and controls to add/remove either.
 /// Shared by [ActivityFormScreen] (a whole activity, built then submitted
 /// once) and the live workout screen (sets added one at a time as they're
 /// actually performed) -- the editing surface is identical either way.
@@ -235,6 +235,11 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                 previous: last != null && i < last.sets.length ? last.sets[i] : null,
                 record: i < recordFlags.length ? recordFlags[i] : null,
                 weightEnabled: catalog?.equipment != Equipment.bodyOnly,
+                // Until the catalog loads, show the defaults (weight x reps).
+                showWeight: catalog?.tracksWeight ?? true,
+                showReps: catalog?.tracksReps ?? true,
+                showDistance: catalog?.tracksDistance ?? false,
+                showDuration: catalog?.tracksDuration ?? false,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -379,10 +384,21 @@ class ActivitySetRow extends StatelessWidget {
     this.weightEnabled = true,
     this.previous,
     this.record,
+    this.showWeight = true,
+    this.showReps = true,
+    this.showDistance = false,
+    this.showDuration = false,
   });
 
   final int index;
   final ActivitySet set;
+
+  /// Which measurements the exercise tracks (see `Exercise.tracks*`); only
+  /// those get a field.
+  final bool showWeight;
+  final bool showReps;
+  final bool showDistance;
+  final bool showDuration;
 
   /// The same-numbered set from the last session, shown as the fields' hints.
   final ActivitySet? previous;
@@ -433,44 +449,63 @@ class ActivitySetRow extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: _NumberField(
-              value: set.weightKg,
-              label: 'kg',
-              hint: _hint(previous?.weightKg),
-              floating: floating,
-              enabled: weightEnabled,
-              decimal: true,
-              onChanged: (value) => onChanged(set.copyWith(weightKg: value)),
+          if (showWeight) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.weightKg,
+                label: 'kg',
+                hint: _hint(previous?.weightKg),
+                floating: floating,
+                enabled: weightEnabled,
+                decimal: true,
+                onChanged: (value) => onChanged(set.copyWith(weightKg: value)),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: _NumberField(
-              value: set.reps?.toDouble(),
-              label: 'reps',
-              hint: _hint(previous?.reps),
-              floating: floating,
-              decimal: false,
-              onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
+            const SizedBox(width: 8),
+          ],
+          if (showReps) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.reps?.toDouble(),
+                label: 'reps',
+                hint: _hint(previous?.reps),
+                floating: floating,
+                decimal: false,
+                onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: _NumberField(
-              value: set.rpe,
-              label: 'RPE',
-              hint: _hint(previous?.rpe),
-              floating: floating,
-              decimal: true,
-              // 1-10, in halves; anything else is a typo, not an effort.
-              validator: (value) => value < 1 || value > 10 ? '1–10' : null,
-              onChanged: (value) => onChanged(set.copyWith(rpe: value)),
+            const SizedBox(width: 8),
+          ],
+          if (showDistance) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.distanceKm,
+                label: 'km',
+                hint: _hint(previous?.distanceKm),
+                floating: floating,
+                decimal: true,
+                onChanged: (value) => onChanged(set.copyWith(distanceKm: value)),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+          ],
+          if (showDuration) ...[
+            Expanded(
+              flex: 3,
+              child: _NumberField(
+                value: set.durationSeconds?.toDouble(),
+                label: 'sec',
+                hint: _hint(previous?.durationSeconds),
+                floating: floating,
+                decimal: false,
+                onChanged: (value) => onChanged(set.copyWith(durationSeconds: value?.round())),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           PopupMenuButton<Object>(
             tooltip: 'Set options',
             onSelected: (value) {
@@ -517,7 +552,6 @@ class _NumberField extends StatefulWidget {
     this.hint,
     this.floating,
     this.enabled = true,
-    this.validator,
   });
 
   final double? value;
@@ -526,9 +560,6 @@ class _NumberField extends StatefulWidget {
   final FloatingLabelBehavior? floating;
   final bool enabled;
   final bool decimal;
-
-  /// An error message for an entered value that is out of range, or null.
-  final String? Function(double value)? validator;
   final ValueChanged<double?> onChanged;
 
   @override
@@ -541,11 +572,9 @@ class _NumberFieldState extends State<_NumberField> {
   static String _format(double? value) => value == null ? '' : formatKg(value);
 
   /// What the model holds for [text]: the number it spells, or null if it is
-  /// empty, unparseable or rejected by the validator (flagged, not recorded).
-  double? _modelValueOf(String text) {
-    final parsed = widget.decimal ? double.tryParse(text) : int.tryParse(text)?.toDouble();
-    return parsed != null && widget.validator?.call(parsed) != null ? null : parsed;
-  }
+  /// empty or unparseable.
+  double? _modelValueOf(String text) =>
+      widget.decimal ? double.tryParse(text) : int.tryParse(text)?.toDouble();
 
   @override
   void didUpdateWidget(_NumberField old) {
@@ -565,8 +594,6 @@ class _NumberFieldState extends State<_NumberField> {
 
   @override
   Widget build(BuildContext context) {
-    final entered = double.tryParse(_controller.text);
-    final error = entered == null ? null : widget.validator?.call(entered);
     return TextField(
       controller: _controller,
       enabled: widget.enabled,
@@ -574,18 +601,13 @@ class _NumberFieldState extends State<_NumberField> {
         labelText: widget.label,
         hintText: widget.hint,
         floatingLabelBehavior: widget.floating,
-        errorText: error,
         isDense: true,
       ),
       keyboardType: TextInputType.numberWithOptions(decimal: widget.decimal),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(widget.decimal ? r'[0-9.]' : r'[0-9]')),
       ],
-      onChanged: (text) {
-        widget.onChanged(_modelValueOf(text));
-        // Show or clear the error even when the model value didn't change.
-        setState(() {});
-      },
+      onChanged: (text) => widget.onChanged(_modelValueOf(text)),
     );
   }
 }

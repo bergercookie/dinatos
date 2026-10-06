@@ -93,7 +93,6 @@ class _SetRow:
     reps: int | None
     distance_km: float | None
     duration_seconds: int | None
-    rpe: float | None
 
 
 @dataclass
@@ -144,7 +143,6 @@ def _group_rows(rows: list[dict[str, str]]) -> list[_WorkoutGroup]:
                 reps=_optional_int(row["reps"]),
                 distance_km=_optional_float(row["distance_km"]),
                 duration_seconds=_optional_int(row["duration_seconds"]),
-                rpe=_optional_float(row["rpe"]),
             )
         )
 
@@ -251,7 +249,6 @@ async def import_hevy_workouts(
                                 reps=set_row.reps,
                                 distance_km=set_row.distance_km,
                                 duration_seconds=set_row.duration_seconds,
-                                rpe=set_row.rpe,
                             )
                             for set_position, set_row in enumerate(instance.sets)
                         ],

@@ -377,3 +377,26 @@ async def test_clear_data_wipes_the_callers_data_and_unused_custom_exercises(
 
 async def test_clear_data_requires_authentication(anonymous_client: AsyncClient) -> None:
     assert (await anonymous_client.delete("/profile/data")).status_code == 401
+
+
+async def test_an_export_from_before_rpe_was_dropped_still_imports(client: AsyncClient) -> None:
+    document = {
+        "format": "dinatos-user-export",
+        "format_version": 1,
+        "exported_at": "2026-01-01T00:00:00Z",
+        "app_version": "0.0.1",
+        "profile": {},
+        "exercises": [{"name": "Old Lift"}],
+        "activities": [
+            {
+                "title": "Old",
+                "started_at": "2026-01-01T10:00:00Z",
+                "exercises": [
+                    {"exercise": "Old Lift", "sets": [{"weight_kg": 50, "reps": 5, "rpe": 8}]}
+                ],
+            }
+        ],
+    }
+    response = await client.post("/profile/import", json=document)
+    assert response.status_code == 200, response.text
+    assert response.json()["created"]["activities"] == 1

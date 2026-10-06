@@ -13,7 +13,7 @@
   (`is_custom=True`, the default) and is fully theirs to edit or delete.
 - **routines** -- a named list of exercises, e.g. an upper-body routine.
 - **activities** -- a recorded gym session: a list of completed exercises
-  with their sets, reps, weights and (optionally) RPE. An activity can come
+  with their sets, reps, weights. An activity can come
   from running a saved routine, or from an ephemeral one built on the spot.
 - **supersets** -- consecutive exercises sharing a `superset_group`, on a
   routine's exercises and an activity's alike; starting a workout from a

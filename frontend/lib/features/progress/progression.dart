@@ -174,8 +174,6 @@ String describeSets(List<ActivitySet> sets) {
 /// A suggestion for the next session of an exercise, from its most recent one
 /// ([last]) -- a simple double progression:
 ///
-/// * a heavy load is not pushed: if the sets were logged at an average RPE of
-///   9.5 or more, repeat it;
 /// * if every working set at the top weight got the same number of reps (the
 ///   target was met on all of them), add weight, aiming for those reps again;
 /// * otherwise stay at that weight and aim for the best set's reps on every set;
@@ -208,23 +206,9 @@ OverloadSuggestion? suggestOverload(ExerciseHistoryEntry? last) {
   final atTop = loaded.where((s) => s.weightKg == topWeight).toList();
   final reps = atTop.map((s) => s.reps!).toList();
   final maxReps = reps.reduce(math.max);
-  final rpes = atTop.map((s) => s.rpe).whereType<double>().toList();
-  final averageRpe = rpes.isEmpty ? null : rpes.reduce((a, b) => a + b) / rpes.length;
   final allHit = reps.every((r) => r == maxReps);
   final setCount = basis.length;
 
-  if (averageRpe != null && averageRpe >= 9.5) {
-    return OverloadSuggestion(
-      kind: SuggestionKind.repeatWeight,
-      setCount: setCount,
-      weightKg: topWeight,
-      reps: maxReps,
-      lastSummary: summary,
-      advice:
-          'That was hard work (RPE ${formatKg(averageRpe)}): '
-          'repeat ${formatKg(topWeight)} kg × $maxReps.',
-    );
-  }
   if (allHit) {
     final next = topWeight + weightIncrementFor(topWeight);
     return OverloadSuggestion(

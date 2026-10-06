@@ -34,13 +34,12 @@ Map<String, dynamic> _exercise(int id, String name, {String? equipment = 'barbel
   'secondary_muscles': <String>[],
 };
 
-Map<String, dynamic> _historySet(double? kg, int reps, {String type = 'normal', double? rpe}) => {
+Map<String, dynamic> _historySet(double? kg, int reps, {String type = 'normal'}) => {
   'set_type': type,
   'weight_kg': kg,
   'reps': reps,
   'distance_km': null,
   'duration_seconds': null,
-  'rpe': rpe,
 };
 
 /// A server with a Bench Press (1) and a Row (2); Bench has a past session of
