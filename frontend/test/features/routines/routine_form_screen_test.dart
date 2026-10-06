@@ -120,6 +120,17 @@ List<dynamic> _savedExercises(MockDio dio) {
 }
 
 void main() {
+  testWidgets('the description box is roomy and grows with what is typed', (tester) async {
+    await _pump(tester);
+    final field = find.widgetWithText(TextField, 'Description (optional)');
+    final empty = tester.getSize(field).height;
+    expect(empty, greaterThan(90)); // four lines, not two
+
+    await tester.enterText(field, List.generate(12, (i) => 'line $i').join('\n'));
+    await tester.pump();
+    expect(tester.getSize(field).height, greaterThan(empty));
+  });
+
   testWidgets('linking exercises makes a superset that is saved with the routine', (tester) async {
     final dio = await _pump(tester);
     expect(find.textContaining('Superset'), findsNothing);

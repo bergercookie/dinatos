@@ -165,7 +165,12 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
         TextField(
           controller: _descriptionController,
           decoration: const InputDecoration(labelText: 'Description (optional)'),
-          maxLines: 2,
+          // Grows with what is typed, so a long description never ends up in
+          // a tiny box with a thin scrollbar of its own.
+          keyboardType: TextInputType.multiline,
+          textCapitalization: TextCapitalization.sentences,
+          minLines: 4,
+          maxLines: null,
         ),
         const SizedBox(height: 16),
         MuscleDistributionCard(
