@@ -1,0 +1,2654 @@
+{
+ "now": "2026-10-06T12:00:00Z",
+ "cases": [
+  {
+   "name": "full body and training, last quarter",
+   "range": "quarter",
+   "height_cm": 181.0,
+   "measurements": [
+    {
+     "id": 1,
+     "measured_at": "2026-08-01T08:00:00Z",
+     "weight_kg": 90,
+     "fat_percent": 20,
+     "waist_cm": 95,
+     "left_thigh_cm": 60
+    },
+    {
+     "id": 2,
+     "measured_at": "2026-10-01T08:00:00Z",
+     "weight_kg": 82,
+     "fat_percent": 14,
+     "waist_cm": 84,
+     "shoulder_cm": 122,
+     "left_thigh_cm": 58,
+     "right_thigh_cm": 60,
+     "left_bicep_cm": 36,
+     "muscle_mass_kg": 38,
+     "left_arm_muscle_kg": 4.2,
+     "right_arm_muscle_kg": 4.4,
+     "left_leg_muscle_kg": 11,
+     "right_leg_muscle_kg": 11.4,
+     "bmi": 0
+    },
+    {
+     "id": 3,
+     "measured_at": "2026-10-03T08:00:00Z",
+     "fat_percent": 0
+    }
+   ],
+   "activities": [
+    {
+     "id": 1,
+     "title": "Strength day",
+     "description": null,
+     "started_at": "2026-09-20T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 10,
+       "position": 0,
+       "exercise_id": 1,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 1,
+         "position": 0,
+         "set_type": "warmup",
+         "weight_kg": 40,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 2,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 5,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 3,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 4,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 12,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 5,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 20,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 11,
+       "position": 1,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 6,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 140,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 7,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 8,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": false
+        }
+       ]
+      },
+      {
+       "id": 12,
+       "position": 2,
+       "exercise_id": 7,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 9,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 10,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "title": "Cardio",
+     "description": null,
+     "started_at": "2026-09-25T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 20,
+       "position": 0,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 11,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 8,
+         "duration_seconds": 2700,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 21,
+       "position": 1,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 12,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 3,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 22,
+       "position": 2,
+       "exercise_id": 4,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 13,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 90,
+         "completed": true
+        },
+        {
+         "id": 14,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 60,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 23,
+       "position": 3,
+       "exercise_id": 5,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 15,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 16,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 20,
+         "reps": 6,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 24,
+       "position": 4,
+       "exercise_id": 6,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 17,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 18,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 40,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 19,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "title": "Old",
+     "description": null,
+     "started_at": "2026-03-01T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 30,
+       "position": 0,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 20,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 21,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 22,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 23,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 24,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 25,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 26,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 27,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 28,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 29,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 30,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 31,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 32,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 33,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 34,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 35,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 36,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 37,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 38,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 39,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 40,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 41,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 42,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 43,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 44,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 45,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 46,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 47,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 48,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 49,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "catalog": [
+    {
+     "id": 1,
+     "name": "Barbell Bench Press",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 2,
+     "name": "Barbell Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 3,
+     "name": "Running, Treadmill",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": null,
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 4,
+     "name": "Plank",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 5,
+     "name": "Jump Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 6,
+     "name": "Pullups",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 7,
+     "name": "Power Clean",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    }
+   ],
+   "expected": {
+    "body_features": {
+     "height": 181.0,
+     "ffmi": 21.52559445682366,
+     "fat_percent": 14.0,
+     "waist_to_height": 0.46408839779005523,
+     "shoulder_to_waist": 1.4523809523809523,
+     "thigh_to_height": 0.3259668508287293,
+     "arm_to_height": 0.19889502762430938,
+     "muscle_index": 11.599157534873783,
+     "lower_body_muscle": 0.7225806451612903
+    },
+    "training_share": {
+     "max_strength": 0.08571428571428572,
+     "muscle_building": 0.05714285714285714,
+     "explosive": 0.11428571428571428,
+     "endurance": 0.6571428571428571,
+     "bodyweight_skill": 0.08571428571428572
+    },
+    "training_units": 35.0,
+    "personas": {
+     "sprinter": {
+      "body_score": 66.71762675019033,
+      "training_score": 44.285714285714285
+     },
+     "distance_runner": {
+      "body_score": 39.04607522589825,
+      "training_score": 89.28571428571429
+     },
+     "weightlifter": {
+      "body_score": 75.03265583117417,
+      "training_score": 30.714285714285715
+     },
+     "powerlifter": {
+      "body_score": 73.49139997057148,
+      "training_score": 22.857142857142854
+     },
+     "bodybuilder": {
+      "body_score": 53.231978862046624,
+      "training_score": 24.28571428571429
+     },
+     "gymnast": {
+      "body_score": 61.30648846656492,
+      "training_score": 39.28571428571429
+     }
+    },
+    "best_body_match": "weightlifter",
+    "best_training_match": "distance_runner",
+    "missing_inputs": []
+   }
+  },
+  {
+   "name": "the same over all time includes the old activity",
+   "range": "all",
+   "height_cm": 181.0,
+   "measurements": [
+    {
+     "id": 1,
+     "measured_at": "2026-08-01T08:00:00Z",
+     "weight_kg": 90,
+     "fat_percent": 20,
+     "waist_cm": 95,
+     "left_thigh_cm": 60
+    },
+    {
+     "id": 2,
+     "measured_at": "2026-10-01T08:00:00Z",
+     "weight_kg": 82,
+     "fat_percent": 14,
+     "waist_cm": 84,
+     "shoulder_cm": 122,
+     "left_thigh_cm": 58,
+     "right_thigh_cm": 60,
+     "left_bicep_cm": 36,
+     "muscle_mass_kg": 38,
+     "left_arm_muscle_kg": 4.2,
+     "right_arm_muscle_kg": 4.4,
+     "left_leg_muscle_kg": 11,
+     "right_leg_muscle_kg": 11.4,
+     "bmi": 0
+    },
+    {
+     "id": 3,
+     "measured_at": "2026-10-03T08:00:00Z",
+     "fat_percent": 0
+    }
+   ],
+   "activities": [
+    {
+     "id": 1,
+     "title": "Strength day",
+     "description": null,
+     "started_at": "2026-09-20T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 10,
+       "position": 0,
+       "exercise_id": 1,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 1,
+         "position": 0,
+         "set_type": "warmup",
+         "weight_kg": 40,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 2,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 5,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 3,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 4,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 12,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 5,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 20,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 11,
+       "position": 1,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 6,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 140,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 7,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 8,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": false
+        }
+       ]
+      },
+      {
+       "id": 12,
+       "position": 2,
+       "exercise_id": 7,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 9,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 10,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "title": "Cardio",
+     "description": null,
+     "started_at": "2026-09-25T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 20,
+       "position": 0,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 11,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 8,
+         "duration_seconds": 2700,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 21,
+       "position": 1,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 12,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 3,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 22,
+       "position": 2,
+       "exercise_id": 4,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 13,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 90,
+         "completed": true
+        },
+        {
+         "id": 14,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 60,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 23,
+       "position": 3,
+       "exercise_id": 5,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 15,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 16,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 20,
+         "reps": 6,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 24,
+       "position": 4,
+       "exercise_id": 6,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 17,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 18,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 40,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 19,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "title": "Old",
+     "description": null,
+     "started_at": "2026-03-01T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 30,
+       "position": 0,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 20,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 21,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 22,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 23,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 24,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 25,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 26,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 27,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 28,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 29,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 30,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 31,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 32,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 33,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 34,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 35,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 36,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 37,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 38,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 39,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 40,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 41,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 42,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 43,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 44,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 45,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 46,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 47,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 48,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 49,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "catalog": [
+    {
+     "id": 1,
+     "name": "Barbell Bench Press",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 2,
+     "name": "Barbell Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 3,
+     "name": "Running, Treadmill",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": null,
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 4,
+     "name": "Plank",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 5,
+     "name": "Jump Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 6,
+     "name": "Pullups",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 7,
+     "name": "Power Clean",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    }
+   ],
+   "expected": {
+    "body_features": {
+     "height": 181.0,
+     "ffmi": 21.52559445682366,
+     "fat_percent": 14.0,
+     "waist_to_height": 0.46408839779005523,
+     "shoulder_to_waist": 1.4523809523809523,
+     "thigh_to_height": 0.3259668508287293,
+     "arm_to_height": 0.19889502762430938,
+     "muscle_index": 11.599157534873783,
+     "lower_body_muscle": 0.7225806451612903
+    },
+    "training_share": {
+     "max_strength": 0.5076923076923077,
+     "muscle_building": 0.03076923076923077,
+     "explosive": 0.06153846153846154,
+     "endurance": 0.35384615384615387,
+     "bodyweight_skill": 0.046153846153846156
+    },
+    "training_units": 65.0,
+    "personas": {
+     "sprinter": {
+      "body_score": 66.71762675019033,
+      "training_score": 48.846153846153854
+     },
+     "distance_runner": {
+      "body_score": 39.04607522589825,
+      "training_score": 53.07692307692308
+     },
+     "weightlifter": {
+      "body_score": 75.03265583117417,
+      "training_score": 63.84615384615384
+     },
+     "powerlifter": {
+      "body_score": 73.49139997057148,
+      "training_score": 58.46153846153845
+     },
+     "bodybuilder": {
+      "body_score": 53.231978862046624,
+      "training_score": 22.69230769230769
+     },
+     "gymnast": {
+      "body_score": 61.30648846656492,
+      "training_score": 33.84615384615385
+     }
+    },
+    "best_body_match": "weightlifter",
+    "best_training_match": "weightlifter",
+    "missing_inputs": []
+   }
+  },
+  {
+   "name": "only a month",
+   "range": "month",
+   "height_cm": 181.0,
+   "measurements": [
+    {
+     "id": 1,
+     "measured_at": "2026-08-01T08:00:00Z",
+     "weight_kg": 90,
+     "fat_percent": 20,
+     "waist_cm": 95,
+     "left_thigh_cm": 60
+    },
+    {
+     "id": 2,
+     "measured_at": "2026-10-01T08:00:00Z",
+     "weight_kg": 82,
+     "fat_percent": 14,
+     "waist_cm": 84,
+     "shoulder_cm": 122,
+     "left_thigh_cm": 58,
+     "right_thigh_cm": 60,
+     "left_bicep_cm": 36,
+     "muscle_mass_kg": 38,
+     "left_arm_muscle_kg": 4.2,
+     "right_arm_muscle_kg": 4.4,
+     "left_leg_muscle_kg": 11,
+     "right_leg_muscle_kg": 11.4,
+     "bmi": 0
+    },
+    {
+     "id": 3,
+     "measured_at": "2026-10-03T08:00:00Z",
+     "fat_percent": 0
+    }
+   ],
+   "activities": [
+    {
+     "id": 1,
+     "title": "Strength day",
+     "description": null,
+     "started_at": "2026-09-20T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 10,
+       "position": 0,
+       "exercise_id": 1,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 1,
+         "position": 0,
+         "set_type": "warmup",
+         "weight_kg": 40,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 2,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 5,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 3,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 4,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 12,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 5,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 90,
+         "reps": 20,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 11,
+       "position": 1,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 6,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 140,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 7,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 8,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 120,
+         "reps": 8,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": false
+        }
+       ]
+      },
+      {
+       "id": 12,
+       "position": 2,
+       "exercise_id": 7,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 9,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 10,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 70,
+         "reps": 3,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "title": "Cardio",
+     "description": null,
+     "started_at": "2026-09-25T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 20,
+       "position": 0,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 11,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 8,
+         "duration_seconds": 2700,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 21,
+       "position": 1,
+       "exercise_id": 3,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 12,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": 3,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 22,
+       "position": 2,
+       "exercise_id": 4,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 13,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 90,
+         "completed": true
+        },
+        {
+         "id": 14,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": 60,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 23,
+       "position": 3,
+       "exercise_id": 5,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 15,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 16,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 20,
+         "reps": 6,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      },
+      {
+       "id": 24,
+       "position": 4,
+       "exercise_id": 6,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 17,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 10,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 18,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": 40,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 19,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": null,
+         "reps": null,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "title": "Old",
+     "description": null,
+     "started_at": "2026-03-01T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 30,
+       "position": 0,
+       "exercise_id": 2,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 20,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 21,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 22,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 23,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 24,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 25,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 26,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 27,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 28,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 29,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 30,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 31,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 32,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 33,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 34,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 35,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 36,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 37,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 38,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 39,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 40,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 41,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 42,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 43,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 44,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 45,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 46,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 47,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 48,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        },
+        {
+         "id": 49,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 200,
+         "reps": 1,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "catalog": [
+    {
+     "id": 1,
+     "name": "Barbell Bench Press",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 2,
+     "name": "Barbell Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 3,
+     "name": "Running, Treadmill",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": null,
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 4,
+     "name": "Plank",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 5,
+     "name": "Jump Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 6,
+     "name": "Pullups",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 7,
+     "name": "Power Clean",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    }
+   ],
+   "expected": {
+    "body_features": {
+     "height": 181.0,
+     "ffmi": 21.52559445682366,
+     "fat_percent": 14.0,
+     "waist_to_height": 0.46408839779005523,
+     "shoulder_to_waist": 1.4523809523809523,
+     "thigh_to_height": 0.3259668508287293,
+     "arm_to_height": 0.19889502762430938,
+     "muscle_index": 11.599157534873783,
+     "lower_body_muscle": 0.7225806451612903
+    },
+    "training_share": {
+     "max_strength": 0.08571428571428572,
+     "muscle_building": 0.05714285714285714,
+     "explosive": 0.11428571428571428,
+     "endurance": 0.6571428571428571,
+     "bodyweight_skill": 0.08571428571428572
+    },
+    "training_units": 35.0,
+    "personas": {
+     "sprinter": {
+      "body_score": 66.71762675019033,
+      "training_score": 44.285714285714285
+     },
+     "distance_runner": {
+      "body_score": 39.04607522589825,
+      "training_score": 89.28571428571429
+     },
+     "weightlifter": {
+      "body_score": 75.03265583117417,
+      "training_score": 30.714285714285715
+     },
+     "powerlifter": {
+      "body_score": 73.49139997057148,
+      "training_score": 22.857142857142854
+     },
+     "bodybuilder": {
+      "body_score": 53.231978862046624,
+      "training_score": 24.28571428571429
+     },
+     "gymnast": {
+      "body_score": 61.30648846656492,
+      "training_score": 39.28571428571429
+     }
+    },
+    "best_body_match": "weightlifter",
+    "best_training_match": "distance_runner",
+    "missing_inputs": []
+   }
+  },
+  {
+   "name": "too little to score",
+   "range": "quarter",
+   "height_cm": null,
+   "measurements": [
+    {
+     "id": 1,
+     "measured_at": "2026-10-01T08:00:00Z",
+     "weight_kg": 80
+    }
+   ],
+   "activities": [
+    {
+     "id": 9,
+     "title": "Tiny",
+     "description": null,
+     "started_at": "2026-10-01T12:00:00Z",
+     "ended_at": null,
+     "routine_id": null,
+     "exercises": [
+      {
+       "id": 90,
+       "position": 0,
+       "exercise_id": 1,
+       "superset_group": null,
+       "notes": null,
+       "sets": [
+        {
+         "id": 50,
+         "position": 0,
+         "set_type": "normal",
+         "weight_kg": 100,
+         "reps": 5,
+         "distance_km": null,
+         "duration_seconds": null,
+         "completed": true
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "catalog": [
+    {
+     "id": 1,
+     "name": "Barbell Bench Press",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 2,
+     "name": "Barbell Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 3,
+     "name": "Running, Treadmill",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": null,
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 4,
+     "name": "Plank",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 5,
+     "name": "Jump Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 6,
+     "name": "Pullups",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 7,
+     "name": "Power Clean",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    }
+   ],
+   "expected": {
+    "body_features": {},
+    "training_share": {
+     "max_strength": 1.0,
+     "muscle_building": 0.0,
+     "explosive": 0.0,
+     "endurance": 0.0,
+     "bodyweight_skill": 0.0
+    },
+    "training_units": 1.0,
+    "personas": {
+     "sprinter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "distance_runner": {
+      "body_score": null,
+      "training_score": null
+     },
+     "weightlifter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "powerlifter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "bodybuilder": {
+      "body_score": null,
+      "training_score": null
+     },
+     "gymnast": {
+      "body_score": null,
+      "training_score": null
+     }
+    },
+    "best_body_match": null,
+    "best_training_match": null,
+    "missing_inputs": [
+     "height (in your profile)",
+     "body fat %",
+     "waist",
+     "shoulders",
+     "thigh",
+     "biceps",
+     "muscle mass",
+     "arm and leg muscle (segmental)"
+    ]
+   }
+  },
+  {
+   "name": "nothing at all",
+   "range": "quarter",
+   "height_cm": null,
+   "measurements": [],
+   "activities": [],
+   "catalog": [
+    {
+     "id": 1,
+     "name": "Barbell Bench Press",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 2,
+     "name": "Barbell Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 3,
+     "name": "Running, Treadmill",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": null,
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 4,
+     "name": "Plank",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 5,
+     "name": "Jump Squat",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 6,
+     "name": "Pullups",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "body_only",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    },
+    {
+     "id": 7,
+     "name": "Power Clean",
+     "tracks_weight": true,
+     "tracks_reps": true,
+     "tracks_distance": false,
+     "tracks_duration": false,
+     "is_custom": false,
+     "equipment": "barbell",
+     "primary_muscles": [],
+     "secondary_muscles": []
+    }
+   ],
+   "expected": {
+    "body_features": {},
+    "training_share": {
+     "max_strength": 0.0,
+     "muscle_building": 0.0,
+     "explosive": 0.0,
+     "endurance": 0.0,
+     "bodyweight_skill": 0.0
+    },
+    "training_units": 0.0,
+    "personas": {
+     "sprinter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "distance_runner": {
+      "body_score": null,
+      "training_score": null
+     },
+     "weightlifter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "powerlifter": {
+      "body_score": null,
+      "training_score": null
+     },
+     "bodybuilder": {
+      "body_score": null,
+      "training_score": null
+     },
+     "gymnast": {
+      "body_score": null,
+      "training_score": null
+     }
+    },
+    "best_body_match": null,
+    "best_training_match": null,
+    "missing_inputs": [
+     "height (in your profile)",
+     "weight",
+     "body fat %",
+     "waist",
+     "shoulders",
+     "thigh",
+     "biceps",
+     "muscle mass",
+     "arm and leg muscle (segmental)"
+    ]
+   }
+  }
+ ]
+}
