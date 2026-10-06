@@ -81,6 +81,27 @@ def _default_exercises() -> Iterator[dict[str, Any]]:
         }
 
 
+def catalog_for_local_mode() -> list[dict[str, Any]]:
+    """The built-in catalog as plain JSON, in seeding order, for the app's
+    no-server mode (`frontend/assets/exercise_catalog.json`, written by
+    `scripts/generate_exercise_catalog.py`). Same names, tracking flags,
+    equipment and muscles the server seeds; no tutorial text.
+    """
+    return [
+        {
+            "name": fields["name"],
+            "tracks_weight": fields["tracks_weight"],
+            "tracks_reps": fields["tracks_reps"],
+            "tracks_distance": fields["tracks_distance"],
+            "tracks_duration": fields["tracks_duration"],
+            "equipment": fields["equipment"].value if fields["equipment"] else None,
+            "primary_muscles": [m.muscle.value for m in fields["muscles"] if m.is_primary],
+            "secondary_muscles": [m.muscle.value for m in fields["muscles"] if not m.is_primary],
+        }
+        for fields in _default_exercises()
+    ]
+
+
 async def bootstrap_default_exercises(db: AsyncSession) -> None:
     """Seeds the vendored catalog into a brand new instance's empty
     `exercises` table -- a no-op the moment any exercise exists, whether

@@ -7,6 +7,7 @@ import '../../core/auth/auth_notifier.dart';
 import '../../core/design_tokens.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/local_mode_dialogs.dart';
 import '../../core/widgets/web_autofill_bridge.dart';
 import '../../core/widgets/web_autofill_semantics.dart';
 
@@ -80,6 +81,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     children: [
                       const BrandHeader(),
                       const SizedBox(height: AppSpacing.lg),
+                      const PendingLocalImportBanner(),
                       Text('Create an account', style: Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: AppSpacing.xs),
                       Text(

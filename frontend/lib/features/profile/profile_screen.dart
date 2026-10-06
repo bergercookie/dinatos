@@ -11,9 +11,12 @@ import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
 import '../../core/file_io.dart';
 import '../../core/insecure_tls_provider.dart';
+import '../../core/local/local_mode.dart';
+import '../../core/local/local_mode_actions.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/widgets/local_mode_dialogs.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/data_transfer_result.dart';
 import '../../models/profile.dart';
@@ -382,10 +385,24 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       ref.invalidate(measurementListProvider);
       ref.invalidate(exerciseListProvider);
       ref.invalidate(exercisePagingProvider);
+      // The file from the device has arrived: the reminder has done its job.
+      if (!local && ref.read(pendingLocalImportProvider)) await clearPendingLocalImport(ref);
       _showMessage(result.summary());
     } on ApiException catch (error) {
       _showMessage('Import failed, nothing was changed: ${error.message}');
     }
+  }
+
+  bool get local => ref.read(localModeProvider);
+
+  Future<void> _moveToServer() async {
+    final choice = await askMoveToServer(context);
+    if (choice == null) return;
+    if (choice == MoveToServerChoice.export) {
+      await _exportData();
+      return;
+    }
+    await leaveLocalMode(ref);
   }
 
   Future<void> _clearData() async {
@@ -437,28 +454,47 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                     title: const Text('Email'),
                     subtitle: Text(widget.email!),
                   ),
-                ListTile(
-                  leading: const Icon(Icons.dns_outlined),
-                  title: const Text('Server'),
-                  subtitle: Text(widget.serverUrl),
-                  trailing: ApiConfig.isFixedToServingOrigin
-                      ? null
-                      : IconButton(
-                          tooltip: 'Change server',
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _editServerUrl(context, ref),
-                        ),
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.lock_open_outlined),
-                  title: const Text('Allow self-signed certificates'),
-                  subtitle: const Text('Skips TLS certificate verification for this server'),
-                  value: ref.watch(allowInsecureTlsProvider),
-                  onChanged: (value) async {
-                    await ref.read(insecureTlsStorageProvider).write(value);
-                    ref.read(allowInsecureTlsProvider.notifier).state = value;
-                  },
-                ),
+                if (local)
+                  ListTile(
+                    leading: const Icon(Icons.phone_android_rounded),
+                    title: const Text('Stored on this device only'),
+                    subtitle: const Text(
+                      'No server, no account, no backup. Move to a server any time with an '
+                      'export file.',
+                    ),
+                  ),
+                if (local)
+                  ListTile(
+                    leading: const Icon(Icons.dns_outlined),
+                    title: const Text('Move to a server'),
+                    subtitle: const Text('How to take your data with you'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _moveToServer,
+                  ),
+                if (!local)
+                  ListTile(
+                    leading: const Icon(Icons.dns_outlined),
+                    title: const Text('Server'),
+                    subtitle: Text(widget.serverUrl),
+                    trailing: ApiConfig.isFixedToServingOrigin
+                        ? null
+                        : IconButton(
+                            tooltip: 'Change server',
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _editServerUrl(context, ref),
+                          ),
+                  ),
+                if (!local)
+                  SwitchListTile(
+                    secondary: const Icon(Icons.lock_open_outlined),
+                    title: const Text('Allow self-signed certificates'),
+                    subtitle: const Text('Skips TLS certificate verification for this server'),
+                    value: ref.watch(allowInsecureTlsProvider),
+                    onChanged: (value) async {
+                      await ref.read(insecureTlsStorageProvider).write(value);
+                      ref.read(allowInsecureTlsProvider.notifier).state = value;
+                    },
+                  ),
               ],
             ),
           ),
@@ -480,13 +516,14 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           Card(
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.file_upload_outlined),
-                  title: const Text('Import from Hevy'),
-                  subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.go('/profile/import-hevy'),
-                ),
+                if (!local)
+                  ListTile(
+                    leading: const Icon(Icons.file_upload_outlined),
+                    title: const Text('Import from Hevy'),
+                    subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.go('/profile/import-hevy'),
+                  ),
                 ListTile(
                   leading: const Icon(Icons.download_outlined),
                   title: const Text('Export my data'),
@@ -510,22 +547,24 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 ),
                 // Both open the backend's own pages in a new browser tab --
                 // the server URL is whatever this install is pointed at.
-                ListTile(
-                  leading: const Icon(Icons.api_outlined),
-                  title: const Text('API documentation'),
-                  subtitle: const Text('Browse and try out the REST API (Swagger UI)'),
-                  trailing: const Icon(Icons.open_in_new_rounded),
-                  onTap: () =>
-                      openExternalLink(context, ref, apiDocsUrl(ref.read(serverUrlProvider))),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.article_outlined),
-                  title: const Text('API reference'),
-                  subtitle: const Text('Read-only view of the same API (ReDoc)'),
-                  trailing: const Icon(Icons.open_in_new_rounded),
-                  onTap: () =>
-                      openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
-                ),
+                if (!local)
+                  ListTile(
+                    leading: const Icon(Icons.api_outlined),
+                    title: const Text('API documentation'),
+                    subtitle: const Text('Browse and try out the REST API (Swagger UI)'),
+                    trailing: const Icon(Icons.open_in_new_rounded),
+                    onTap: () =>
+                        openExternalLink(context, ref, apiDocsUrl(ref.read(serverUrlProvider))),
+                  ),
+                if (!local)
+                  ListTile(
+                    leading: const Icon(Icons.article_outlined),
+                    title: const Text('API reference'),
+                    subtitle: const Text('Read-only view of the same API (ReDoc)'),
+                    trailing: const Icon(Icons.open_in_new_rounded),
+                    onTap: () =>
+                        openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
+                  ),
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('About'),
@@ -566,21 +605,23 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionHeader('Exercise tutorials'),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.vpn_key_outlined),
-              title: const Text('WorkoutX API key'),
-              subtitle: Text(
-                widget.profile.hasWorkoutxApiKey
-                    ? 'Saved -- using your own WorkoutX account'
-                    : 'Not set -- using the built-in exercise images',
+          if (!local) ...[
+            const _SectionHeader('Exercise tutorials'),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.vpn_key_outlined),
+                title: const Text('WorkoutX API key'),
+                subtitle: Text(
+                  widget.profile.hasWorkoutxApiKey
+                      ? 'Saved -- using your own WorkoutX account'
+                      : 'Not set -- using the built-in exercise images',
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _editWorkoutxKey,
               ),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: _editWorkoutxKey,
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xl),
+          ],
           const _SectionHeader('Appearance'),
           Card(
             child: Padding(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'core/auth/auth_notifier.dart';
 import 'core/auth/auth_state.dart';
 import 'core/insecure_tls_provider.dart';
+import 'core/local/local_mode.dart';
 import 'core/insecure_tls_storage.dart';
 import 'core/router.dart';
 import 'core/server_url_provider.dart';
@@ -36,6 +37,9 @@ Future<void> main() async {
   final storedServerUrl = await ServerUrlStorage().read();
   final storedAllowInsecureTls = await InsecureTlsStorage().read();
   final storedThemeMode = await const ThemeModeStorage().read();
+  const localModeStorage = LocalModeStorage();
+  final storedLocalMode = await localModeStorage.readMode();
+  final storedPendingImport = await localModeStorage.readPendingImport();
   const liveSessionStorage = PrefsLiveSessionStorage();
   final restoredLiveSession = await liveSessionStorage.read();
   runApp(
@@ -43,6 +47,8 @@ Future<void> main() async {
       overrides: [
         liveSessionStorageProvider.overrideWithValue(liveSessionStorage),
         restoredLiveSessionProvider.overrideWithValue(restoredLiveSession),
+        localModeProvider.overrideWith((ref) => storedLocalMode),
+        pendingLocalImportProvider.overrideWith((ref) => storedPendingImport),
         if (storedServerUrl != null) serverUrlProvider.overrideWith((ref) => storedServerUrl),
         allowInsecureTlsProvider.overrideWith((ref) => storedAllowInsecureTls),
         themeModeProvider.overrideWith((ref) => storedThemeMode),

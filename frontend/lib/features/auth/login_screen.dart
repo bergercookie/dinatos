@@ -10,6 +10,8 @@ import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/widgets/brand_header.dart';
 import '../../core/widgets/error_banner.dart';
+import '../../core/local/local_mode_actions.dart';
+import '../../core/widgets/local_mode_dialogs.dart';
 import '../../core/widgets/web_autofill_bridge.dart';
 import '../../core/widgets/web_autofill_semantics.dart';
 import 'auth_config_provider.dart';
@@ -120,6 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         style: TextStyle(color: scheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: AppSpacing.xl),
+                      const PendingLocalImportBanner(),
                       TextFormField(
                         controller: _serverUrlController,
                         enabled: !ApiConfig.isFixedToServingOrigin,
@@ -189,6 +192,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                           child: const Text("Don't have an account? Register"),
                         ),
+                      // No server of your own? The app works on its own, with
+                      // everything stored on this device.
+                      if (!ApiConfig.isFixedToServingOrigin) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        const Divider(),
+                        const SizedBox(height: AppSpacing.xs),
+                        OutlinedButton.icon(
+                          onPressed: _submitting
+                              ? null
+                              : () async {
+                                  if (await confirmLocalMode(context)) await enterLocalMode(ref);
+                                },
+                          icon: const Icon(Icons.phone_android_rounded),
+                          label: const Text('Use without a server'),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Keeps everything on this device. No account needed.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                     ],
                   ),
                 ),

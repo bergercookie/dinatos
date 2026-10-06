@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_info.dart';
 import '../../core/auth/auth_notifier.dart';
+import '../../core/local/local_mode.dart';
 import '../onboarding/onboarding_overlay.dart';
 import 'live_workout_banner.dart';
 
@@ -64,12 +65,15 @@ class AppShell extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Log out',
-                          icon: const Icon(Icons.logout),
-                          onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
-                        ),
-                        const SizedBox(height: 8),
+                        // Nobody is logged in without a server.
+                        if (!ref.watch(localModeProvider)) ...[
+                          IconButton(
+                            tooltip: 'Log out',
+                            icon: const Icon(Icons.logout),
+                            onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         Text(
                           appVersion == 'dev' ? 'dev' : 'v$appVersion',
                           style: Theme.of(context).textTheme.labelSmall,

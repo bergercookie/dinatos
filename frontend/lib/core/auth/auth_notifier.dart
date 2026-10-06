@@ -6,17 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user.dart';
 import '../api_exception.dart';
 import '../dio_provider.dart';
+import '../local/local_mode.dart';
 import 'auth_state.dart';
 import 'token_storage.dart';
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(dioProvider), ref.watch(tokenStorageProvider));
+  return AuthNotifier(
+    ref.watch(dioProvider),
+    ref.watch(tokenStorageProvider),
+    local: ref.watch(localModeProvider),
+  );
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._dio, this._tokenStorage) : super(const AuthUnknown()) {
+  AuthNotifier(this._dio, this._tokenStorage, {this.local = false}) : super(const AuthUnknown()) {
     // Attaches directly to the `Dio` instance this notifier already holds,
     // rather than as an interceptor built from `dioProvider`'s own `ref`:
     // that would need to read `authNotifierProvider` back (for the token,
@@ -44,6 +49,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final Dio _dio;
   final TokenStorage _tokenStorage;
 
+  /// Local (no-server) mode: there is no account to log in to, the person is
+  /// simply "this device".
+  final bool local;
+
   /// On startup: a stored token might still be valid (it hasn't hit its
   /// expiry or been revoked -- logged out from here, or from another
   /// device/tab, since a session is per-login, not per-account).
@@ -60,6 +69,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// `AuthUnauthenticated`. Once anything else has already settled `state`,
   /// bootstrap's own opinion no longer matters.
   Future<void> _bootstrap() async {
+    if (local) {
+      state = const AuthAuthenticated(
+        token: 'local',
+        user: User(id: 1, email: 'this device', isAdmin: false),
+      );
+      return;
+    }
     final token = await _tokenStorage.read();
     if (token == null) {
       if (state is AuthUnknown) state = const AuthUnauthenticated();
@@ -118,6 +134,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// *this* device; the token being technically still valid server-side
   /// until it expires is a lesser problem than being stuck logged in.
   Future<void> logout() async {
+    if (local) return; // nobody is logged in
     try {
       await _dio.post<void>('/auth/logout');
     } on DioException {

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'insecure_tls_configurator.dart';
 import 'insecure_tls_provider.dart';
+import 'local/local_api_adapter.dart';
+import 'local/local_api_provider.dart';
+import 'local/local_mode.dart';
 import 'server_url_provider.dart';
 
 /// Just the HTTP client, with TLS behavior applied -- the bearer-token
@@ -18,6 +21,11 @@ import 'server_url_provider.dart';
 /// `AuthNotifier` already holds this same `Dio` instance directly, so it
 /// can add its own interceptor without going through `ref` at all.
 final dioProvider = Provider<Dio>((ref) {
+  if (ref.watch(localModeProvider)) {
+    // No server: the same client, answered on the device (see LocalApi).
+    return Dio(BaseOptions(baseUrl: 'http://local.invalid'))
+      ..httpClientAdapter = LocalApiAdapter(ref.watch(localApiProvider));
+  }
   final dio = Dio(BaseOptions(baseUrl: ref.watch(serverUrlProvider)));
   configureInsecureTls(dio, ref.watch(allowInsecureTlsProvider));
   return dio;
