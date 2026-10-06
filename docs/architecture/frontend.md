@@ -220,7 +220,7 @@ screen counts a first-ever set as a record, as it always did.
 ## "Which athlete do you resemble?" is a best-effort estimate, computed on the device
 
 `features/personas/` compares the person with a few hand-picked athlete
-archetypes (sprinter, distance runner, weightlifter, javelin thrower,
+archetypes (sprinter, distance runner, weightlifter, powerlifter,
 bodybuilder, gymnast) and draws two overlaid shapes on a radar chart: how close
 their *body* is to each, and how close their *training* is. Like the stats page
 it has no endpoint -- it reads the measurements, activities, exercise catalog

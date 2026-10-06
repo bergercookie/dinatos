@@ -296,7 +296,7 @@ void main() {
         catalog: _catalog,
         now: _now,
       );
-      expect(lifting.bestTraining?.persona.id, 'weightlifter');
+      expect(lifting.bestTraining?.persona.id, 'powerlifter');
     });
 
     test('training gaps are ordered largest first', () {
