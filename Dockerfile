@@ -89,11 +89,28 @@ COPY backend/alembic.ini ./
 COPY backend/alembic ./alembic
 COPY backend/src ./src
 
+# Stamp the release version into the package itself (it is otherwise the
+# hard-coded one in pyproject.toml, so every nightly/release reported
+# 0.1.0 from the API, its OpenAPI document and the backups). The release
+# version is not always PEP 440 -- a nightly is `<base>-nightly.YYYYMMDD[.N]`
+# -- so that form becomes `<base>.devYYYYMMDD[N]`; a plain `dev` (an unset
+# build arg) leaves pyproject.toml's own version alone.
+ARG APP_VERSION=dev
+RUN if [ "${APP_VERSION}" != dev ]; then \
+        py_version="$(printf '%s' "${APP_VERSION}" | sed -E 's/-nightly\.([0-9]+)(\.([0-9]+))?$/.dev\1\3/')" \
+        && sed -i -E "0,/^version = \".*\"/s//version = \"${py_version}\"/" pyproject.toml \
+        && grep -m1 '^version = ' pyproject.toml; \
+    fi
+
 # --no-editable installs a real wheel, so the runtime stage needs the
 # virtualenv and nothing else -- without it, `uv sync`'s default editable
 # install leaves the venv pointing back at /app/src *in this stage*, which
 # does not exist once only .venv/ is copied into runtime below.
-RUN uv sync --locked --no-dev --no-editable
+#
+# --frozen, not --locked, for this one: the stamp above changes the project's
+# own version, which --locked would reject as a stale uv.lock (the dependency
+# set it checks was already verified by the --locked sync further up).
+RUN uv sync --frozen --no-dev --no-editable
 
 
 FROM python:3.12-slim-trixie AS runtime
