@@ -39,8 +39,8 @@ check-lockfile:
 # Everything CI runs for this package.
 check: lint check-lockfile test
 
-# Run the server over stdio -- point an LLM harness's MCP client config at
-# this (see README.md); needs DINATOS_MCP_TOKEN or DINATOS_MCP_EMAIL/
-# DINATOS_MCP_PASSWORD set, and a reachable Dinatos backend (DINATOS_MCP_BASE_URL).
+# Run the stdio proxy -- point an LLM harness's MCP client config at this (see
+# docs/user-guide/mcp-server.md); needs DINATOS_MCP_API_KEY (Settings > API keys
+# in the app) and DINATOS_MCP_BASE_URL set to your Dinatos server.
 run:
     uv run dinatos-mcp

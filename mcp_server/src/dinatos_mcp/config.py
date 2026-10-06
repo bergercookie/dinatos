@@ -6,18 +6,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DINATOS_MCP_", env_file=".env")
 
-    # Where the Dinatos backend itself lives -- the default matches
-    # `just backend run`/`just dev`'s own default port.
+    # Where your Dinatos server lives (the address you open in a browser).
     base_url: str = "http://127.0.0.1:8000"
 
-    # Either set this directly (a token from `POST /auth/login`, e.g. via
-    # the curl recipe in docs/development/workflow.md), or set both `email`
-    # and `password` below and `DinatosClient` logs in for you on first use.
-    # A token set here wins if both are present.
-    token: str | None = None
+    # An API key from Settings > API keys in the app. The only way to
+    # authenticate: not your password, and not a login token.
+    api_key: str | None = None
 
-    email: str | None = None
-    password: str | None = None
+    @property
+    def mcp_url(self) -> str:
+        """The server's own MCP endpoint, which does all the work."""
+        return self.base_url.rstrip("/") + "/mcp"
 
 
 @lru_cache

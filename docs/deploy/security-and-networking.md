@@ -27,6 +27,26 @@ affected by this setting either way. Lock it down to a specific list of
 origins if you'd rather not rely on that reasoning -- if you only ever use
 the bundled UI, that list can be empty.
 
+## API keys and the MCP endpoint
+
+The server hosts an MCP endpoint at `/mcp` (see
+[Using it from an LLM harness](../user-guide/mcp-server.md)) that accepts only
+**API keys** (`Authorization: Bearer dnk_...`), which people create under
+Settings > API keys. A key is a long-lived credential for that person's data, so
+treat it like a password: it is shown once at creation and only a hash is stored,
+but anyone who holds the plaintext can act as its owner (except for managing keys
+and administering the server, which need a real login). Two consequences for your
+reverse proxy:
+
+- **Serve it over HTTPS.** Over plain `http://` the key crosses the network in the
+  clear, exactly as a password would.
+- **Pass the `Authorization` header through**, and don't buffer or cache `/mcp`
+  responses. The endpoint is stateless -- no sticky sessions are needed -- so it
+  works behind a load balancer as it is.
+
+If you don't want the endpoint reachable from outside your network, block `/mcp`
+at the proxy; nothing else in Dinatos depends on it.
+
 ## The insecure-TLS client toggle
 
 If you terminate TLS with a self-signed certificate (no public CA), a
