@@ -217,6 +217,44 @@ count, and reps count only for a set with no load. The live screen only flags
 an exercise that has history (nothing to have beaten otherwise); the summary
 screen counts a first-ever set as a record, as it always did.
 
+## Adding several exercises to a live workout by voice
+
+The live screen's *Add several* button opens `bulk_add_sheet.dart`: say or type
+"1 reverse lunges 2 bench press 3 pull ups", check the matches, add them all
+(no sets -- those are filled in afterwards, as with a single *Add exercise*).
+It is built to be self-explanatory, because a free-text box with a hidden
+format is where people give up: the three steps are always on screen, every
+row says in words how sure the match is, and nothing is added until the person
+presses the button.
+
+- **Text only, all on the device.** `speech_input.dart` wraps Android's own
+  recogniser (`speech_to_text`) behind a small interface; everything after it
+  works on plain text, so it is typed identically everywhere and tests use a
+  fake. The mic is shown only where `SpeechInput.isSupported` (Android).
+  The catalog is already in memory on the live screen, so there is no backend
+  call or endpoint for this. Needs `RECORD_AUDIO` and the
+  `android.speech.RecognitionService` `<queries>` entry in the main
+  `AndroidManifest.xml` (Android 11+ hides recognisers without it).
+- **Splitting** (`splitExerciseList`, `exercise_text_matcher.dart`): numbers are
+  the reliable separator, digits or words, because a recogniser gives no
+  punctuation. Only the *next expected* number splits, so "one arm dumbbell
+  row" stays whole. A "1" opening a new line starts a new run, which is how a
+  second dictation appends. Without a leading "1" it falls back to new lines,
+  commas and "and"/"then"/"next".
+- **Matching** (`ExerciseMatcher`): word order, case, plurals and punctuation are
+  ignored, `db`/`bb` expand, "pull ups" equals "Pullup", and a one-letter slip in
+  a long word is forgiven. A fully matched name with no extra words is
+  *Matched*; all words found in a longer name ("reverse lunges" for "Crossover
+  Reverse Lunge") is a *Best guess*; some words is *Not sure*; none is *No
+  match*. The first two are ticked by default, the last two are not -- a wrong
+  exercise in a workout under way is worse than one more tap. Ties go to what
+  the person has logged most.
+- **Not verified on a device from CI or a cloud container**: nothing there has a
+  microphone or a recogniser, so the dictation path itself (permission prompt,
+  `pauseFor` behaviour, partial results) needs a real Android phone. The
+  parsing, matching and sheet are covered by `test/features/exercise_text_matcher_test.dart`
+  and `test/features/activities/live/bulk_add_sheet_test.dart`.
+
 ## "Which athlete do you resemble?" is a best-effort estimate, computed on the device
 
 `features/personas/` compares the person with a few hand-picked athlete

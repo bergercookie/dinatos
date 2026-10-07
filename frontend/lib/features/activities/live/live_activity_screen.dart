@@ -14,6 +14,7 @@ import '../../exercises/exercises_providers.dart';
 import '../../onboarding/onboarding_overlay.dart';
 import '../../progress/exercise_progress_screen.dart';
 import '../widgets/activity_exercise_card.dart';
+import 'bulk_add_sheet.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
 import 'muscle_distribution_card.dart';
@@ -277,6 +278,24 @@ class LiveActivityScreen extends ConsumerWidget {
                         icon: const Icon(Icons.add),
                         label: const Text('Add exercise'),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Several at once, by dictating or typing a numbered list;
+                  // the sheet explains the format itself.
+                  AsyncValueView(
+                    value: exercisesAsync,
+                    builder: (context, allExercises) => OutlinedButton.icon(
+                      onPressed: () async {
+                        final chosen = await showBulkAddSheet(context, exercises: allExercises);
+                        if (chosen != null) {
+                          ref.read(liveActivityProvider.notifier).addExercises([
+                            for (final e in chosen) e.id!,
+                          ]);
+                        }
+                      },
+                      icon: const Icon(Icons.playlist_add),
+                      label: const Text('Add several (speak or type a list)'),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

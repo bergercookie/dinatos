@@ -201,6 +201,18 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
     );
   }
 
+  /// Appends several exercises at once, in order, each with no sets yet.
+  void addExercises(List<int> exerciseIds) {
+    final current = state;
+    if (current == null || exerciseIds.isEmpty) return;
+    state = current.copyWith(
+      exercises: [
+        ...current.exercises,
+        for (final id in exerciseIds) ActivityExercise(uid: nextUid(), exerciseId: id),
+      ],
+    );
+  }
+
   void removeExerciseAt(int index) =>
       _editExercises((e) => removeItem(e, index, activitySupersets));
 
