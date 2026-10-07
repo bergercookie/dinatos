@@ -17,27 +17,34 @@ import 'exercises_providers.dart';
 /// by equipment, and by whether it is built-in or custom; within one filter any selected value matches, across
 /// filters all must. Results are ordered by how often the person has logged
 /// each exercise, most-used first (the catalog's own order breaks ties).
-Future<Exercise?> showExercisePicker(BuildContext context, {required List<Exercise> exercises}) {
+///
+/// [initialQuery] pre-fills the search box (e.g. with what was dictated).
+Future<Exercise?> showExercisePicker(
+  BuildContext context, {
+  required List<Exercise> exercises,
+  String initialQuery = '',
+}) {
   return showModalBottomSheet<Exercise>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (context) => _ExercisePickerSheet(exercises: exercises),
+    builder: (context) => _ExercisePickerSheet(exercises: exercises, initialQuery: initialQuery),
   );
 }
 
 class _ExercisePickerSheet extends ConsumerStatefulWidget {
-  const _ExercisePickerSheet({required this.exercises});
+  const _ExercisePickerSheet({required this.exercises, required this.initialQuery});
 
   final List<Exercise> exercises;
+  final String initialQuery;
 
   @override
   ConsumerState<_ExercisePickerSheet> createState() => _ExercisePickerSheetState();
 }
 
 class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
-  final _searchController = TextEditingController();
-  String _query = '';
+  late final _searchController = TextEditingController(text: widget.initialQuery);
+  late String _query = widget.initialQuery;
   final Set<MuscleGroup> _muscles = {};
   final Set<Equipment> _equipment = {};
   ExerciseSource _source = ExerciseSource.all;

@@ -1,5 +1,6 @@
 import 'package:dinatos_frontend/core/dio_provider.dart';
 import 'package:dinatos_frontend/features/activities/live/live_activity_screen.dart';
+import 'package:dinatos_frontend/features/activities/live/speech_input.dart';
 import 'package:dinatos_frontend/features/activities/live/live_session.dart';
 import 'package:dinatos_frontend/models/routine.dart';
 import 'package:dio/dio.dart';
@@ -94,11 +95,31 @@ MockDio _dio({bool historyOffline = false}) {
   return dio;
 }
 
+/// Typing only: the real one would touch the microphone plugin.
+class _NoSpeech implements SpeechInput {
+  @override
+  bool get isSupported => false;
+
+  @override
+  Future<String?> start({
+    required void Function(String) onText,
+    required VoidCallback onDone,
+  }) async => null;
+
+  @override
+  Future<void> stop() async {}
+}
+
 Future<ProviderContainer> _pump(WidgetTester tester, MockDio dio) async {
   tester.view.physicalSize = const Size(800, 3000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+  final container = ProviderContainer(
+    overrides: [
+      dioProvider.overrideWithValue(dio),
+      speechInputProvider.overrideWithValue(_NoSpeech()),
+    ],
+  );
   addTearDown(container.dispose);
   container.read(liveActivityProvider.notifier).start();
   await tester.pumpWidget(
@@ -115,6 +136,21 @@ TextField _field(WidgetTester tester, String label, {int index = 0}) =>
     tester.widget<TextField>(find.widgetWithText(TextField, label).at(index));
 
 void main() {
+  testWidgets('Add several adds each confirmed exercise, with no sets', (tester) async {
+    final container = await _pump(tester, _dio());
+
+    await tester.tap(find.text('Add several (speak or type a list)'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '1 row 2 bench press');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add 2 exercises'));
+    await tester.pumpAndSettle();
+
+    final added = container.read(liveActivityProvider)!.exercises;
+    expect(added.map((e) => e.exerciseId), [2, 1]);
+    expect(added.every((e) => e.sets.isEmpty), isTrue);
+  });
+
   testWidgets('shows last time and a suggestion, and Use fills the sets from it', (tester) async {
     final container = await _pump(tester, _dio());
     container.read(liveActivityProvider.notifier).addExercise(1);
