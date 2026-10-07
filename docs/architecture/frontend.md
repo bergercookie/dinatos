@@ -244,8 +244,8 @@ presses the button.
 - **Matching** (`ExerciseMatcher`): word order, case, plurals and punctuation are
   ignored, `db`/`bb` expand, "pull ups" equals "Pullup", and a one-letter slip in
   a long word is forgiven. A fully matched name with no extra words is
-  *Matched*; all words found in a longer name ("reverse lunges" for "Reverse
-  Dumbbell Lunge") is a *Best guess*; some words is *Not sure*; none is *No
+  *Matched*; all words found in a longer name ("reverse lunges" for "Crossover
+  Reverse Lunge") is a *Best guess*; some words is *Not sure*; none is *No
   match*. The first two are ticked by default, the last two are not -- a wrong
   exercise in a workout under way is worse than one more tap. Ties go to what
   the person has logged most.

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 final _catalog = [
   const Exercise(id: 1, name: 'Bench Press'),
   const Exercise(id: 2, name: 'Incline Dumbbell Bench Press'),
-  const Exercise(id: 3, name: 'Reverse Dumbbell Lunge'),
+  const Exercise(id: 3, name: 'Crossover Reverse Lunge'),
   const Exercise(id: 4, name: 'Pull-up'),
   const Exercise(id: 5, name: 'One-Arm Dumbbell Row'),
   const Exercise(id: 6, name: 'Squat'),
@@ -108,6 +108,14 @@ void main() {
     test('the closest name wins over a longer one', () {
       expect(matcher.match('bench press').exercise?.id, 1);
       expect(matcher.match('dumbbell bench').exercise?.id, 2);
+    });
+
+    test('a word that merely starts like another is not a match (over vs overhead)', () {
+      final catalog = [
+        const Exercise(id: 20, name: 'Leg-Over Floor Press'),
+        const Exercise(id: 21, name: 'Overhead Shoulder Press'),
+      ];
+      expect(ExerciseMatcher(catalog).match('overhead press').exercise?.id, 21);
     });
 
     test('usage breaks a tie', () {

@@ -89,7 +89,7 @@ enum MatchQuality {
   exact,
 
   /// Every word you said is in the name, but the name has more words or other
-  /// exercises fit equally well: "reverse lunges" for "Reverse Dumbbell Lunge".
+  /// exercises fit equally well: "reverse lunges" for "Crossover Reverse Lunge".
   guess,
 
   /// Only some of the words matched, so [ExerciseMatch.exercise] is a
@@ -228,7 +228,12 @@ String _stem(String word) => word.length > 2 && word.endsWith('s') && !word.ends
 bool _wordsMatch(String a, String b) {
   if (a == b) return true;
   final shortest = a.length < b.length ? a.length : b.length;
-  if (shortest >= 4 && (a.startsWith(b) || b.startsWith(a))) return true;
+  // One a prefix of the other covers leftover plural endings ("presse" for
+  // "press"); a longer tail is a different word ("over" is not "overhead").
+  final longest = a.length > b.length ? a.length : b.length;
+  if (shortest >= 4 && longest - shortest <= 2 && (a.startsWith(b) || b.startsWith(a))) {
+    return true;
+  }
   if (shortest >= 5) {
     final allowed = shortest >= 8 ? 2 : 1;
     return _editDistance(a, b, allowed) <= allowed;

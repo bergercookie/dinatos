@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _catalog = [
   Exercise(id: 1, name: 'Bench Press'),
-  Exercise(id: 2, name: 'Reverse Dumbbell Lunge'),
+  Exercise(id: 2, name: 'Crossover Reverse Lunge'),
   Exercise(id: 3, name: 'Pull-up'),
   Exercise(id: 4, name: 'Cable Row'),
 ];
@@ -98,7 +98,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Check what we understood'), findsOneWidget);
-    expect(find.text('Reverse Dumbbell Lunge'), findsOneWidget);
+    expect(find.text('Crossover Reverse Lunge'), findsOneWidget);
     expect(find.text('You said "reverse lunges"'), findsOneWidget);
     expect(find.text('Best guess -- please check'), findsOneWidget);
     expect(find.text('Matched'), findsOneWidget);
