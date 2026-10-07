@@ -115,7 +115,12 @@ jobs:
             echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
           } > frontend/android/key.properties
       - name: Build release APK
-        run: just packaging build-apk "${{ needs.version.outputs.version }}" "${{ github.run_number }}"
+        # The build number becomes the APK's versionCode, which must only ever
+        # grow or Android refuses the install as a downgrade. github.run_number
+        # doesn't: it counts per *calling* workflow, so the Nightly workflow's
+        # runs (16) fell below the tag-triggered Release runs (v0.1.18 shipped
+        # as 20). Minutes since the epoch grows across every workflow.
+        run: just packaging build-apk "${{ needs.version.outputs.version }}" "$(( $(date -u +%s) / 60 ))"
       - uses: actions/upload-artifact@v4
         with:
           name: dinatos-${{ needs.version.outputs.version }}-android
