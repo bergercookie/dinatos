@@ -76,6 +76,7 @@ async def test_export_document_shape(client: AsyncClient) -> None:
     assert len(tables["activities"]) == 3
     assert len(tables["body_measurements"]) == 3
     assert len(tables["hevy_import_records"]) == 1
+    assert len(tables["intervals_imported_activities"]) == 1
     assert {row["name"] for row in tables["exercises"]} == {
         "Bench Press",
         "Hill Sprint",

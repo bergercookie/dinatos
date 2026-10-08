@@ -53,6 +53,7 @@ BACKED_UP_TABLES: tuple[str, ...] = (
     "activity_exercises",
     "activity_sets",
     "hevy_import_records",
+    "intervals_imported_activities",
     "body_measurements",
 )
 

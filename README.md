@@ -5,7 +5,7 @@ log against them. Inspired by Hevy, built to run on your own homelab.
 
 **Status:** a FastAPI + async SQLAlchemy backend (multi-user accounts with
 session-based auth, exercises, routines, activities, a profile, body
-measurements, a Hevy CSV importer) and a Flutter frontend against it (web,
+measurements, a Hevy CSV importer, a pick-what-to-import Intervals.icu importer) and a Flutter frontend against it (web,
 Android, and Linux desktop) that also charts your training: frequency,
 workout time, muscle split, go-to exercises and best lifts.
 
@@ -75,7 +75,7 @@ for configuration, upgrades/backups, and native (Android/Linux) clients.
 ## Using it
 
 Already have access to a running instance and just want to log workouts,
-track measurements, or import your history from Hevy? See
+track measurements, or import your history from Hevy or Intervals.icu? See
 [Using Dinatos](https://bergercookie.github.io/dinatos/user-guide/index.html).
 
 ## Contributing

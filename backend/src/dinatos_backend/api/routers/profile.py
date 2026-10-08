@@ -85,7 +85,7 @@ async def clear_my_data(
     user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> ClearDataResult:
     """Start the account clean: deletes the caller's routines, activities,
-    measurements and Hevy import history, and every custom exercise no other
+    measurements and Hevy/Intervals.icu import history, and every custom exercise no other
     data still uses. Settings and the account itself are kept. Not undoable.
     """
     return ClearDataResult(deleted=await clear_own_data(db, user))

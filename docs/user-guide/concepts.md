@@ -24,7 +24,7 @@ Dinatos organizes everything around four kinds of thing:
   separate from any routine.
 
 Your **profile** holds account-level settings and is where you log out,
-change the server you're pointed at, and import history from Hevy.
+change the server you're pointed at, and import history from Hevy or Intervals.icu.
 
 Everything except the exercise catalog belongs to exactly one account --
 Dinatos is a household app from the start, so if your instance has more

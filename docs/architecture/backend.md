@@ -42,6 +42,8 @@ calling user's own data:
   entry, and the backup is generic over columns; the grouping is the UI's.
 - `/imports/hevy/workouts` and `/imports/hevy/measurements` -- see
   "Hevy import" below.
+- `/imports/intervals/preview` and `/imports/intervals/activities` -- see
+  "Intervals.icu import" below.
 - `GET /admin/backup` and `POST /admin/backup/restore` (admin only), and
   `GET /profile/export` and `POST /profile/import` (any user, own data only)
   -- see "Backup and data export" below.
@@ -213,7 +215,7 @@ to that document**. The mechanics are in `services/backup.py`:
 `services/user_export.py`. Not generic: it is a hand-shaped, id-free
 document (`UserExport`) of the profile settings, the exercises the data
 uses, routines, activities and body measurements. Never the password hash,
-sessions, Hevy import records, or the WorkoutX API key (it is a credential
+sessions, Hevy/Intervals.icu import records, or the WorkoutX API key (it is a credential
 and stays on the server it was typed into; an import ignores one if a file
 smuggles it in).
 
@@ -236,7 +238,7 @@ smuggles it in).
   (`?mode=replace`) first deletes the caller's routines, activities and
   measurements. Profile settings are applied in both modes.
 - `DELETE /profile/data` clears the account: the caller's routines, activities,
-  measurements and Hevy import records, plus every custom exercise no
+  measurements and Hevy/Intervals.icu import records, plus every custom exercise no
   remaining routine or activity (anyone's) references -- exercises are shared,
   so one another account still uses survives. Settings and the user stay.
 - Every row written has `owner_id` set to the caller; nothing else in the
@@ -365,6 +367,87 @@ flags; the import screen turns that into a "please review these" card linking
 to each exercise's edit screen. Re-importing creates nothing (and so reports
 nothing): existing exercises, including ones the person has since edited, are
 never re-inferred.
+
+## Intervals.icu import
+
+A one-time import of chosen [Intervals.icu](https://intervals.icu) activities,
+for someone who also tracks there. It is the sibling of the Hevy import above
+-- a one-shot migration, not a sync; nothing runs in the background -- but its
+source is an API rather than a file, which changes how a second run is made
+safe. Code: `services/intervals_client.py` (the HTTP side),
+`services/intervals_import.py` (mapping, selection, duplicate handling),
+`api/routers/intervals_imports.py`, and `models/intervals_import.py`.
+
+**Two steps, both `POST`.** `POST /imports/intervals/preview` fetches the
+activities in a date window (`oldest`, `newest` defaulting to today) and
+returns them annotated, writing nothing. `POST /imports/intervals/activities`
+takes the same window plus `activity_ids` -- the person's selection -- and
+imports exactly those. The import re-fetches the window rather than trusting
+activity data sent back by the client, so what is written is always what
+Intervals.icu says; an id missing from that window, or unimportable, is a `422`
+and nothing is written. Both are `POST` because the **API key travels in the
+body**: it is used for that request and never stored (no profile column, not in
+a backup or export, never echoed -- there is a test for the last). That also
+means there is no WorkoutX-style `UserProfile` field to keep out of exports.
+The athlete id is validated against `^(0|i?\d+)$` because it becomes a URL
+path segment, and the base URL is a constant, so the endpoint cannot be pointed
+at another host. A key Intervals.icu rejects is a `400`, deliberately **not**
+`401`: the app logs the person out on a 401 from this API, and this is not
+their Dinatos session. Intervals.icu being down is a `502`.
+
+**Mapping.** Each activity becomes one `Activity` (title from its name, start
+from `start_date_local`, end from the elapsed time) with one exercise named for
+its sport -- `Run` -> "Running" and so on through a small table, otherwise the
+type split on its capitals -- holding one set with the moving time and the
+distance. An exercise of that exact name is reused; otherwise a custom one is
+created tracking duration (and distance if any selected activity had it).
+Intervals.icu has no per-exercise strength data, so a `WeightTraining` activity
+is just a timed entry. Timestamps are stored as the naive wall-clock time, the
+same as Hevy's CSV timestamps. Strava-sourced activities come back from
+Intervals.icu as a stub (an `id` and a `_note`); they are listed as
+unimportable rather than dropped, so the person sees why they are missing.
+
+**Second runs are safe per activity, not per file.** A Hevy export has no ids,
+so duplicates are caught by hashing the whole file (`HevyImportRecord`).
+An Intervals.icu activity has a stable id, so each import is recorded per
+activity in `IntervalsImportedActivity` -- unique on `(owner_id, intervals_id)`,
+pointing at the `Activity` it created -- and the same activity is never
+imported twice by default, including across overlapping date ranges, which a
+file hash could not catch. The behaviour deliberately mirrors the Hevy one:
+
+- a request that includes an activity already imported is rejected whole with
+  `409` -- nothing written, not a partial import -- naming those ids and when
+  they were imported; `?force=true` imports them again anyway, creating a
+  second `Activity` and repointing the existing record at it rather than adding
+  a second record;
+- duplicates are scoped per `owner_id`;
+- the whole selection is written in one transaction. Two requests importing the
+  same activity at once cannot both win: the unique constraint makes the loser
+  fail at commit, which is rolled back and reported as the same `409`;
+- a record only counts while the `Activity` it points at still exists (the
+  lookup joins to it -- sqlite, which the tests run on, has no cascade to rely
+  on, and Postgres' `ON DELETE CASCADE` is just belt and braces), so deleting
+  an imported activity makes it importable again without `force`. For the same
+  reason the records are deleted with the activities in `replace` and in
+  `DELETE /profile/data`.
+
+**Duplicates with Hevy.** Hevy can sync to Intervals.icu, so the same workout
+may already be in Dinatos. The preview flags (`possible_duplicate_of`, the title
+found) any activity starting within 30 minutes of an existing one of the same
+owner (`DUPLICATE_WINDOW`) and the app leaves it unticked. It is advisory only:
+the backend never skips a selected activity for that reason, because only the
+person knows whether it is really the same session.
+
+The records table is in `BACKED_UP_TABLES` (a full server backup restores it
+with its `activities` foreign keys) but not in the per-user export, like the
+Hevy records. The app side is `frontend/lib/features/imports/intervals_import_*`
+(Profile -> Import from Intervals.icu): the list defaults to ticking only what
+is importable, not already imported and not a possible duplicate, remembers the
+key and window the list was fetched with so later edits to the form do not leak
+into the import, and turns the `409` into the same "import again anyway?"
+dialog as the Hevy screen (`IntervalsAlreadyImportedException`). The tests fake
+Intervals.icu with an `httpx2.MockTransport` injected through the
+`get_intervals_client` dependency; no test touches the network.
 
 ## Exercise tutorials
 

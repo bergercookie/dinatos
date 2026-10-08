@@ -233,7 +233,7 @@ class _ClearDataDialogState extends State<_ClearDataDialog> {
         children: [
           const Text(
             'This permanently deletes ALL your activities, routines, body measurements and '
-            'Hevy import history, plus any custom exercises nobody else uses. Your settings '
+            'Hevy/Intervals.icu import history, plus any custom exercises nobody else uses. Your settings '
             'and account stay. This cannot be undone -- export your data first if unsure.',
           ),
           const SizedBox(height: AppSpacing.md),
@@ -486,6 +486,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                   subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => context.go('/profile/import-hevy'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.sync_alt_outlined),
+                  title: const Text('Import from Intervals.icu'),
+                  subtitle: const Text('Choose which Intervals.icu activities to bring over'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/profile/import-intervals'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.download_outlined),

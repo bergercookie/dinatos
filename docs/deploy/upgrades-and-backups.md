@@ -47,7 +47,7 @@ going to reconcile a restore against existing data for you.
 **Settings -> Administration** has **Download full backup** and **Restore from
 backup** (also `GET /admin/backup` and `POST /admin/backup/restore`). The
 backup is one JSON file with every account, exercise, routine, activity,
-measurement and Hevy import record. It is independent of the Postgres version
+measurement and Hevy/Intervals.icu import record. It is independent of the Postgres version
 and of ids, but it also contains **password hashes and any stored WorkoutX API
 keys**: keep it as private as the database itself.
 

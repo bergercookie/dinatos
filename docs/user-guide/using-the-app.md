@@ -109,7 +109,8 @@ cross-checked (BMI, say, is whatever the scale told you).
 
 Your account-level settings: change your Server URL, log out (ends the
 session on the server, see [Getting started](getting-started.md#staying-signed-in)),
-[import your history from Hevy](hevy-import.md), and open **"API
+[import your history from Hevy](hevy-import.md) or
+[chosen activities from Intervals.icu](intervals-import.md), and open **"API
 documentation"** (Swagger UI) or **"API reference"** (ReDoc) -- the
 backend's own API reference, each opening in a new browser tab, useful if
 you're scripting something against your instance rather than using the app.
