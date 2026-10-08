@@ -33,6 +33,8 @@ Widget _card(Exercise catalog) => MaterialApp(
 );
 
 void main() {
+  _collapsibleTests();
+
   testWidgets('a duration-only exercise shows a duration field, not weight or reps', (
     tester,
   ) async {
@@ -426,6 +428,81 @@ void _cardTests() {
       );
 
       expect(find.text('Superset B'), findsOneWidget);
+    });
+  });
+}
+
+void _collapsibleTests() {
+  Widget collapsible({bool enabled = true, List<ActivitySet>? sets}) => MaterialApp(
+    home: Scaffold(
+      body: SingleChildScrollView(
+        child: ActivityExerciseCard(
+          collapsible: enabled,
+          exercise: ActivityExercise(
+            exerciseId: 1,
+            sets:
+                sets ??
+                const [
+                  ActivitySet(uid: 1, weightKg: 60, reps: 5, completed: true),
+                  ActivitySet(uid: 2, weightKg: 60, reps: 5, completed: false),
+                  ActivitySet(uid: 3, completed: false),
+                ],
+          ),
+          catalogExercise: const Exercise(id: 1, name: 'Bench Press'),
+          onChanged: (_) {},
+          onRemove: () {},
+        ),
+      ),
+    ),
+  );
+
+  group('collapsible', () {
+    testWidgets('collapses to a summary and expands again', (tester) async {
+      await tester.pumpWidget(collapsible());
+      expect(find.text('Add set'), findsOneWidget);
+      expect(find.byType(ActivitySetRow), findsNWidgets(3));
+
+      await tester.tap(find.byTooltip('Collapse exercise'));
+      await tester.pump();
+      expect(find.text('Add set'), findsNothing);
+      expect(find.byType(ActivitySetRow), findsNothing);
+      expect(find.text('1 of 3 sets done'), findsOneWidget);
+      expect(find.text('Bench Press'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Expand exercise'));
+      await tester.pump();
+      expect(find.byType(ActivitySetRow), findsNWidgets(3));
+      expect(find.byKey(const Key('collapsedSummary')), findsNothing);
+    });
+
+    testWidgets('tapping the title toggles it too', (tester) async {
+      await tester.pumpWidget(collapsible());
+
+      await tester.tap(find.text('Bench Press'));
+      await tester.pump();
+      expect(find.byKey(const Key('collapsedSummary')), findsOneWidget);
+      await tester.tap(find.text('Bench Press'));
+      await tester.pump();
+      expect(find.byKey(const Key('collapsedSummary')), findsNothing);
+    });
+
+    testWidgets('summary wording for none and one set', (tester) async {
+      await tester.pumpWidget(collapsible(sets: const []));
+      await tester.tap(find.byTooltip('Collapse exercise'));
+      await tester.pump();
+      expect(find.text('No sets yet'), findsOneWidget);
+
+      await tester.pumpWidget(collapsible(sets: const [ActivitySet(uid: 1, completed: false)]));
+      expect(find.text('0 of 1 set done'), findsOneWidget);
+    });
+
+    testWidgets('is off by default: no chevron, title does nothing', (tester) async {
+      await tester.pumpWidget(collapsible(enabled: false));
+
+      expect(find.byTooltip('Collapse exercise'), findsNothing);
+      await tester.tap(find.text('Bench Press'));
+      await tester.pump();
+      expect(find.byType(ActivitySetRow), findsNWidgets(3));
     });
   });
 }
