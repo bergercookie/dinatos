@@ -439,6 +439,8 @@ def run_browser_flow(base_url: str, output_dir: Path) -> dict[str, Path]:
             saved["login"] = path
 
             _register(page)
+            # A new account lands on Home, not on the catalog.
+            _goto_tab(page, "Exercises")
             for name in EXERCISES:
                 _create_exercise(page, name)
             page.mouse.move(10, 10)  # away from whatever was last hovered/focused

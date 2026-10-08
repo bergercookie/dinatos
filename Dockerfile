@@ -95,6 +95,7 @@ COPY backend/src ./src
 # version is not always PEP 440 -- a nightly is `<base>-nightly.YYYYMMDD[.N]`
 # -- so that form becomes `<base>.devYYYYMMDD[N]`; a plain `dev` (an unset
 # build arg) leaves pyproject.toml's own version alone.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG APP_VERSION=dev
 RUN if [ "${APP_VERSION}" != dev ]; then \
         py_version="$(printf '%s' "${APP_VERSION}" | sed -E 's/-nightly\.([0-9]+)(\.([0-9]+))?$/.dev\1\3/')" \
