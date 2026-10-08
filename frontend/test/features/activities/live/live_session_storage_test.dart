@@ -138,8 +138,10 @@ void main() {
       expect(session.endedAt, isNotNull);
       expect(session.isSaved, isFalse);
       expect(session.pendingTitle, 'Push day');
-      expect(session.exercises.map((e) => e.exerciseId), [1, 2]);
-      expect(session.exercises.map((e) => e.supersetGroup), [1, 1]);
+      // Exercise 2 had no finished set, so finishing dropped it -- and with it the
+      // superset it formed with exercise 1, which must not be left as a group of one.
+      expect(session.exercises.map((e) => e.exerciseId), [1]);
+      expect(session.exercises.map((e) => e.supersetGroup), [null]);
       expect(session.exercises[0].notes, 'tempo 3-1-1');
       expect(session.exercises[0].sets.single.weightKg, 62.5);
       // Restored items get fresh row identities, so editing them is safe.

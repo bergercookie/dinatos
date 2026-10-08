@@ -4,6 +4,18 @@ import 'package:dinatos_frontend/models/routine.dart';
 import 'package:dinatos_frontend/models/set_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Replaces the session's exercises with [exercises] through the public API.
+extension on LiveActivityNotifier {
+  void loadForTest(List<ActivityExercise> exercises) {
+    for (final exercise in exercises) {
+      addExercise(exercise.exerciseId);
+    }
+    for (var i = 0; i < exercises.length; i++) {
+      updateExerciseAt(i, exercises[i]);
+    }
+  }
+}
+
 void main() {
   group('LiveActivityNotifier', () {
     test('starts with no session until start() is called', () {
@@ -93,14 +105,49 @@ void main() {
       expect(notifier.state, isNull);
     });
 
-    test('finish() stamps endedAt without touching logged exercises', () {
+    test('finish() stamps endedAt and keeps fully completed exercises as they are', () {
       final notifier = LiveActivityNotifier()..start();
-      notifier.addExercise(1);
+      notifier.loadForTest(const [
+        ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1, reps: 5)]),
+      ]);
 
       notifier.finish();
 
       expect(notifier.state!.endedAt, isNotNull);
       expect(notifier.state!.exercises, hasLength(1));
+      expect(notifier.state!.exercises.single.sets, hasLength(1));
+    });
+
+    test('finish() drops unfinished sets, and exercises with no finished set', () {
+      final notifier = LiveActivityNotifier()..start();
+      notifier.loadForTest(const [
+        ActivityExercise(
+          exerciseId: 1,
+          sets: [
+            ActivitySet(uid: 1, reps: 5),
+            ActivitySet(uid: 2, reps: 5, completed: false),
+            ActivitySet(uid: 3, reps: 4),
+          ],
+        ),
+        ActivityExercise(exerciseId: 2, sets: [ActivitySet(uid: 4, completed: false)]),
+        ActivityExercise(exerciseId: 3, sets: []),
+      ]);
+
+      expect(notifier.state!.unfinished, (exercises: 2, sets: 1));
+      notifier.finish();
+
+      expect(notifier.state!.exercises.map((e) => e.exerciseId), [1]);
+      expect(notifier.state!.exercises.single.sets.map((s) => s.uid), [1, 3]);
+      expect(notifier.state!.unfinished, (exercises: 0, sets: 0));
+    });
+
+    test('finish() on a workout with nothing finished leaves it empty', () {
+      final notifier = LiveActivityNotifier()..start();
+      notifier.addExercise(1);
+
+      notifier.finish();
+
+      expect(notifier.state!.exercises, isEmpty);
     });
 
     test('discard() clears the session back to null', () {

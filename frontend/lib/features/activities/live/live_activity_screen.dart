@@ -42,6 +42,39 @@ class LiveActivityScreen extends ConsumerWidget {
     return confirmed ?? false;
   }
 
+  /// Finishing drops what was never ticked off, so say so first. Returns
+  /// whether to go ahead; nothing to warn about means yes without asking.
+  Future<bool> _confirmFinish(BuildContext context, LiveActivitySession session) async {
+    final lost = session.unfinished;
+    if (lost.exercises == 0 && lost.sets == 0) return true;
+    final parts = [
+      if (lost.exercises > 0)
+        '${lost.exercises} ${lost.exercises == 1 ? 'exercise' : 'exercises'} with no finished sets',
+      if (lost.sets > 0) '${lost.sets} unfinished ${lost.sets == 1 ? 'set' : 'sets'}',
+    ];
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove unfinished work?'),
+        content: Text(
+          'Finishing removes ${parts.join(' and ')} from this workout. Only sets you ticked '
+          'off are kept. Tick them first if you did them.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep logging'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Finish and remove'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _showStopwatchControls(BuildContext context, WidgetRef ref) async {
     final notifier = ref.read(liveActivityProvider.notifier);
     final action = await showModalBottomSheet<_StopwatchAction>(
@@ -295,16 +328,17 @@ class LiveActivityScreen extends ConsumerWidget {
                         }
                       },
                       icon: const Icon(Icons.playlist_add),
-                      label: const Text('Add several (speak or type a list)'),
+                      label: const Text('Add several (type a list)'),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   OnboardingTarget(
                     id: 'live-finish',
                     child: FilledButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
+                        if (!await _confirmFinish(context, session)) return;
                         ref.read(liveActivityProvider.notifier).finish();
-                        context.go('/activities/live/summary');
+                        if (context.mounted) context.go('/activities/live/summary');
                       },
                       icon: const Icon(Icons.flag_outlined),
                       label: const Text('Finish workout'),

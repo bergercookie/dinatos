@@ -1,11 +1,13 @@
 import 'package:dinatos_frontend/core/dio_provider.dart';
 import 'package:dinatos_frontend/features/activities/live/live_activity_screen.dart';
 import 'package:dinatos_frontend/features/activities/live/live_session.dart';
+import 'package:dinatos_frontend/models/activity.dart';
 import 'package:dinatos_frontend/models/routine.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../support/fakes.dart';
@@ -111,6 +113,18 @@ Future<ProviderContainer> _pump(WidgetTester tester, MockDio dio) async {
   return container;
 }
 
+/// Replaces the session's exercises with [exercises] through the public API.
+extension on LiveActivityNotifier {
+  void loadForTest(List<ActivityExercise> exercises) {
+    for (final exercise in exercises) {
+      addExercise(exercise.exerciseId);
+    }
+    for (var i = 0; i < exercises.length; i++) {
+      updateExerciseAt(i, exercises[i]);
+    }
+  }
+}
+
 TextField _field(WidgetTester tester, String label, {int index = 0}) =>
     tester.widget<TextField>(find.widgetWithText(TextField, label).at(index));
 
@@ -118,7 +132,7 @@ void main() {
   testWidgets('Add several adds each confirmed exercise, with no sets', (tester) async {
     final container = await _pump(tester, _dio());
 
-    await tester.tap(find.text('Add several (speak or type a list)'));
+    await tester.tap(find.text('Add several (type a list)'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '1 row 2 bench press');
     await tester.pumpAndSettle();
@@ -383,5 +397,130 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Superset A'), findsNWidgets(2));
+  });
+
+  group('finishing a workout', () {
+    Future<ProviderContainer> pumpWithRouter(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 3000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final container = ProviderContainer(
+        overrides: [dioProvider.overrideWithValue(_dio(historyOffline: true))],
+      );
+      addTearDown(container.dispose);
+      container.read(liveActivityProvider.notifier).start();
+      final router = GoRouter(
+        routes: [
+          GoRoute(path: '/', builder: (context, state) => const LiveActivityScreen()),
+          GoRoute(
+            path: '/activities/live/summary',
+            builder: (context, state) => const Text('summary page'),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return container;
+    }
+
+    // Bench: one done, one not ticked. Row: nothing done. Plus an empty exercise.
+    void logMixedWorkout(ProviderContainer container) {
+      container.read(liveActivityProvider.notifier).loadForTest(const [
+        ActivityExercise(
+          exerciseId: 1,
+          sets: [
+            ActivitySet(uid: 1, weightKg: 60, reps: 5),
+            ActivitySet(uid: 2, weightKg: 60, reps: 5, completed: false),
+          ],
+        ),
+        ActivityExercise(
+          exerciseId: 2,
+          sets: [ActivitySet(uid: 3, weightKg: 40, reps: 8, completed: false)],
+        ),
+        ActivityExercise(exerciseId: 2, sets: []),
+      ]);
+    }
+
+    testWidgets('warns about unfinished work, and keep logging leaves everything as it was', (
+      tester,
+    ) async {
+      final container = await pumpWithRouter(tester);
+      logMixedWorkout(container);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Finish workout'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remove unfinished work?'), findsOneWidget);
+      expect(
+        find.textContaining('removes 2 exercises with no finished sets and 1 unfinished set'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Keep logging'));
+      await tester.pumpAndSettle();
+
+      final session = container.read(liveActivityProvider)!;
+      expect(session.endedAt, isNull);
+      expect(session.exercises, hasLength(3));
+      expect(find.text('summary page'), findsNothing);
+    });
+
+    testWidgets('confirming removes the unfinished exercises and sets and goes to the summary', (
+      tester,
+    ) async {
+      final container = await pumpWithRouter(tester);
+      logMixedWorkout(container);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Finish workout'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Finish and remove'));
+      await tester.pumpAndSettle();
+
+      final session = container.read(liveActivityProvider)!;
+      expect(session.endedAt, isNotNull);
+      expect(session.exercises.map((e) => e.exerciseId), [1]);
+      expect(session.exercises.single.sets.map((s) => s.uid), [1]);
+      expect(find.text('summary page'), findsOneWidget);
+    });
+
+    testWidgets('with everything ticked off there is nothing to warn about', (tester) async {
+      final container = await pumpWithRouter(tester);
+      container.read(liveActivityProvider.notifier).loadForTest(const [
+        ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1, weightKg: 60, reps: 5)]),
+      ]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Finish workout'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remove unfinished work?'), findsNothing);
+      expect(find.text('summary page'), findsOneWidget);
+    });
+
+    testWidgets('singular wording', (tester) async {
+      final container = await pumpWithRouter(tester);
+      container.read(liveActivityProvider.notifier).loadForTest(const [
+        ActivityExercise(exerciseId: 1, sets: []),
+        ActivityExercise(
+          exerciseId: 2,
+          sets: [ActivitySet(uid: 1, weightKg: 1, reps: 1), ActivitySet(uid: 2, completed: false)],
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Finish workout'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('removes 1 exercise with no finished sets and 1 unfinished set from'),
+        findsOneWidget,
+      );
+    });
   });
 }
