@@ -1,6 +1,5 @@
 import 'package:dinatos_frontend/core/dio_provider.dart';
 import 'package:dinatos_frontend/features/activities/live/live_activity_screen.dart';
-import 'package:dinatos_frontend/features/activities/live/speech_input.dart';
 import 'package:dinatos_frontend/features/activities/live/live_session.dart';
 import 'package:dinatos_frontend/models/routine.dart';
 import 'package:dio/dio.dart';
@@ -95,31 +94,11 @@ MockDio _dio({bool historyOffline = false}) {
   return dio;
 }
 
-/// Typing only: the real one would touch the microphone plugin.
-class _NoSpeech implements SpeechInput {
-  @override
-  bool get isSupported => false;
-
-  @override
-  Future<String?> start({
-    required void Function(String) onText,
-    required VoidCallback onDone,
-  }) async => null;
-
-  @override
-  Future<void> stop() async {}
-}
-
 Future<ProviderContainer> _pump(WidgetTester tester, MockDio dio) async {
   tester.view.physicalSize = const Size(800, 3000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  final container = ProviderContainer(
-    overrides: [
-      dioProvider.overrideWithValue(dio),
-      speechInputProvider.overrideWithValue(_NoSpeech()),
-    ],
-  );
+  final container = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
   addTearDown(container.dispose);
   container.read(liveActivityProvider.notifier).start();
   await tester.pumpWidget(
