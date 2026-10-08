@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/notification_taps.dart';
 import '../../../core/router.dart';
 import 'elapsed_timer.dart';
 import 'live_session.dart';
@@ -57,7 +58,12 @@ class NoopLiveWorkoutNotificationService implements LiveWorkoutNotificationServi
 /// notification brings the app forward and calls [onTap] to route to the live
 /// workout screen.
 class AndroidLiveWorkoutNotificationService implements LiveWorkoutNotificationService {
-  AndroidLiveWorkoutNotificationService({required this.onTap});
+  AndroidLiveWorkoutNotificationService({required this.onTap}) {
+    // This notification carries no payload; reminders (see `workout_reminders.dart`) do.
+    addNotificationTapListener((payload) {
+      if (payload == null) onTap();
+    });
+  }
 
   static const _id = 1;
   static const _channelId = 'live_workout';
@@ -74,7 +80,7 @@ class AndroidLiveWorkoutNotificationService implements LiveWorkoutNotificationSe
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
-      onDidReceiveNotificationResponse: (_) => onTap(),
+      onDidReceiveNotificationResponse: dispatchNotificationTap,
     );
     // Android 13+ requires a runtime grant; without it show() is silently dropped.
     await _android?.requestNotificationsPermission();

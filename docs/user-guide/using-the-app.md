@@ -88,6 +88,39 @@ and keeps the workout; a banner on every tab brings you back to it. Try again
 when you're online -- the title is locked after a failed attempt so a retry
 can't save the workout twice.
 
+## Planning workouts
+
+Put a workout on the calendar ahead of time: on **Home**, tap **Schedule** in
+the *Upcoming* card, or tap a day in the calendar and choose **Schedule
+workout**. Pick a routine (or leave it empty for a free-form session), a day and
+time, how long it takes, and a reminder -- and add notes if you like. Days with
+a workout still to do get a dot on the calendar, and you can page forward
+through future months to see what is coming.
+
+- **Reminders** (Android) -- a notification arrives at the time you chose
+  (30 minutes before by default). Tap it and the workout starts, pre-filled from
+  its routine. Allow notifications when asked; the reminder may arrive a few
+  minutes late while the phone is idle.
+- **On the day**, **Start activity** gains a third option, **Planned workout**,
+  which starts it directly. (With several planned for the day it asks which.)
+  Starting one from a reminder, the Upcoming card or the day's list does the same.
+- Saving a workout started from a plan marks that plan done, and it drops off
+  the upcoming list. A plan is only a plan: it does not count towards your stats
+  or streaks until you actually do the workout.
+- An assistant connected over [MCP](mcp-server.md) can schedule, read, move and
+  remove planned workouts too.
+
+### Showing the calendar in another app
+
+**Settings -> Calendar feed** creates a private link to subscribe to in Google
+Calendar ("From URL"), Apple Calendar ("New Calendar Subscription") or Outlook.
+Your planned workouts then appear as events, with their reminders, and stay up
+to date: the link is always current and your calendar app re-checks it by itself
+(about hourly; Google only every few hours, so a change can take a while to show
+there). Anyone with the link can see your planned workouts, so don't share it --
+if it leaks, **Create a new link** (the old one stops working) or turn the feed
+off.
+
 ## Progress
 
 The chart icon next to an exercise (Exercises tab, or **View progress** in its

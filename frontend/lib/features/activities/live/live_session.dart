@@ -25,6 +25,7 @@ class LiveActivitySession {
     this.pendingTitle,
     this.routineId,
     this.routineName,
+    this.plannedWorkoutId,
   }) : clockOrigin = clockOrigin ?? startedAt;
 
   /// When the workout actually began -- what gets saved as the activity's
@@ -55,6 +56,10 @@ class LiveActivitySession {
   /// activity as `routine_id`, and its name is the summary's default title.
   final int? routineId;
   final String? routineName;
+
+  /// The planned workout (calendar entry) this session was started from, if
+  /// any: sent along when saving so the plan is marked done.
+  final int? plannedWorkoutId;
 
   /// Non-null once `POST /activities` has actually succeeded for this
   /// session -- tracked on the session itself, not as local screen state,
@@ -155,6 +160,7 @@ class LiveActivitySession {
     pendingTitle: clearPendingTitle ? null : (pendingTitle ?? this.pendingTitle),
     routineId: routineId,
     routineName: routineName,
+    plannedWorkoutId: plannedWorkoutId,
   );
 }
 
@@ -181,20 +187,31 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
   /// The account the session belongs to (null if it started before login state was known).
   int? ownerId;
 
-  void start() {
+  /// Starts an empty workout. [plannedWorkoutId] / [title] come from a plan on
+  /// the calendar that has no routine behind it.
+  void start({int? plannedWorkoutId, String? title}) {
     ownerId = _currentUserId?.call();
-    state = LiveActivitySession(startedAt: DateTime.now());
+    state = LiveActivitySession(
+      startedAt: DateTime.now(),
+      routineName: title,
+      plannedWorkoutId: plannedWorkoutId,
+    );
   }
 
   /// Starts a workout pre-filled from [routine]: its exercises, notes and
   /// target sets (weight/reps), to be edited into what was actually done --
   /// the same copy `ActivityFormScreen`'s "Start from a saved routine" makes.
-  void startFromRoutine(Routine routine) {
+  ///
+  /// [plannedWorkoutId] and [title] are set when starting from a calendar
+  /// entry: the plan is marked done on save, and its title (which may differ
+  /// from the routine's name) is the summary's default.
+  void startFromRoutine(Routine routine, {int? plannedWorkoutId, String? title}) {
     ownerId = _currentUserId?.call();
     state = LiveActivitySession(
       startedAt: DateTime.now(),
       routineId: routine.id,
-      routineName: routine.name,
+      routineName: title ?? routine.name,
+      plannedWorkoutId: plannedWorkoutId,
       exercises: [
         for (final exercise in routine.exercises)
           ActivityExercise(

@@ -51,6 +51,8 @@ dependencies:
   # separate android_file_picker package) fixes this.
   file_picker: ^13.1.0
   flutter_local_notifications: ^22.3.1
+  # Scheduled reminders for planned workouts (absolute instants, in UTC).
+  timezone: ^0.11.0
   shared_preferences: ^2.5.5
   # Opening the API docs / ReDoc in a new browser tab.
   url_launcher: ^6.3.2

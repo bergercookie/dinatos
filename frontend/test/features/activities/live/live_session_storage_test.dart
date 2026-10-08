@@ -101,6 +101,21 @@ void main() {
     expect(restored.routineName, 'Pull day');
   });
 
+  test('the planned workout a session was started from survives a round trip too', () {
+    final fromPlan = LiveActivitySession(
+      startedAt: session.startedAt,
+      routineName: 'Push',
+      plannedWorkoutId: 12,
+    );
+
+    final restored = PersistedLiveSession.fromJson(
+      PersistedLiveSession(session: fromPlan, ownerId: 3).toJson(),
+    ).session;
+
+    expect(restored.plannedWorkoutId, 12);
+    expect(restored.copyWith(savedActivityId: 1).plannedWorkoutId, 12);
+  });
+
   test(
     'a workout finished offline survives the app being killed, as it will be restored',
     () async {

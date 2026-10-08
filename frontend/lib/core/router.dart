@@ -10,6 +10,9 @@ import '../features/activities/activity_list_screen.dart';
 import '../features/activities/live/activity_summary_screen.dart';
 import '../features/activities/live/live_activity_screen.dart';
 import '../features/auth/login_screen.dart';
+import '../features/calendar/calendar_feed_screen.dart';
+import '../features/calendar/planned_workout_screen.dart';
+import '../features/calendar/start_planned_workout.dart';
 import '../features/auth/register_screen.dart';
 import '../features/docs/api_docs_screen.dart';
 import '../features/exercises/exercise_form_screen.dart';
@@ -120,6 +123,25 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(path: 'new', builder: (context, state) => const ActivityFormScreen()),
                   GoRoute(path: 'live', builder: (context, state) => const LiveActivityScreen()),
+                  GoRoute(
+                    path: 'plan/new',
+                    builder: (context, state) => PlannedWorkoutScreen(
+                      initialDate: DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'plan/:id',
+                    builder: (context, state) =>
+                        PlannedWorkoutScreen(plannedId: int.parse(state.pathParameters['id']!)),
+                    routes: [
+                      GoRoute(
+                        path: 'start',
+                        builder: (context, state) => StartPlannedWorkoutScreen(
+                          plannedId: int.parse(state.pathParameters['id']!),
+                        ),
+                      ),
+                    ],
+                  ),
                   GoRoute(path: 'stats', builder: (context, state) => const StatsScreen()),
                   GoRoute(path: 'personas', builder: (context, state) => const PersonaScreen()),
                   GoRoute(
@@ -168,6 +190,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
                   GoRoute(path: 'api-keys', builder: (context, state) => const ApiKeysScreen()),
+                  GoRoute(
+                    path: 'calendar-feed',
+                    builder: (context, state) => const CalendarFeedScreen(),
+                  ),
                   GoRoute(path: 'admin', builder: (context, state) => const AdminScreen()),
                 ],
               ),

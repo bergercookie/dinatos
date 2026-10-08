@@ -55,6 +55,9 @@ class ActivityCreate(ActivityBase):
     """Also used to replace an activity in full via `PUT`."""
 
     exercises: list[ActivityExerciseCreate] = []
+    # The planned workout this session was started from, if any: saving marks
+    # that plan done. Only read on create; never stored on the activity itself.
+    planned_workout_id: int | None = None
 
 
 class ActivityRead(ActivityBase):

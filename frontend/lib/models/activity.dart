@@ -152,6 +152,7 @@ class Activity {
     required this.startedAt,
     this.endedAt,
     this.routineId,
+    this.plannedWorkoutId,
     this.exercises = const [],
   });
 
@@ -173,6 +174,10 @@ class Activity {
   final DateTime startedAt;
   final DateTime? endedAt;
   final int? routineId;
+
+  /// The calendar entry this activity was started from. Only ever sent when
+  /// creating (the server marks that plan done); never read back.
+  final int? plannedWorkoutId;
   final List<ActivityExercise> exercises;
 
   Map<String, dynamic> toJson() => {
@@ -181,6 +186,7 @@ class Activity {
     'started_at': startedAt.toUtc().toIso8601String(),
     'ended_at': endedAt?.toUtc().toIso8601String(),
     'routine_id': routineId,
+    if (plannedWorkoutId != null) 'planned_workout_id': plannedWorkoutId,
     'exercises': exercises.map((e) => e.toJson()).toList(),
   };
 

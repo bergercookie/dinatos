@@ -15,6 +15,11 @@
 - **activities** -- a recorded gym session: a list of completed exercises
   with their sets, reps, weights. An activity can come
   from running a saved routine, or from an ephemeral one built on the spot.
+- **planned workouts** -- a routine (or free-form session) scheduled for a
+  future time: one calendar entry. Not an activity -- it only becomes one when a
+  workout started from it is saved, which links the two
+  (`completed_activity_id`). Shown on Home's calendar, reminded on Android, and
+  published as an ICS feed.
 - **supersets** -- consecutive exercises sharing a `superset_group`, on a
   routine's exercises and an activity's alike; starting a workout from a
   routine carries them over.

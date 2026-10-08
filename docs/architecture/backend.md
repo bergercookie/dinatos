@@ -40,6 +40,14 @@ calling user's own data:
   and muscle kg per arm, leg and trunk) and tape circumferences. Flat rather
   than separate tables because one weigh-in or tape session is one dated
   entry, and the backup is generic over columns; the grouping is the UI's.
+- `/planned-workouts` -- the training calendar: a routine (or free-form
+  session) scheduled for a future time, with a duration and a reminder lead
+  time. Deliberately **not** an activity -- activities feed every stat, so a
+  plan must not count until it is performed. Starting a workout from a plan
+  sends `planned_workout_id` along with `POST /activities`, which sets the
+  plan's `completed_activity_id` (an unknown id is ignored rather than failing
+  the save). `GET /profile/calendar`, `POST` (turn on / rotate) and `DELETE`
+  manage the secret behind the ICS feed -- see "Calendar feed" below.
 - `/imports/hevy/workouts` and `/imports/hevy/measurements` -- see
   "Hevy import" below.
 - `/imports/intervals/preview` and `/imports/intervals/activities` -- see
@@ -272,6 +280,27 @@ session only: manage keys (so a leaked key cannot mint more or hide itself),
 log out, and every `/admin/*` route (so a key cannot back up or restore the
 server). At most 25 keys per account.
 
+## Calendar feed
+
+`GET /calendar/{token}.ics` serves the caller's planned workouts as an
+iCalendar document (`services/calendar.py`) that Google/Apple/Outlook calendars
+subscribe to by URL. Calendar apps cannot log in, so this is the one
+unauthenticated route besides `/health` and `/auth/*`: the unguessable token
+(`UserProfile.calendar_token`, `secrets.token_urlsafe(32)`) in the path is the
+credential. It is stored in the clear -- unlike an API key it is shown again, so
+the person can re-copy their link -- and so is excluded from the per-user export
+but, like every profile column, part of the admin backup. `POST /profile/calendar`
+rotates it (the old link then 404s), `DELETE` turns the feed off.
+
+The document is generated from the database on every request, so it is never
+stale; "updating periodically" is the subscriber re-fetching, which the feed asks
+for hourly (`REFRESH-INTERVAL` / `X-PUBLISHED-TTL`; Google Calendar polls only
+every several hours regardless). Events carry a stable `UID` (`planned-<id>@dinatos`)
+and a `SEQUENCE` taken from `updated_at`, so an edit updates the event instead of
+duplicating it, plus a `VALARM` from the reminder lead time. The feed covers the
+last 90 days onward. The client builds the full URL from its own server address
+(`<server>/calendar/<token>.ics`): only it knows how the server is reached.
+
 ## MCP server
 
 The API hosts an MCP server itself, at `/mcp` (streamable HTTP, `api/mcp.py`),
@@ -287,7 +316,9 @@ app's lifespan (`McpGateway.running()`); a fresh one is built each time, so test
 can start it per test.
 
 The tools are plain wrappers over endpoints (exercises, routines, activities)
-plus `get_persona_stats`, which runs `services/personas.py`: a Python port of
+the calendar (`list_planned_workouts`, `schedule_workout`,
+`update_planned_workout` -- a `PATCH`, so only the arguments passed change --
+and `delete_planned_workout`), plus `get_persona_stats`, which runs `services/personas.py`: a Python port of
 the app's on-device persona scoring (`frontend/lib/features/personas/`). The two
 implementations are kept honest by a shared fixture
 (`frontend/test/fixtures/persona_parity.json`) that both test suites run -- change

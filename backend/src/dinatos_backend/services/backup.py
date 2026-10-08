@@ -55,6 +55,7 @@ BACKED_UP_TABLES: tuple[str, ...] = (
     "hevy_import_records",
     "intervals_imported_activities",
     "body_measurements",
+    "planned_workouts",
 )
 
 # Table name -> why a backup deliberately leaves it out.

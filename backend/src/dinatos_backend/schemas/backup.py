@@ -146,6 +146,15 @@ class ExportedMeasurement(BaseModel):
     right_calf_cm: float | None = None
 
 
+class ExportedPlannedWorkout(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    notes: str | None = Field(default=None, max_length=2000)
+    scheduled_at: datetime
+    duration_minutes: int = 60
+    reminder_minutes: int | None = 30
+    routine_ref: int | None = None
+
+
 class ExportedProfile(BaseModel):
     """Display settings only -- never the WorkoutX API key, which is a
     credential and stays on the server it was entered on.
@@ -167,6 +176,7 @@ class UserExport(BaseModel):
     routines: list[ExportedRoutine] = []
     activities: list[ExportedActivity] = []
     measurements: list[ExportedMeasurement] = []
+    planned_workouts: list[ExportedPlannedWorkout] = []
 
 
 class UserImportMode(enum.Enum):
@@ -179,6 +189,7 @@ class UserImportCounts(BaseModel):
     routines: int = 0
     activities: int = 0
     measurements: int = 0
+    planned_workouts: int = 0
 
 
 class ClearDataResult(BaseModel):

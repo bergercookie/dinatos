@@ -174,6 +174,39 @@ that failing:
 paths against a mocked `Dio`; the storage tests cover the kill-and-restore
 round trip through the real `SharedPreferences` path.
 
+## Planned workouts: reminders and the start flow
+
+A planned workout (`lib/features/calendar/`) is a backend entity, not client
+state -- see "Calendar feed" and `/planned-workouts` in `backend.md`. The client
+parts worth knowing:
+
+- **Reminders are scheduled local notifications**, not push: `workoutReminderSyncProvider`
+  (watched from the app root, like the live-workout notification) re-schedules
+  the next 50 whenever `plannedWorkoutListProvider` changes, and clears them on
+  logout -- but not while the login is still `AuthUnknown` and not when the fetch
+  fails, so starting the app offline never cancels tomorrow's reminder. They use
+  `AndroidScheduleMode.inexactAllowWhileIdle`: a reminder may be a few minutes late
+  in doze, in exchange for needing no exact-alarm permission (which Play
+  restricts). The date is an absolute instant, passed as UTC so no timezone
+  database is needed. The manifest declares the plugin's two receivers and
+  `RECEIVE_BOOT_COMPLETED`; without them a scheduled notification never shows.
+- **One tap callback for two services.** `flutter_local_notifications` keeps a
+  single `onDidReceiveNotificationResponse`, so a second service's `initialize()`
+  silently replaced the live workout notification's. Both services therefore pass
+  `dispatchNotificationTap` (`core/notification_taps.dart`) and register a listener
+  for the payloads they own (the live one's has none; a reminder's is `planned:<id>`).
+- **A tap opens `/activities/plan/<id>/start`**, a route rather than a callback
+  into a widget: the notification may launch a cold app, and the route survives
+  the login redirect. `StartPlannedWorkoutScreen` loads the plan and its routine,
+  then starts the live workout; `startPlannedWorkout` is the same entry the Home
+  card, the day sheet and the **Start activity** sheet's third option use.
+- **The live session carries `plannedWorkoutId`** (persisted with it, so it
+  survives a restart), and the summary screen sends it with `POST /activities`.
+  It is a plan's *title* that becomes the summary's default title, not the
+  routine's name.
+- The Start-activity sheet reads whatever plans Home already loaded
+  (`valueOrNull`) rather than waiting on the network to open.
+
 ## Supersets
 
 Exercises sharing a `supersetGroup` are done back-to-back. A group only means

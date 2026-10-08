@@ -5,6 +5,7 @@ import 'package:dinatos_frontend/core/external_link.dart';
 import 'package:dinatos_frontend/core/router.dart';
 import 'package:dinatos_frontend/core/server_url_provider.dart';
 import 'package:dinatos_frontend/core/server_url_storage.dart';
+import 'package:dinatos_frontend/features/calendar/workout_reminders.dart';
 import 'package:dinatos_frontend/features/docs/api_docs_screen.dart';
 import 'package:dinatos_frontend/features/profile/profile_providers.dart';
 import 'package:dinatos_frontend/features/profile/profile_screen.dart';
@@ -63,6 +64,7 @@ void main() {
     return ProviderContainer(
       overrides: [
         ...extraOverrides,
+        workoutReminderServiceProvider.overrideWithValue(NoopWorkoutReminderService()),
         serverUrlProvider.overrideWith((ref) => 'https://api.example.com'),
         serverUrlStorageProvider.overrideWithValue(ServerUrlStorage(storage: FakeSecureStore())),
         tokenStorageProvider.overrideWithValue(TokenStorage(storage: FakeSecureStore())),
@@ -101,6 +103,7 @@ void main() {
     // is exactly the kind of small change that should have to update a test.
     final container = ProviderContainer(
       overrides: [
+        workoutReminderServiceProvider.overrideWithValue(NoopWorkoutReminderService()),
         serverUrlStorageProvider.overrideWithValue(ServerUrlStorage(storage: FakeSecureStore())),
         tokenStorageProvider.overrideWithValue(TokenStorage(storage: FakeSecureStore())),
         dioProvider.overrideWith((ref) => loggedInDio()),

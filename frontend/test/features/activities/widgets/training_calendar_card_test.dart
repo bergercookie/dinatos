@@ -1,5 +1,6 @@
 import 'package:dinatos_frontend/features/activities/widgets/training_calendar_card.dart';
 import 'package:dinatos_frontend/models/activity.dart';
+import 'package:dinatos_frontend/models/planned_workout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +37,7 @@ void main() {
     expect(find.textContaining('week'), findsOneWidget);
   });
 
-  testWidgets('previous/next month navigation updates the header, capped at the current month', (
+  testWidgets('previous/next month navigation updates the header, forward into the future too', (
     tester,
   ) async {
     await _pump(tester, const []);
@@ -44,11 +45,13 @@ void main() {
     final lastMonth = DateTime(now.year, now.month - 1);
 
     expect(find.text(DateFormat.yMMMM().format(now)), findsOneWidget);
-    // The current month is showing, so "next month" must be disabled.
-    final nextButton = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.chevron_right),
-    );
-    expect(nextButton.onPressed, isNull);
+    final nextMonth = DateTime(now.year, now.month + 1);
+    // Future months can be browsed, to see what is planned there.
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_right));
+    await tester.pump();
+    expect(find.text(DateFormat.yMMMM().format(nextMonth)), findsOneWidget);
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+    await tester.pump();
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
     await tester.pump();
@@ -57,5 +60,53 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_right));
     await tester.pump();
     expect(find.text(DateFormat.yMMMM().format(now)), findsOneWidget);
+  });
+
+  testWidgets('marks days with a planned workout and reports taps on a day', (tester) async {
+    final now = DateTime.now();
+    final planned = DateTime(now.year, now.month, 15, 18);
+    DateTime? tapped;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TrainingCalendarCard(
+              activities: const [],
+              plannedWorkouts: [PlannedWorkout(id: 1, title: 'Push', scheduledAt: planned)],
+              onDayTap: (day) => tapped = day,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('planned-dot')), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(RegExp('workout planned')));
+    expect(tapped, DateTime(now.year, now.month, 15));
+  });
+
+  testWidgets('a completed plan is not marked', (tester) async {
+    final now = DateTime.now();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TrainingCalendarCard(
+              activities: const [],
+              plannedWorkouts: [
+                PlannedWorkout(
+                  id: 1,
+                  title: 'Push',
+                  scheduledAt: DateTime(now.year, now.month, 15, 18),
+                  completedActivityId: 9,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('planned-dot')), findsNothing);
   });
 }

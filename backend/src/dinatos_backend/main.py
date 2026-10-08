@@ -19,10 +19,12 @@ from dinatos_backend.api.routers import (
     admin,
     api_keys,
     auth,
+    calendar,
     exercises,
     imports,
     intervals_imports,
     measurements,
+    planned_workouts,
     profile,
     routines,
 )
@@ -35,7 +37,8 @@ app = FastAPI(
     docs_url=None,  # replaced by the themed `/docs` route below
     description=(
         "The Dinatos REST API.\n\n"
-        "Everything except `GET /health` needs an "
+        "Everything except `GET /health` and the calendar feed "
+        "`GET /calendar/{token}.ics` (whose secret link is its credential) needs an "
         "`Authorization: Bearer <token>` header. Call `POST /auth/register` or "
         "`POST /auth/login` to get one -- those two, plus `GET /auth/config`, "
         "work without it (`/auth/me` and `/auth/logout` are themselves "
@@ -53,6 +56,14 @@ app = FastAPI(
         {"name": "exercises", "description": "The exercise catalog, shared by every user."},
         {"name": "routines", "description": "Routine templates: exercises and sets, no dates."},
         {"name": "activities", "description": "Logged instances of a workout, actually performed."},
+        {
+            "name": "planned-workouts",
+            "description": "Routines scheduled for future dates: the training calendar.",
+        },
+        {
+            "name": "calendar",
+            "description": "The subscribable ICS feed of planned workouts, and its secret link.",
+        },
         {"name": "measurements", "description": "Body weight, fat percentage and circumferences."},
         {
             "name": "profile",
@@ -87,6 +98,8 @@ app.include_router(routines.router)
 app.include_router(activities.router)
 app.include_router(profile.router)
 app.include_router(measurements.router)
+app.include_router(planned_workouts.router)
+app.include_router(calendar.router)
 app.include_router(imports.router)
 app.include_router(intervals_imports.router)
 # The MCP server (streamable HTTP), for LLM clients that take a URL and an API

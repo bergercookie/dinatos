@@ -23,6 +23,10 @@ Dinatos organizes everything around four kinds of thing:
   body composition, and tape measurements -- whatever you choose to track),
   separate from any routine.
 
+- **Planned workouts** -- a routine (or a free-form session) scheduled for a
+  future day and time, shown on Home's calendar. A plan is not an activity: it
+  only becomes one when you do the workout, and then it is marked done.
+
 Your **profile** holds account-level settings and is where you log out,
 change the server you're pointed at, and import history from Hevy or Intervals.icu.
 

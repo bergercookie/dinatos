@@ -26,6 +26,7 @@ from dinatos_backend.models.exercise import Exercise, ExerciseMuscle
 from dinatos_backend.models.hevy_import import HevyImportRecord
 from dinatos_backend.models.intervals_import import IntervalsImportedActivity
 from dinatos_backend.models.measurement import BodyMeasurement
+from dinatos_backend.models.planned_workout import PlannedWorkout
 from dinatos_backend.models.routine import Routine, RoutineExercise, RoutineSet
 from dinatos_backend.models.user import User
 from dinatos_backend.schemas.backup import (
@@ -34,6 +35,7 @@ from dinatos_backend.schemas.backup import (
     ExportedActivitySet,
     ExportedExercise,
     ExportedMeasurement,
+    ExportedPlannedWorkout,
     ExportedProfile,
     ExportedRoutine,
     ExportedRoutineExercise,
@@ -79,6 +81,13 @@ async def export_user_data(db: AsyncSession, user: User, app_version: str) -> Us
             select(BodyMeasurement)
             .where(BodyMeasurement.owner_id == user.id)
             .order_by(BodyMeasurement.measured_at, BodyMeasurement.id)
+        )
+    )
+    planned = list(
+        await db.scalars(
+            select(PlannedWorkout)
+            .where(PlannedWorkout.owner_id == user.id)
+            .order_by(PlannedWorkout.scheduled_at, PlannedWorkout.id)
         )
     )
     exercise_ids = {item.exercise_id for routine in routines for item in routine.exercises} | {
@@ -174,6 +183,17 @@ async def export_user_data(db: AsyncSession, user: User, app_version: str) -> Us
             )
             for m in measurements
         ],
+        planned_workouts=[
+            ExportedPlannedWorkout(
+                title=p.title,
+                notes=p.notes,
+                scheduled_at=normalize_utc(p.scheduled_at),
+                duration_minutes=p.duration_minutes,
+                reminder_minutes=p.reminder_minutes,
+                routine_ref=refs.get(p.routine_id) if p.routine_id else None,
+            )
+            for p in planned
+        ],
     )
 
 
@@ -201,6 +221,7 @@ async def _delete_own_data(db: AsyncSession, owner_id: int) -> UserImportCounts:
         delete(RoutineExercise).where(RoutineExercise.routine_id.in_(routine_ids)),
         delete(Routine).where(Routine.owner_id == owner_id),
         delete(BodyMeasurement).where(BodyMeasurement.owner_id == owner_id),
+        delete(PlannedWorkout).where(PlannedWorkout.owner_id == owner_id),
     ]
     removed = [
         cast(
@@ -209,7 +230,12 @@ async def _delete_own_data(db: AsyncSession, owner_id: int) -> UserImportCounts:
         ).rowcount
         for statement in statements
     ]
-    return UserImportCounts(activities=removed[3], routines=removed[6], measurements=removed[7])
+    return UserImportCounts(
+        activities=removed[3],
+        routines=removed[6],
+        measurements=removed[7],
+        planned_workouts=removed[8],
+    )
 
 
 async def clear_own_data(db: AsyncSession, user: User) -> UserImportCounts:
@@ -271,6 +297,9 @@ def _check_references(document: UserExport, known_exercises: set[str]) -> None:
     for activity in document.activities:
         if activity.routine_ref is not None and activity.routine_ref not in refs:
             raise UserImportInvalidError(f"activity {activity.title!r}: unknown routine_ref")
+    for plan in document.planned_workouts:
+        if plan.routine_ref is not None and plan.routine_ref not in refs:
+            raise UserImportInvalidError(f"planned workout {plan.title!r}: unknown routine_ref")
 
 
 async def import_user_data(
@@ -304,6 +333,7 @@ async def import_user_data(
     known_routines: dict[str, int] = {}
     known_activities: set[tuple[str, datetime]] = set()
     known_measurements: set[datetime] = set()
+    known_plans: set[tuple[str, datetime]] = set()
     if mode is UserImportMode.merge:
         for routine_id, routine_name in await db.execute(
             select(Routine.id, Routine.name)
@@ -319,6 +349,15 @@ async def import_user_data(
             normalize_utc(measured_at)
             for measured_at in await db.scalars(
                 select(BodyMeasurement.measured_at).where(BodyMeasurement.owner_id == user.id)
+            )
+        }
+
+        known_plans = {
+            (title, normalize_utc(scheduled_at))
+            for title, scheduled_at in await db.execute(
+                select(PlannedWorkout.title, PlannedWorkout.scheduled_at).where(
+                    PlannedWorkout.owner_id == user.id
+                )
             )
         }
 
@@ -420,6 +459,24 @@ async def import_user_data(
             )
         )
         created.measurements += 1
+
+    for plan in document.planned_workouts:
+        scheduled_at = normalize_utc(plan.scheduled_at)
+        if (plan.title, scheduled_at) in known_plans:
+            skipped.planned_workouts += 1
+            continue
+        db.add(
+            PlannedWorkout(
+                owner_id=user.id,
+                routine_id=routine_ids[plan.routine_ref] if plan.routine_ref is not None else None,
+                title=plan.title,
+                notes=plan.notes,
+                scheduled_at=scheduled_at,
+                duration_minutes=plan.duration_minutes,
+                reminder_minutes=plan.reminder_minutes,
+            )
+        )
+        created.planned_workouts += 1
 
     await db.commit()
     return UserImportResult(mode=mode, created=created, skipped=skipped, deleted=deleted)

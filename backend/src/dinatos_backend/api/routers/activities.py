@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from dinatos_backend.api.deps import get_current_user
 from dinatos_backend.db import get_db
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
+from dinatos_backend.models.planned_workout import PlannedWorkout
 from dinatos_backend.models.routine import Routine
 from dinatos_backend.models.user import User
 from dinatos_backend.schemas.activity import ActivityCreate, ActivityRead
@@ -56,6 +57,25 @@ async def _check_routine_ownership(db: AsyncSession, owner_id: int, routine_id: 
     )
     if result.scalar_one_or_none() is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "routine not found")
+
+
+async def _complete_planned_workout(
+    db: AsyncSession, owner_id: int, planned_id: int | None, activity_id: int
+) -> None:
+    """Marks the caller's planned workout done by this activity. An unknown or
+    foreign id is ignored rather than failing the save: the workout has been
+    done either way, and losing it over a stale plan would be worse.
+    """
+    if planned_id is None:
+        return
+    planned = await db.scalar(
+        select(PlannedWorkout).where(
+            PlannedWorkout.id == planned_id, PlannedWorkout.owner_id == owner_id
+        )
+    )
+    if planned is not None and planned.completed_activity_id is None:
+        planned.completed_activity_id = activity_id
+        await db.commit()
 
 
 @router.get("", response_model=list[ActivityRead])
@@ -110,6 +130,7 @@ async def create_activity(
     replayed_id = existing.scalars().first()
     if replayed_id is not None:
         response.status_code = status.HTTP_200_OK
+        await _complete_planned_workout(db, user.id, payload.planned_workout_id, replayed_id)
         return await _get_or_404(db, user.id, replayed_id)
     activity = Activity(
         owner_id=user.id,
@@ -122,6 +143,7 @@ async def create_activity(
     )
     db.add(activity)
     await db.commit()
+    await _complete_planned_workout(db, user.id, payload.planned_workout_id, activity.id)
     return await _get_or_404(db, user.id, activity.id)
 
 

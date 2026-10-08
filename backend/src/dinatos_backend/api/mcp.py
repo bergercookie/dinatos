@@ -34,9 +34,10 @@ from dinatos_backend.services.personas import analyse_personas
 
 INSTRUCTIONS = (
     "Manage a Dinatos workout tracker: browse and add exercises, create routine "
-    "templates, log activities, and see which athlete personas the person's body and "
-    "training resemble. Look up exercise ids with list_exercises before creating a "
-    "routine or logging an activity that references one."
+    "templates, log activities, schedule future workouts on the calendar, and see "
+    "which athlete personas the person's body and training resemble. Look up "
+    "exercise ids with list_exercises before creating a routine or logging an "
+    "activity that references one."
 )
 
 
@@ -68,6 +69,8 @@ async def _api(
     if response.status_code >= httpx2.codes.BAD_REQUEST:
         # The app's own errors are always JSON with a `detail`.
         raise McpApiError(f"{response.status_code}: {response.json().get('detail')}")
+    if response.status_code == httpx2.codes.NO_CONTENT:
+        return None
     return response.json()
 
 
@@ -177,6 +180,90 @@ def build_mcp_server() -> FastMCP:
             },
         )
         return result
+
+    @mcp.tool()
+    async def list_planned_workouts(
+        since: datetime | None = None, until: datetime | None = None
+    ) -> list[dict[str, Any]]:
+        """List the workouts scheduled on your calendar, soonest first,
+        optionally bounded by scheduled time. A plan with completed_activity_id
+        set has already been done.
+        """
+        params = {
+            key: value.isoformat()
+            for key, value in {"since": since, "until": until}.items()
+            if value is not None
+        }
+        result: list[dict[str, Any]] = await _api("GET", "/planned-workouts", params=params or None)
+        return result
+
+    @mcp.tool()
+    async def schedule_workout(
+        scheduled_at: datetime,
+        routine_id: int | None = None,
+        title: str | None = None,
+        notes: str | None = None,
+        duration_minutes: int = 60,
+        reminder_minutes: int | None = 30,
+    ) -> dict[str, Any]:
+        """Put a future workout on the calendar at scheduled_at (include a
+        timezone offset). Give a routine_id (see list_routines) to plan that
+        routine -- the title then defaults to its name -- or just a title for a
+        free-form session. The phone reminds the person reminder_minutes before
+        it starts (null for no reminder) and can start it straight from the plan.
+        """
+        result: dict[str, Any] = await _api(
+            "POST",
+            "/planned-workouts",
+            body={
+                "scheduled_at": scheduled_at.isoformat(),
+                "routine_id": routine_id,
+                "title": title,
+                "notes": notes,
+                "duration_minutes": duration_minutes,
+                "reminder_minutes": reminder_minutes,
+            },
+        )
+        return result
+
+    @mcp.tool()
+    async def update_planned_workout(
+        planned_workout_id: int,
+        scheduled_at: datetime | None = None,
+        routine_id: int | None = None,
+        title: str | None = None,
+        notes: str | None = None,
+        duration_minutes: int | None = None,
+        reminder_minutes: int | None = None,
+        remove_reminder: bool = False,
+    ) -> dict[str, Any]:
+        """Change a scheduled workout (reschedule it, retitle it, switch its
+        routine, ...). Only the arguments you pass change; the rest stay as
+        they were. Pass remove_reminder=true to drop its reminder.
+        """
+        changes: dict[str, Any] = {
+            "scheduled_at": scheduled_at.isoformat() if scheduled_at is not None else None,
+            "routine_id": routine_id,
+            "title": title,
+            "notes": notes,
+            "duration_minutes": duration_minutes,
+            "reminder_minutes": reminder_minutes,
+        }
+        body = {key: value for key, value in changes.items() if value is not None}
+        if remove_reminder:
+            body["reminder_minutes"] = None
+        result: dict[str, Any] = await _api(
+            "PATCH", f"/planned-workouts/{planned_workout_id}", body=body
+        )
+        return result
+
+    @mcp.tool()
+    async def delete_planned_workout(planned_workout_id: int) -> dict[str, Any]:
+        """Remove a workout from the calendar (an activity already logged from
+        it is kept).
+        """
+        await _api("DELETE", f"/planned-workouts/{planned_workout_id}")
+        return {"deleted": planned_workout_id}
 
     @mcp.tool()
     async def get_persona_stats(

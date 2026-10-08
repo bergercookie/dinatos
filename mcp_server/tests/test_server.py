@@ -13,6 +13,10 @@ EXPECTED_TOOLS = {
     "create_routine",
     "list_activities",
     "log_activity",
+    "list_planned_workouts",
+    "schedule_workout",
+    "update_planned_workout",
+    "delete_planned_workout",
     "get_persona_stats",
 }
 

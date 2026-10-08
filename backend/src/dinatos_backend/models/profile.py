@@ -28,3 +28,8 @@ class UserProfile(Base, TimestampMixin):
     # would be useless) and never returned by the API: `ProfileRead` only
     # exposes whether one is set.
     workoutx_api_key: Mapped[str | None] = mapped_column(String(255))
+    # The secret in this user's calendar-feed URL (`GET /calendar/{token}.ics`),
+    # which calendar apps fetch without being able to log in. Stored as-is
+    # (unlike an API key it is shown again, so the person can re-copy the
+    # link) and never part of the per-user export. `None` = feed disabled.
+    calendar_token: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
