@@ -406,6 +406,7 @@ class _LiveExerciseCard extends ConsumerWidget {
       history: ref.watch(exerciseHistoryProvider(exercise.exerciseId)).valueOrNull,
       records: ref.watch(exerciseRecordsProvider(exercise.exerciseId)).valueOrNull,
       supersetLabel: supersetLabel,
+      collapsible: true,
       onChanged: (updated) => notifier.updateExerciseAt(index, updated),
       onRemove: () => notifier.removeExerciseAt(index),
       onLinkWithNext: index + 1 < count ? () => notifier.linkExerciseWithNext(index) : null,

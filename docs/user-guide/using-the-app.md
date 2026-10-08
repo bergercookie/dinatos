@@ -55,6 +55,12 @@ otherwise aim for the best set's reps on all of them. **Use** fills it into the
 sets that are still empty. The weight and reps fields hint at the same set
 from last time.
 
+Tap an exercise's name (or the arrow beside it) to **collapse** it to a single
+line -- its name and how many sets are done -- and tap again to expand it.
+Handy for tucking away finished exercises in a long workout; collapsing hides
+nothing from the workout itself, and it resets if you leave and reopen the
+screen.
+
 Tick the box at the end of a set when you have done it: its row turns green,
 and only ticked sets count -- towards the workout's totals, your records, the
 statistics and what the app suggests next time. A set you have not ticked is

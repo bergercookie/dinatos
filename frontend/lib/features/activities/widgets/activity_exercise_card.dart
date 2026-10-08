@@ -39,6 +39,7 @@ class ActivityExerciseCard extends StatefulWidget {
     this.onMoveUp,
     this.onMoveDown,
     this.onViewProgress,
+    this.collapsible = false,
   });
 
   final ActivityExercise exercise;
@@ -65,6 +66,12 @@ class ActivityExerciseCard extends StatefulWidget {
   final VoidCallback? onMoveDown;
   final VoidCallback? onViewProgress;
 
+  /// Lets the person collapse the card to its title and a one-line sets
+  /// summary (tap the title or the chevron), and expand it again -- for a
+  /// long live workout where the finished exercises just take up room. Off
+  /// by default: a form being filled in has nothing to tuck away.
+  final bool collapsible;
+
   @override
   State<ActivityExerciseCard> createState() => _ActivityExerciseCardState();
 }
@@ -73,6 +80,9 @@ enum _ExerciseAction { linkWithNext, unlink, moveUp, moveDown, viewProgress, tog
 
 class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
   late bool _showNotes = (widget.exercise.notes ?? '').isNotEmpty;
+  bool _expanded = true;
+
+  bool get _collapsed => widget.collapsible && !_expanded;
 
   ActivityExercise get _exercise => widget.exercise;
 
@@ -159,10 +169,19 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
           children: [
             Row(
               children: [
+                if (widget.collapsible)
+                  IconButton(
+                    tooltip: _collapsed ? 'Expand exercise' : 'Collapse exercise',
+                    icon: Icon(_collapsed ? Icons.expand_more : Icons.expand_less),
+                    onPressed: () => setState(() => _expanded = !_expanded),
+                  ),
                 Expanded(
-                  child: Text(
-                    catalog?.name ?? '#${_exercise.exerciseId}',
-                    style: Theme.of(context).textTheme.titleSmall,
+                  child: InkWell(
+                    onTap: widget.collapsible ? () => setState(() => _expanded = !_expanded) : null,
+                    child: Text(
+                      catalog?.name ?? '#${_exercise.exerciseId}',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                   ),
                 ),
                 if (inSuperset)
@@ -215,49 +234,65 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                 ),
               ],
             ),
-            if (catalog != null) _ExerciseMetadataChips(exercise: catalog),
-            if (last != null)
-              _LastTimePanel(last: last, suggestion: suggestion, onUse: _applySuggestion),
-            if (_showNotes)
+            if (_collapsed)
               Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 4),
-                child: TextFormField(
-                  initialValue: _exercise.notes,
-                  decoration: const InputDecoration(labelText: 'Note', isDense: true),
-                  textCapitalization: TextCapitalization.sentences,
-                  minLines: 1,
-                  maxLines: 3,
-                  onChanged: (value) =>
-                      widget.onChanged(_exercise.copyWith(notes: value.isEmpty ? null : value)),
+                key: const Key('collapsedSummary'),
+                padding: const EdgeInsets.only(left: 12, bottom: 4),
+                child: Text(_collapsedSummary(), style: Theme.of(context).textTheme.bodySmall),
+              )
+            else ...[
+              if (catalog != null) _ExerciseMetadataChips(exercise: catalog),
+              if (last != null)
+                _LastTimePanel(last: last, suggestion: suggestion, onUse: _applySuggestion),
+              if (_showNotes)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: TextFormField(
+                    initialValue: _exercise.notes,
+                    decoration: const InputDecoration(labelText: 'Note', isDense: true),
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: 1,
+                    maxLines: 3,
+                    onChanged: (value) =>
+                        widget.onChanged(_exercise.copyWith(notes: value.isEmpty ? null : value)),
+                  ),
                 ),
-              ),
-            for (var i = 0; i < _exercise.sets.length; i++)
-              ActivitySetRow(
-                key: ValueKey(
-                  itemKeyOf(uid: _exercise.sets[i].uid, id: _exercise.sets[i].id, index: i),
+              for (var i = 0; i < _exercise.sets.length; i++)
+                ActivitySetRow(
+                  key: ValueKey(
+                    itemKeyOf(uid: _exercise.sets[i].uid, id: _exercise.sets[i].id, index: i),
+                  ),
+                  index: i,
+                  set: _exercise.sets[i],
+                  previous: last != null && i < last.sets.length ? last.sets[i] : null,
+                  record: i < recordFlags.length ? recordFlags[i] : null,
+                  weightEnabled: catalog?.equipment != Equipment.bodyOnly,
+                  // Until the catalog loads, show the defaults (weight x reps).
+                  showWeight: catalog?.tracksWeight ?? true,
+                  showReps: catalog?.tracksReps ?? true,
+                  showDistance: catalog?.tracksDistance ?? false,
+                  showDuration: catalog?.tracksDuration ?? false,
+                  onChanged: (updated) => _updateSetAt(i, updated),
+                  onRemove: () => _removeSetAt(i),
                 ),
-                index: i,
-                set: _exercise.sets[i],
-                previous: last != null && i < last.sets.length ? last.sets[i] : null,
-                record: i < recordFlags.length ? recordFlags[i] : null,
-                weightEnabled: catalog?.equipment != Equipment.bodyOnly,
-                // Until the catalog loads, show the defaults (weight x reps).
-                showWeight: catalog?.tracksWeight ?? true,
-                showReps: catalog?.tracksReps ?? true,
-                showDistance: catalog?.tracksDistance ?? false,
-                showDuration: catalog?.tracksDuration ?? false,
-                onChanged: (updated) => _updateSetAt(i, updated),
-                onRemove: () => _removeSetAt(i),
+              TextButton.icon(
+                onPressed: _addSet,
+                icon: const Icon(Icons.add),
+                label: const Text('Add set'),
               ),
-            TextButton.icon(
-              onPressed: _addSet,
-              icon: const Icon(Icons.add),
-              label: const Text('Add set'),
-            ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  /// "2 of 3 sets done" -- all that is shown of the sets while collapsed.
+  String _collapsedSummary() {
+    final total = _exercise.sets.length;
+    if (total == 0) return 'No sets yet';
+    final done = _exercise.completedSets.length;
+    return '$done of $total ${total == 1 ? 'set' : 'sets'} done';
   }
 }
 
