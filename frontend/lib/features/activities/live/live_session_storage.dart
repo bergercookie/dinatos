@@ -27,6 +27,7 @@ class PersistedLiveSession {
     'pending_title': session.pendingTitle,
     'routine_id': session.routineId,
     'routine_name': session.routineName,
+    'planned_workout_id': session.plannedWorkoutId,
     // `ActivityExercise.toJson` is exactly the shape wanted here (no server ids).
     'exercises': session.exercises.map((e) => e.toJson()).toList(),
   };
@@ -49,6 +50,7 @@ class PersistedLiveSession {
         pendingTitle: json['pending_title'] as String?,
         routineId: json['routine_id'] as int?,
         routineName: json['routine_name'] as String?,
+        plannedWorkoutId: json['planned_workout_id'] as int?,
         exercises: (json['exercises'] as List<dynamic>)
             .map((e) => _exerciseFromJson(e as Map<String, dynamic>))
             .toList(),

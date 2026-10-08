@@ -7,10 +7,19 @@ import 'live_session.dart';
 
 /// Starts a live workout pre-filled from [routine] and opens it.
 ///
+/// [plannedWorkoutId] and [title] come from a calendar entry (see
+/// `startPlannedWorkout`).
+///
 /// A workout already under way is never silently clobbered (the "Start
 /// workout" button resumes it instead): the person chooses between carrying
 /// on with it and replacing it with this routine.
-Future<void> startWorkoutFromRoutine(BuildContext context, WidgetRef ref, Routine routine) async {
+Future<void> startWorkoutFromRoutine(
+  BuildContext context,
+  WidgetRef ref,
+  Routine routine, {
+  int? plannedWorkoutId,
+  String? title,
+}) async {
   final session = ref.read(liveActivityProvider);
   final inProgress = session != null && session.endedAt == null;
 
@@ -42,6 +51,8 @@ Future<void> startWorkoutFromRoutine(BuildContext context, WidgetRef ref, Routin
     }
   }
 
-  ref.read(liveActivityProvider.notifier).startFromRoutine(routine);
+  ref
+      .read(liveActivityProvider.notifier)
+      .startFromRoutine(routine, plannedWorkoutId: plannedWorkoutId, title: title);
   context.go('/activities/live');
 }

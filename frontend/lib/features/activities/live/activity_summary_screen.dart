@@ -12,6 +12,7 @@ import '../../../models/exercise_records.dart';
 import '../../../models/muscle_group.dart';
 import '../../exercises/exercises_providers.dart';
 import '../../exercises/exercises_repository.dart';
+import '../../calendar/planned_workouts_providers.dart';
 import '../activities_providers.dart';
 import '../activities_repository.dart';
 import 'elapsed_timer.dart';
@@ -158,10 +159,12 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       endedAt: session.endedAt ?? DateTime.now(),
       exercises: session.exercises,
       routineId: session.routineId,
+      plannedWorkoutId: session.plannedWorkoutId,
     );
     try {
       final saved = await ref.read(activitiesRepositoryProvider).create(activity);
       ref.invalidate(activityListProvider);
+      if (session.plannedWorkoutId != null) ref.invalidate(plannedWorkoutListProvider);
       if (mounted) notifier.markSaved(activityId: saved.id!, title: saved.title);
     } on ApiException catch (error) {
       // No HTTP status means no response: the workout may or may not have been

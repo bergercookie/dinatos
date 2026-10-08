@@ -14,6 +14,7 @@ import 'core/theme_mode_provider.dart';
 import 'features/activities/live/live_session.dart';
 import 'features/activities/live/live_session_storage.dart';
 import 'features/activities/live/live_workout_notification.dart';
+import 'features/calendar/workout_reminders.dart';
 import 'features/onboarding/onboarding_overlay.dart';
 
 /// A catch-all route so this renders regardless of the browser's current
@@ -61,6 +62,7 @@ class DinatosApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(liveWorkoutNotificationSyncProvider);
+    ref.watch(workoutReminderSyncProvider);
 
     if (authState is AuthUnknown) {
       // A plain `MaterialApp(home: ...)` here (Navigator 1.0) throws "Could

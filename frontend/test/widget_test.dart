@@ -1,6 +1,7 @@
 import 'package:dinatos_frontend/core/auth/auth_notifier.dart';
 import 'package:dinatos_frontend/core/auth/token_storage.dart';
 import 'package:dinatos_frontend/main.dart';
+import 'package:dinatos_frontend/features/calendar/workout_reminders.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,11 @@ void main() {
   testWidgets('shows the login screen when signed out', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [tokenStorageProvider.overrideWithValue(_FakeTokenStorage())],
+        overrides: [
+          tokenStorageProvider.overrideWithValue(_FakeTokenStorage()),
+          // `flutter test` reports Android as its platform: keep the real plugin out of it.
+          workoutReminderServiceProvider.overrideWithValue(NoopWorkoutReminderService()),
+        ],
         child: const DinatosApp(),
       ),
     );

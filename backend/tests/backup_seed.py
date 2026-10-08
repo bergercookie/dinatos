@@ -197,6 +197,18 @@ async def populate(
         },
     )
     await post(
+        client,
+        alice,
+        "/planned-workouts",
+        {
+            "scheduled_at": "2030-06-01T07:30:00Z",
+            "routine_id": push["id"],
+            "notes": "heavy",
+            "duration_minutes": 75,
+            "reminder_minutes": 15,
+        },
+    )
+    await post(
         client, bob, "/measurements", {"measured_at": "2026-01-02T07:00:00Z", "weight_kg": 90}
     )
 

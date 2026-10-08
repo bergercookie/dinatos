@@ -81,6 +81,10 @@ async def test_lists_the_tools(client: AsyncClient) -> None:
         "create_routine",
         "list_activities",
         "log_activity",
+        "list_planned_workouts",
+        "schedule_workout",
+        "update_planned_workout",
+        "delete_planned_workout",
         "get_persona_stats",
     }
 
@@ -255,3 +259,58 @@ async def test_a_refusal_from_the_api_comes_back_as_a_tool_error(client: AsyncCl
     assert result["isError"] is True
     assert "404" in result["content"][0]["text"]
     assert "routine not found" in result["content"][0]["text"]
+
+
+async def test_schedule_read_update_and_delete_a_planned_workout(client: AsyncClient) -> None:
+    key = await _api_key(client)
+    routine = _data(await _call(client, key, "create_routine", name="Pull Day", exercises=[]))
+
+    plan = _data(
+        await _call(
+            client,
+            key,
+            "schedule_workout",
+            scheduled_at="2030-01-05T07:30:00+00:00",
+            routine_id=routine["id"],
+        )
+    )
+    assert plan["title"] == "Pull Day"
+    assert plan["reminder_minutes"] == 30
+
+    listed = _data(await _call(client, key, "list_planned_workouts"))
+    assert [p["id"] for p in listed] == [plan["id"]]
+    later = _data(
+        await _call(client, key, "list_planned_workouts", since="2031-01-01T00:00:00+00:00")
+    )
+    assert later == []
+
+    moved = _data(
+        await _call(
+            client,
+            key,
+            "update_planned_workout",
+            planned_workout_id=plan["id"],
+            scheduled_at="2030-01-06T18:00:00+00:00",
+            notes="Heavy",
+            remove_reminder=True,
+        )
+    )
+    assert moved["scheduled_at"].startswith("2030-01-06T18:00:00")
+    assert moved["notes"] == "Heavy"
+    assert moved["reminder_minutes"] is None
+    assert moved["title"] == "Pull Day"
+
+    # Without remove_reminder, an unmentioned reminder is left alone.
+    renamed = _data(
+        await _call(
+            client, key, "update_planned_workout", planned_workout_id=plan["id"], title="Back day"
+        )
+    )
+    assert renamed["title"] == "Back day"
+    assert renamed["reminder_minutes"] is None
+
+    deleted = _data(
+        await _call(client, key, "delete_planned_workout", planned_workout_id=plan["id"])
+    )
+    assert deleted == {"deleted": plan["id"]}
+    assert _data(await _call(client, key, "list_planned_workouts")) == []

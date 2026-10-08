@@ -3,16 +3,28 @@ import 'package:intl/intl.dart';
 
 import '../../../core/design_tokens.dart';
 import '../../../models/activity.dart';
+import '../../../models/planned_workout.dart';
 import 'training_streak.dart';
 
 /// A month calendar marking which days the person actually trained, plus
 /// their current day/week streak -- shown at the top of the Home screen's
 /// activity list. Built from whatever [activities] the caller already has
 /// loaded (the same list the screen below renders), not a separate fetch.
+///
+/// Days with a workout still planned ([plannedWorkouts]) carry a dot, and a
+/// tap on any day reports it through [onDayTap] (the Home screen opens that
+/// day's plans). Months can be browsed into the future, to see what is planned.
 class TrainingCalendarCard extends StatefulWidget {
-  const TrainingCalendarCard({super.key, required this.activities});
+  const TrainingCalendarCard({
+    super.key,
+    required this.activities,
+    this.plannedWorkouts = const [],
+    this.onDayTap,
+  });
 
   final List<Activity> activities;
+  final List<PlannedWorkout> plannedWorkouts;
+  final void Function(DateTime day)? onDayTap;
 
   @override
   State<TrainingCalendarCard> createState() => _TrainingCalendarCardState();
@@ -28,17 +40,9 @@ class _TrainingCalendarCardState extends State<TrainingCalendarCard> {
     _month = DateTime(now.year, now.month);
   }
 
-  bool get _isCurrentMonth {
-    final now = DateTime.now();
-    return _month.year == now.year && _month.month == now.month;
-  }
-
   void _previousMonth() => setState(() => _month = DateTime(_month.year, _month.month - 1));
 
-  void _nextMonth() {
-    if (_isCurrentMonth) return;
-    setState(() => _month = DateTime(_month.year, _month.month + 1));
-  }
+  void _nextMonth() => setState(() => _month = DateTime(_month.year, _month.month + 1));
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,7 @@ class _TrainingCalendarCardState extends State<TrainingCalendarCard> {
     final dayStreak = currentDayStreak(trainingDates);
     final weekStreak = currentWeekStreak(trainingDates);
     final today = dateOnly(DateTime.now());
+    final planned = plannedDates(widget.plannedWorkouts);
 
     final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
     final leadingBlanks = _month.weekday - 1;
@@ -80,7 +85,7 @@ class _TrainingCalendarCardState extends State<TrainingCalendarCard> {
                 IconButton(
                   tooltip: 'Next month',
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: _isCurrentMonth ? null : _nextMonth,
+                  onPressed: _nextMonth,
                 ),
               ],
             ),
@@ -108,6 +113,10 @@ class _TrainingCalendarCardState extends State<TrainingCalendarCard> {
                             date: date,
                             trained: date != null && trainingDates.contains(date),
                             isToday: date != null && date == today,
+                            planned: date != null && planned.contains(date),
+                            onTap: date == null || widget.onDayTap == null
+                                ? null
+                                : () => widget.onDayTap!(date),
                           ),
                         ),
                       )
@@ -176,34 +185,74 @@ class _StreakChip extends StatelessWidget {
 }
 
 class _DayCell extends StatelessWidget {
-  const _DayCell({required this.date, required this.trained, required this.isToday});
+  const _DayCell({
+    required this.date,
+    required this.trained,
+    required this.isToday,
+    required this.planned,
+    this.onTap,
+  });
 
   final DateTime? date;
   final bool trained;
   final bool isToday;
+  final bool planned;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final date = this.date;
     if (date == null) return const SizedBox(height: 32);
     final scheme = Theme.of(context).colorScheme;
+    final label = [
+      DateFormat.MMMMd().format(date),
+      if (trained) 'trained',
+      if (planned) 'workout planned',
+    ].join(', ');
     return Padding(
       padding: const EdgeInsets.all(2),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: trained ? scheme.primary : null,
-            border: isToday && !trained ? Border.all(color: scheme.primary, width: 1.5) : null,
-          ),
-          child: Center(
-            child: Text(
-              '${date.day}',
-              style: TextStyle(
-                color: trained ? scheme.onPrimary : (isToday ? scheme.primary : scheme.onSurface),
-                fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
-                fontSize: 12,
+      child: Semantics(
+        label: label,
+        button: onTap != null,
+        excludeSemantics: true,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: trained ? scheme.primary : null,
+                border: isToday && !trained ? Border.all(color: scheme.primary, width: 1.5) : null,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    '${date.day}',
+                    style: TextStyle(
+                      color: trained
+                          ? scheme.onPrimary
+                          : (isToday ? scheme.primary : scheme.onSurface),
+                      fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (planned)
+                    Positioned(
+                      bottom: 3,
+                      child: Container(
+                        key: const ValueKey('planned-dot'),
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: trained ? scheme.onPrimary : scheme.tertiary,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

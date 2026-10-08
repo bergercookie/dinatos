@@ -9,6 +9,9 @@ import '../../core/widgets/app_list_card.dart';
 import '../../core/widgets/count_footer.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../calendar/day_plans_sheet.dart';
+import '../calendar/planned_workouts_providers.dart';
+import '../calendar/upcoming_workouts_card.dart';
 import '../../models/activity.dart';
 import 'activities_providers.dart';
 import '../onboarding/onboarding_overlay.dart';
@@ -23,6 +26,8 @@ class ActivityListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activities = ref.watch(activityListProvider);
+    // A failed or pending fetch just means no plans are shown: never worth blocking Home on.
+    final plans = ref.watch(plannedWorkoutListProvider).valueOrNull ?? const [];
     final dateFormat = DateFormat.yMMMd().add_Hm();
     final liveSession = ref.watch(liveActivityProvider);
     final hasLiveWorkout = liveSession != null && liveSession.endedAt == null;
@@ -67,18 +72,37 @@ class ActivityListScreen extends ConsumerWidget {
       ),
       body: ResponsiveBody(
         child: RefreshIndicator(
-          onRefresh: () => ref.refresh(activityListProvider.future),
+          onRefresh: () {
+            ref.invalidate(plannedWorkoutListProvider);
+            return ref.refresh(activityListProvider.future);
+          },
           child: AsyncValueView(
             value: activities,
             onRetry: () => ref.invalidate(activityListProvider),
             builder: (context, data) {
               if (data.isEmpty) {
-                return EmptyState(
-                  icon: Icons.history_rounded,
-                  title: 'No logged activities yet',
-                  message: 'Log a session to start tracking what you actually did in the gym.',
-                  actionLabel: 'Log activity',
-                  onAction: () => context.go('/activities/new'),
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: UpcomingWorkoutsCard(plans: plans),
+                    ),
+                    Expanded(
+                      child: EmptyState(
+                        icon: Icons.history_rounded,
+                        title: 'No logged activities yet',
+                        message:
+                            'Log a session to start tracking what you actually did in the gym.',
+                        actionLabel: 'Log activity',
+                        onAction: () => context.go('/activities/new'),
+                      ),
+                    ),
+                  ],
                 );
               }
               return ListView.separated(
@@ -88,8 +112,8 @@ class ActivityListScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   AppSpacing.xxl,
                 ),
-                // +2 for the stats and calendar/streak cards, pinned above the list itself.
-                itemCount: data.length + 2,
+                // +3 for the stats, upcoming and calendar/streak cards, pinned above the list itself.
+                itemCount: data.length + 3,
                 separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) {
                   if (index == 0) {
@@ -98,8 +122,15 @@ class ActivityListScreen extends ConsumerWidget {
                       onOpenStats: () => context.go('/activities/stats'),
                     );
                   }
-                  if (index == 1) return TrainingCalendarCard(activities: data);
-                  final activity = data[index - 2];
+                  if (index == 1) return UpcomingWorkoutsCard(plans: plans);
+                  if (index == 2) {
+                    return TrainingCalendarCard(
+                      activities: data,
+                      plannedWorkouts: plans,
+                      onDayTap: (day) => showDayPlansSheet(context, ref, day, plans),
+                    );
+                  }
+                  final activity = data[index - 3];
                   return AppListCard(
                     leading: const AppIconAvatar(icon: Icons.history_rounded),
                     title: activity.title,

@@ -1,7 +1,8 @@
 # Exporting and importing your data
 
 **Settings -> Data -> Export my data** saves a JSON file with your own
-settings (height, units), routines, activities, body measurements, and the
+settings (height, units), routines, activities, body measurements, planned
+workouts, and the
 exercises they use. It never includes your password or your WorkoutX API key,
 and never anyone else's data.
 
@@ -11,7 +12,8 @@ another one). You choose how:
 - **Merge** (the default) adds what is missing and leaves everything you
   already have alone. A routine counts as already there if you have one with
   the same name, an activity if the title and start time match, a measurement
-  if the date and time match -- so importing the same file twice does not
+  if the date and time match, a planned workout if the title and time match --
+  so importing the same file twice does not
   create duplicates.
 - **Replace my data** first deletes *all* your routines, activities and body
   measurements, then imports the file. Use it to make an account match a file
@@ -19,7 +21,7 @@ another one). You choose how:
 
 To start over entirely, turn on **Advanced** in Settings and use **Clear all
 account data**. It deletes your activities, routines, body measurements, Hevy and
-Intervals.icu import history and any custom exercises nobody else uses, and keeps your
+Intervals.icu import history, planned workouts and any custom exercises nobody else uses, and keeps your
 settings and account. It cannot be undone.
 
 Exercises are shared by everyone on a server: an exercise in the file is matched

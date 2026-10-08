@@ -92,8 +92,15 @@ async def test_export_then_import_into_a_fresh_account_reproduces_the_data(
         "routines": 2,
         "activities": 2,
         "measurements": 2,
+        "planned_workouts": 1,
     }
-    assert result["skipped"] == {"exercises": 0, "routines": 0, "activities": 0, "measurements": 0}
+    assert result["skipped"] == {
+        "exercises": 0,
+        "routines": 0,
+        "activities": 0,
+        "measurements": 0,
+        "planned_workouts": 0,
+    }
     assert _comparable(await _export(client, carol)) == _comparable(original)
 
     # The copy is carol's own: new ids, and independent of alice's data.
@@ -125,6 +132,8 @@ async def test_import_creates_missing_exercises_as_custom_and_reuses_existing_on
         await client.delete(f"/routines/{routine['id']}", headers=seeded.alice.headers)
     for activity in (await client.get("/activities", headers=seeded.alice.headers)).json():
         await client.delete(f"/activities/{activity['id']}", headers=seeded.alice.headers)
+    for plan in (await client.get("/planned-workouts", headers=seeded.alice.headers)).json():
+        await client.delete(f"/planned-workouts/{plan['id']}", headers=seeded.alice.headers)
     assert (await client.delete(f"/exercises/{sprint_id}")).status_code == 204
 
     response = await _import(client, seeded.alice, document)
@@ -158,12 +167,14 @@ async def test_merge_is_idempotent_and_keeps_existing_data(
             "routines": 0,
             "activities": 0,
             "measurements": 0,
+            "planned_workouts": 0,
         }
         assert response.json()["skipped"] == {
             "exercises": 0,
             "routines": 2,
             "activities": 2,
             "measurements": 2,
+            "planned_workouts": 1,
         }
     names = [
         r["name"] for r in (await client.get("/routines", headers=seeded.alice.headers)).json()
@@ -218,8 +229,20 @@ async def test_replace_swaps_the_callers_data_for_the_files(
     assert response.status_code == 200, response.text
     result = response.json()
     assert result["mode"] == "replace"
-    assert result["deleted"] == {"exercises": 0, "routines": 3, "activities": 2, "measurements": 3}
-    assert result["created"] == {"exercises": 0, "routines": 2, "activities": 2, "measurements": 2}
+    assert result["deleted"] == {
+        "exercises": 0,
+        "routines": 3,
+        "activities": 2,
+        "measurements": 3,
+        "planned_workouts": 1,
+    }
+    assert result["created"] == {
+        "exercises": 0,
+        "routines": 2,
+        "activities": 2,
+        "measurements": 2,
+        "planned_workouts": 1,
+    }
     assert _comparable(await _export(client, seeded.alice)) == _comparable(alice_before)
     # Only the caller's rows were ever touched.
     assert _comparable(await _export(client, seeded.bob)) == _comparable(bob_before)
@@ -355,6 +378,7 @@ async def test_clear_data_wipes_the_callers_data_and_unused_custom_exercises(
     assert response.status_code == 200, response.text
     assert response.json()["deleted"]["routines"] == 2
     assert response.json()["deleted"]["activities"] == 2
+    assert response.json()["deleted"]["planned_workouts"] == 1
 
     document = await _export(client, seeded.alice)
     assert document["routines"] == []
@@ -372,7 +396,41 @@ async def test_clear_data_wipes_the_callers_data_and_unused_custom_exercises(
         "routines": 0,
         "activities": 0,
         "measurements": 0,
+        "planned_workouts": 0,
     }
+
+
+async def test_planned_workouts_keep_their_routine_through_an_import(
+    client: AsyncClient, seeded: Seeded
+) -> None:
+    document = await _export(client, seeded.alice)
+    assert document["planned_workouts"] == [
+        {
+            "title": "Push",
+            "notes": "heavy",
+            "scheduled_at": "2030-06-01T07:30:00Z",
+            "duration_minutes": 75,
+            "reminder_minutes": 15,
+            "routine_ref": 2,
+        }
+    ]
+    carol = await register(client, "carol@example.com")
+    await _import(client, carol, document)
+    plans = (await client.get("/planned-workouts", headers=carol.headers)).json()
+    routines = (await client.get("/routines", headers=carol.headers)).json()
+    assert [p["routine_id"] for p in plans] == [
+        next(r["id"] for r in routines if r["name"] == "Push")
+    ]
+
+
+async def test_a_planned_workout_with_an_unknown_routine_ref_is_rejected(
+    client: AsyncClient, seeded: Seeded
+) -> None:
+    document = await _export(client, seeded.alice)
+    document["planned_workouts"][0]["routine_ref"] = 99
+    response = await _import(client, seeded.alice, document)
+    assert response.status_code == 422
+    assert "unknown routine_ref" in response.text
 
 
 async def test_clear_data_requires_authentication(anonymous_client: AsyncClient) -> None:

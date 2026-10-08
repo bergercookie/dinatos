@@ -76,6 +76,12 @@ takes. The old `DINATOS_MCP_TOKEN`, `DINATOS_MCP_EMAIL` and
 - **`list_activities`** / **`log_activity`** -- logged sessions: what was
   actually done, and when, optionally against one of your own routine
   templates. Sets you log count as done unless you pass `completed: false`.
+- **`list_planned_workouts`** / **`schedule_workout`** /
+  **`update_planned_workout`** / **`delete_planned_workout`** -- your training
+  calendar: put a routine (or a free-form session) on a future date and time,
+  move or retitle it later, or take it off. Give `schedule_workout` a timezone
+  offset in `scheduled_at`; `reminder_minutes` (default 30, `null` for none) is
+  how long before the start the phone reminds you.
 - **`get_persona_stats`** -- the Personas page as data: how closely your body
   (from your measurements and profile height) and your training (the sets you
   completed over the last `month`, `quarter` -- the default -- `year`, or `all`
