@@ -7,7 +7,7 @@ This site has three parts, for three different reasons to be here:
 
 - **[Using Dinatos](user-guide/index.md)** -- you already have access to a
   running instance (someone else's, or your own) and want to log workouts,
-  track measurements, or import your history from Hevy.
+  track measurements, or import your history from Hevy or Intervals.icu.
 - **[Running your own instance](deploy/index.md)** -- you want to self-host
   Dinatos: Docker Compose, configuration, upgrades and backups, networking.
 - **Contributing** -- you want to change the code itself:

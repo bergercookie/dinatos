@@ -21,6 +21,7 @@ from dinatos_backend.api.routers import (
     auth,
     exercises,
     imports,
+    intervals_imports,
     measurements,
     profile,
     routines,
@@ -57,7 +58,12 @@ app = FastAPI(
             "name": "profile",
             "description": "Per-user settings; export and import of one's own data.",
         },
-        {"name": "imports", "description": "One-shot migration of a Hevy CSV export."},
+        {
+            "name": "imports",
+            "description": (
+                "One-shot migration of a Hevy CSV export, or of chosen Intervals.icu activities."
+            ),
+        },
     ],
 )
 app.add_middleware(
@@ -82,6 +88,7 @@ app.include_router(activities.router)
 app.include_router(profile.router)
 app.include_router(measurements.router)
 app.include_router(imports.router)
+app.include_router(intervals_imports.router)
 # The MCP server (streamable HTTP), for LLM clients that take a URL and an API
 # key. Routes, not a Mount: `/mcp` must answer as itself, not redirect to `/mcp/`.
 for _mcp_path in ("/mcp", "/mcp/"):

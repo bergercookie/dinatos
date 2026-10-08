@@ -29,6 +29,10 @@ tap one to review and edit it.
 > filename -- Hevy names every export the same thing, so Dinatos can't tell
 > two exports apart by name alone.
 
+Also tracking in [Intervals.icu](intervals-import.md)? That has its own one-time
+import, where you choose which activities to bring over (and skip the ones
+already here from Hevy).
+
 See [Hevy import](../architecture/backend.md#hevy-import) for exactly how
 the CSV gets parsed into activities and exercises, if you're curious.
 

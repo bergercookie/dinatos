@@ -7,9 +7,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from httpx2 import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from dinatos_backend.models.activity import Activity
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
+from dinatos_backend.models.intervals_import import IntervalsImportedActivity
 
 PASSWORD = "hunter22"
 
@@ -218,6 +221,18 @@ async def populate(
                 filename="workout_data.csv",
                 activities_created=3,
                 exercises_created=2,
+            )
+        )
+        ad_hoc = await session.scalar(
+            select(Activity).where(Activity.owner_id == alice_id, Activity.title == "Ad hoc")
+        )
+        assert ad_hoc is not None
+        session.add(
+            IntervalsImportedActivity(
+                owner_id=alice_id,
+                intervals_id="i123",
+                activity_id=ad_hoc.id,
+                started_at=ad_hoc.started_at,
             )
         )
         await session.commit()

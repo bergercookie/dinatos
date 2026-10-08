@@ -12,6 +12,7 @@ concepts
 getting-started
 using-the-app
 hevy-import
+intervals-import
 data-export
 mcp-server
 ```

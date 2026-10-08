@@ -18,8 +18,8 @@ another one). You choose how:
   exactly.
 
 To start over entirely, turn on **Advanced** in Settings and use **Clear all
-account data**. It deletes your activities, routines, body measurements, Hevy
-import history and any custom exercises nobody else uses, and keeps your
+account data**. It deletes your activities, routines, body measurements, Hevy and
+Intervals.icu import history and any custom exercises nobody else uses, and keeps your
 settings and account. It cannot be undone.
 
 Exercises are shared by everyone on a server: an exercise in the file is matched

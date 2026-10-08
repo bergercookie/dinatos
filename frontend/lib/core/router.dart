@@ -20,6 +20,7 @@ import '../features/progress/exercise_progress_screen.dart';
 import '../features/measurements/measurement_form_screen.dart';
 import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
+import '../features/imports/intervals_import_screen.dart';
 import '../features/profile/about_screen.dart';
 import '../features/personas/persona_screen.dart';
 import '../features/stats/stats_screen.dart';
@@ -160,6 +161,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'import-hevy',
                     builder: (context, state) => const HevyImportScreen(),
+                  ),
+                  GoRoute(
+                    path: 'import-intervals',
+                    builder: (context, state) => const IntervalsImportScreen(),
                   ),
                   GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
                   GoRoute(path: 'api-keys', builder: (context, state) => const ApiKeysScreen()),

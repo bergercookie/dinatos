@@ -189,6 +189,11 @@ void main() {
     FileContent? picked;
 
     Future<void> pump(WidgetTester tester) async {
+      // Tall enough that the whole Data card (Hevy, Intervals.icu, export,
+      // import...) is on screen without scrolling.
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       final container = ProviderContainer(
         overrides: [
           profileRepositoryProvider.overrideWithValue(repository),

@@ -4,7 +4,7 @@ export" for the policy; this is the mechanics.
 
 What travels: display settings, the exercises the user's routines/activities
 refer to, their routines, activities and body measurements. Never ids, the
-password hash, sessions, Hevy import records or the WorkoutX API key.
+password hash, sessions, Hevy or Intervals.icu import records or the WorkoutX API key.
 
 Exercises are a single global catalog with no owner, so "the user's custom
 exercises" means "the exercises their data uses": on import each is matched
@@ -24,6 +24,7 @@ from sqlalchemy.orm import selectinload
 from dinatos_backend.models.activity import Activity, ActivityExercise, ActivitySet
 from dinatos_backend.models.exercise import Exercise, ExerciseMuscle
 from dinatos_backend.models.hevy_import import HevyImportRecord
+from dinatos_backend.models.intervals_import import IntervalsImportedActivity
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.routine import Routine, RoutineExercise, RoutineSet
 from dinatos_backend.models.user import User
@@ -189,6 +190,10 @@ async def _delete_own_data(db: AsyncSession, owner_id: int) -> UserImportCounts:
         ActivityExercise.activity_id.in_(activity_ids)
     )
     statements = [
+        # Which Intervals.icu activities were imported is only meaningful while
+        # those activities exist, so the records go with them (and re-importing
+        # after a replace/clear must not be refused as a duplicate).
+        delete(IntervalsImportedActivity).where(IntervalsImportedActivity.owner_id == owner_id),
         delete(ActivitySet).where(ActivitySet.activity_exercise_id.in_(activity_exercise_ids)),
         delete(ActivityExercise).where(ActivityExercise.activity_id.in_(activity_ids)),
         delete(Activity).where(Activity.owner_id == owner_id),
@@ -204,7 +209,7 @@ async def _delete_own_data(db: AsyncSession, owner_id: int) -> UserImportCounts:
         ).rowcount
         for statement in statements
     ]
-    return UserImportCounts(activities=removed[2], routines=removed[5], measurements=removed[6])
+    return UserImportCounts(activities=removed[3], routines=removed[6], measurements=removed[7])
 
 
 async def clear_own_data(db: AsyncSession, user: User) -> UserImportCounts:
