@@ -66,6 +66,12 @@ and only ticked sets count -- towards the workout's totals, your records, the
 statistics and what the app suggests next time. A set you have not ticked is
 treated as not done.
 
+When you press **Finish workout**, anything left unfinished is **removed**: sets
+you never ticked off, and exercises with no ticked set at all. If there is
+anything to remove, Dinatos first tells you how much and asks you to confirm
+(**Keep logging** takes you back to tick them off). Nothing unfinished is
+saved with the workout.
+
 The small letter beside a set's number is its type (**W**armup, **N**ormal,
 **D**rop set, **F**ailure); tap it to step to the next one. A trophy appears on a
 ticked set that beats your all-time best weight for that exercise (warm-ups

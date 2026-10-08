@@ -105,6 +105,35 @@ class LiveActivitySession {
         }),
   );
 
+  /// What finishing would throw away: exercises with no completed set (counting
+  /// ones with no sets at all) and, in the exercises that stay, the sets never
+  /// ticked off. A set in a removed exercise is not counted a second time.
+  ({int exercises, int sets}) get unfinished {
+    var removedExercises = 0;
+    var removedSets = 0;
+    for (final exercise in exercises) {
+      if (exercise.completedSets.isEmpty) {
+        removedExercises++;
+      } else {
+        removedSets += exercise.sets.length - exercise.completedSets.length;
+      }
+    }
+    return (exercises: removedExercises, sets: removedSets);
+  }
+
+  /// [exercises] with the unfinished work dropped -- see [unfinished]. Removing
+  /// an exercise goes through the same path as the remove button, so a
+  /// superset it leaves with one member is dissolved rather than left dangling.
+  List<ActivityExercise> get finishedExercises {
+    var kept = exercises;
+    for (var i = kept.length - 1; i >= 0; i--) {
+      if (kept[i].completedSets.isEmpty) kept = removeItem(kept, i, activitySupersets);
+    }
+    return [
+      for (final exercise in kept) exercise.copyWith(sets: [...exercise.completedSets]),
+    ];
+  }
+
   LiveActivitySession copyWith({
     DateTime? endedAt,
     List<ActivityExercise>? exercises,
@@ -268,10 +297,14 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
     state = current.copyWith(clockOrigin: DateTime.now().subtract(elapsed), clearPausedAt: true);
   }
 
+  /// Ends the workout. Unfinished work is dropped (see
+  /// [LiveActivitySession.unfinished]): only ticked sets count anywhere, so
+  /// an exercise or set never done must not be saved as if it had been. The
+  /// screen warns before calling this.
   void finish() {
     final current = state;
     if (current == null) return;
-    state = current.copyWith(endedAt: DateTime.now());
+    state = current.copyWith(endedAt: DateTime.now(), exercises: current.finishedExercises);
   }
 
   /// Records that this session was actually saved as activity [activityId]

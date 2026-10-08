@@ -217,6 +217,19 @@ count, and reps count only for a set with no load. The live screen only flags
 an exercise that has history (nothing to have beaten otherwise); the summary
 screen counts a first-ever set as a record, as it always did.
 
+## Finishing a live workout drops what was never done
+
+`LiveActivityNotifier.finish()` removes the exercises with no completed set and,
+in the others, the sets never ticked off (`LiveActivitySession.unfinished`
+counts them, `finishedExercises` is the result), because only ticked sets count
+anywhere -- records, history, totals -- so saving an untouched planned set would
+record work that did not happen. Exercises go through the same `removeItem`
+path as the remove button, so a superset left with one member is dissolved. The
+screen asks first (`_confirmFinish`) whenever something would be lost, so the
+removal is never a surprise; the dialog's "Keep logging" leaves the session
+untouched. The routine-started workout's planned sets are the common case: a
+set not ticked by the end is a planned set that was skipped.
+
 ## Adding several exercises to a live workout from a typed list
 
 The live screen's *Add several* button opens `bulk_add_sheet.dart`: type (or dictate with the
