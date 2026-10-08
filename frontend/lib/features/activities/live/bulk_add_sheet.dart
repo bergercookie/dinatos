@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_tokens.dart';
-import '../../../core/widgets/error_banner.dart';
 import '../../../models/exercise.dart';
 import '../../exercises/exercise_picker.dart';
 import '../../exercises/exercise_text_matcher.dart';
 import '../activities_providers.dart';
-import 'speech_input.dart';
 
 /// Opens the "add several exercises" sheet over [exercises] and resolves with
 /// the ones the person confirmed, in the order they were named (null if the
 /// sheet was dismissed).
 ///
-/// The person dictates (Android) or types a list -- "1 reverse lunges 2 bench
-/// press 3 pull ups" -- the text is split into one entry per exercise and each
+/// The person types a list (or dictates it with their keyboard's own mic) --
+/// "1 reverse lunges 2 bench press 3 pull ups" -- the text is split into one entry per exercise and each
 /// is matched to the catalog (see `exercise_text_matcher.dart`). Nothing is
-/// added until they have looked at the matches and pressed the button: speech
-/// recognition mishears, and a wrong exercise in a workout under way is worse
+/// added until they have looked at the matches and pressed the button: dictated
+/// text gets misheard, and a wrong exercise in a workout under way is worse
 /// than one more tap.
 Future<List<Exercise>?> showBulkAddSheet(
   BuildContext context, {
@@ -60,19 +58,11 @@ class _BulkAddSheet extends ConsumerStatefulWidget {
 class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
   final _controller = TextEditingController();
   late final ExerciseMatcher _matcher;
-  late final SpeechInput _speech;
   List<_Row> _rows = [];
-  bool _listening = false;
-  String? _speechError;
-
-  /// What was in the box when listening began: the transcript is appended to
-  /// it, so dictating again adds to the list instead of replacing it.
-  String _textBeforeListening = '';
 
   @override
   void initState() {
     super.initState();
-    _speech = ref.read(speechInputProvider);
     _matcher = ExerciseMatcher(
       widget.exercises,
       usage: ref.read(exerciseUsageProvider).valueOrNull ?? const {},
@@ -81,12 +71,6 @@ class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
 
   @override
   void dispose() {
-    if (_listening) {
-      // Cleared first: stopping reports back through onDone, which must not
-      // setState on a sheet that is going away.
-      _listening = false;
-      _speech.stop();
-    }
     _controller.dispose();
     super.dispose();
   }
@@ -101,38 +85,6 @@ class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
         else
           _Row(_matcher.match(queries[i])),
     ];
-  }
-
-  Future<void> _toggleListening() async {
-    if (_listening) {
-      await _speech.stop();
-      return;
-    }
-    setState(() {
-      _speechError = null;
-      _listening = true;
-      // A new line, so a second dictation counting from "1" again is read as
-      // a new run (see splitExerciseList).
-      _textBeforeListening = _controller.text.trimRight();
-    });
-    final error = await _speech.start(
-      onText: (text) {
-        if (!mounted) return;
-        setState(() {
-          _controller.text = _textBeforeListening.isEmpty ? text : '$_textBeforeListening\n$text';
-          _reparse();
-        });
-      },
-      onDone: () {
-        if (mounted && _listening) setState(() => _listening = false);
-      },
-    );
-    if (error != null && mounted) {
-      setState(() {
-        _listening = false;
-        _speechError = error;
-      });
-    }
   }
 
   Future<void> _change(_Row row) async {
@@ -181,7 +133,7 @@ class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
                 child: ListView(
                   controller: scrollController,
                   children: [
-                    _HowItWorks(canSpeak: _speech.isSupported),
+                    const _HowItWorks(),
                     const SizedBox(height: AppSpacing.md),
                     TextField(
                       controller: _controller,
@@ -205,33 +157,6 @@ class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
                       ),
                       onChanged: (_) => setState(_reparse),
                     ),
-                    if (_speech.isSupported) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      FilledButton.tonalIcon(
-                        onPressed: _toggleListening,
-                        icon: Icon(_listening ? Icons.stop_rounded : Icons.mic_rounded),
-                        label: Text(_listening ? 'Stop listening' : 'Tap and speak'),
-                        style: _listening
-                            ? FilledButton.styleFrom(
-                                backgroundColor: theme.colorScheme.errorContainer,
-                                foregroundColor: theme.colorScheme.onErrorContainer,
-                              )
-                            : null,
-                      ),
-                      if (_listening)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.xs),
-                          child: Text(
-                            'Listening... say each exercise after its number, '
-                            'like "1 bench press, 2 squats".',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                    ],
-                    if (_speechError != null) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      ErrorBanner(message: _speechError!),
-                    ],
                     if (_rows.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.lg),
                       Text('Check what we understood', style: theme.textTheme.titleSmall),
@@ -280,9 +205,7 @@ class _BulkAddSheetState extends ConsumerState<_BulkAddSheet> {
 /// The three steps, always on screen, so nobody has to guess what the box is
 /// for or what format it wants.
 class _HowItWorks extends StatelessWidget {
-  const _HowItWorks({required this.canSpeak});
-
-  final bool canSpeak;
+  const _HowItWorks();
 
   @override
   Widget build(BuildContext context) {
@@ -298,12 +221,9 @@ class _HowItWorks extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            canSpeak
-                ? '1. Say or type your exercises, one after another, each starting with '
-                      'its number: "1 reverse lunges, 2 bench press, 3 pull ups". '
-                      'A part of the name is enough.'
-                : '1. Type your exercises, each starting with its number or on its own '
-                      'line: "1 reverse lunges, 2 bench press". A part of the name is enough.',
+            '1. Type your exercises, each starting with its number or on its own '
+            'line: "1 reverse lunges, 2 bench press". A part of the name is enough '
+            "(your keyboard's microphone works here too).",
             style: style,
           ),
           const SizedBox(height: AppSpacing.xs),

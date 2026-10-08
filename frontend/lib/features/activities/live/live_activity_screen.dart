@@ -281,7 +281,7 @@ class LiveActivityScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  // Several at once, by dictating or typing a numbered list;
+                  // Several at once, by typing a numbered list;
                   // the sheet explains the format itself.
                   AsyncValueView(
                     value: exercisesAsync,
