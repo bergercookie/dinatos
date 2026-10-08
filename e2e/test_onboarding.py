@@ -156,7 +156,7 @@ def test_highlighted_step_blocks_everything_else(page: Page) -> None:
         _press_tab(page, "Body", timeout=2_000)
     page.wait_for_timeout(500)
     _on_step(page, "Start with Settings")
-    expect(page.get_by_role("heading", name="Exercises")).to_be_visible()
+    expect(page.get_by_role("heading", name="Home")).to_be_visible()
 
     _press_tab(page, "Settings")
     _on_step(page, "Pick your units")

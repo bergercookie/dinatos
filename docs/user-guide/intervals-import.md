@@ -104,5 +104,5 @@ with `409 Conflict` (nothing is written); add `?force=true` to import it again
 anyway. An id that is not in the window, or can't be imported, is a `422`; a
 bad key is a `400`; Intervals.icu being unreachable is a `502`.
 
-See [Intervals.icu import](../architecture/backend.md#intervals-icu-import) for
+See [Intervals.icu import](../architecture/backend.md#intervalsicu-import) for
 how it works and why it differs from the Hevy import.
