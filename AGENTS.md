@@ -420,3 +420,10 @@ then every request fails as "server not reachable" -- debug builds and
 builds and launches the release APK on an emulator to check this class of bug;
 `just android check-apk` asserts the permission on the built APK with no emulator
 at all (the emulator won't start without `/dev/kvm`, e.g. in a cloud container).
+
+## Commits: committer identity, and no `Claude-Session` trailer
+
+Commit as `nickkouk@gmail.com` (set `GIT_COMMITTER_*`/`--author`, or `git -c
+user.email=...`), and leave the `Claude-Session: https://claude.ai/code/...`
+trailer out of commit messages -- the harness's default attribution
+reminder suggests it, but this repo's owner does not want it.

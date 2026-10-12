@@ -17,13 +17,13 @@ Response<T> _ok<T>(String path, T data) => Response(
   data: data,
 );
 
-Map<String, dynamic> _exercise(int id, String name) => {
+Map<String, dynamic> _exercise(int id, String name, {bool durationOnly = false}) => {
   'id': id,
   'name': name,
-  'tracks_weight': true,
-  'tracks_reps': true,
+  'tracks_weight': !durationOnly,
+  'tracks_reps': !durationOnly,
   'tracks_distance': false,
-  'tracks_duration': false,
+  'tracks_duration': durationOnly,
   'is_custom': true,
   'equipment': null,
   'primary_muscles': <String>[],
@@ -39,7 +39,7 @@ Map<String, dynamic> _routineExercise(int id, int exerciseId, {int? group}) => {
   'sets': <dynamic>[],
 };
 
-/// An existing routine of three exercises -- Bench (1), Row (2), Curl (3) --
+/// An existing routine of three exercises -- Bench (1), Row (2), Plank (3) --
 /// the first two already a superset when [grouped].
 Future<MockDio> _pump(WidgetTester tester, {bool grouped = false}) async {
   tester.view.physicalSize = const Size(800, 3000);
@@ -51,7 +51,7 @@ Future<MockDio> _pump(WidgetTester tester, {bool grouped = false}) async {
         (_) async => _ok<List<dynamic>>('/exercises', [
           _exercise(1, 'Bench Press'),
           _exercise(2, 'Row'),
-          _exercise(3, 'Curl'),
+          _exercise(3, 'Plank', durationOnly: true),
         ]),
       );
   when(() => dio.get<Map<String, dynamic>>('/routines/7')).thenAnswer(
@@ -107,7 +107,7 @@ Future<void> _menu(WidgetTester tester, int card, String entry) async {
 
 List<String> _names(WidgetTester tester) => [
   for (final t in tester.widgetList<Text>(find.byType(Text)))
-    if (const {'Bench Press', 'Row', 'Curl'}.contains(t.data)) t.data!,
+    if (const {'Bench Press', 'Row', 'Plank'}.contains(t.data)) t.data!,
 ];
 
 List<dynamic> _savedExercises(MockDio dio) {
@@ -160,10 +160,10 @@ void main() {
 
   testWidgets('moving an exercise reorders the routine', (tester) async {
     final dio = await _pump(tester);
-    expect(_names(tester), ['Bench Press', 'Row', 'Curl']);
+    expect(_names(tester), ['Bench Press', 'Row', 'Plank']);
 
     await _menu(tester, 2, 'Move up');
-    expect(_names(tester), ['Bench Press', 'Curl', 'Row']);
+    expect(_names(tester), ['Bench Press', 'Plank', 'Row']);
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -177,7 +177,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Superset'), findsNothing);
-    expect(_names(tester), ['Row', 'Curl']);
+    expect(_names(tester), ['Row', 'Plank']);
+  });
+
+  testWidgets('a set row only shows the fields its exercise tracks', (tester) async {
+    await _pump(tester);
+    await tester.tap(find.text('Add set').last);
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextFormField, 'sec'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'kg'), findsNothing);
+    expect(find.widgetWithText(TextFormField, 'reps'), findsNothing);
   });
 
   testWidgets('a set removed from the middle takes its own values with it', (tester) async {

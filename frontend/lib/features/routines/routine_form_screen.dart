@@ -204,12 +204,9 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
                   orElse: () => Exercise(name: '#${_exercises[i].exerciseId}'),
                 )
                 .name,
-            weightEnabled:
-                exercisesAsync.valueOrNull
-                    ?.where((e) => e.id == _exercises[i].exerciseId)
-                    .firstOrNull
-                    ?.equipment !=
-                Equipment.bodyOnly,
+            catalog: exercisesAsync.valueOrNull
+                ?.where((e) => e.id == _exercises[i].exerciseId)
+                .firstOrNull,
             onChanged: (updated) => _updateExerciseAt(i, updated),
             onRemove: () => _removeExerciseAt(i),
           ),
@@ -264,7 +261,7 @@ class _RoutineExerciseCard extends StatelessWidget {
     required this.onMoveUp,
     required this.onMoveDown,
     required this.exerciseName,
-    required this.weightEnabled,
+    required this.catalog,
     required this.onChanged,
     required this.onRemove,
   });
@@ -276,7 +273,10 @@ class _RoutineExerciseCard extends StatelessWidget {
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
   final String? exerciseName;
-  final bool weightEnabled;
+
+  /// The catalog entry, null while the catalog loads; decides which target
+  /// fields each set row shows.
+  final Exercise? catalog;
   final ValueChanged<RoutineExercise> onChanged;
   final VoidCallback onRemove;
 
@@ -373,7 +373,7 @@ class _RoutineExerciseCard extends StatelessWidget {
                 ),
                 index: i,
                 set: exercise.sets[i],
-                weightEnabled: weightEnabled,
+                catalog: catalog,
                 onChanged: (updated) => _updateSetAt(i, updated),
                 onRemove: () => _removeSetAt(i),
               ),
@@ -394,14 +394,14 @@ class _SetRow extends StatelessWidget {
     super.key,
     required this.index,
     required this.set,
-    required this.weightEnabled,
+    required this.catalog,
     required this.onChanged,
     required this.onRemove,
   });
 
   final int index;
   final RoutineSet set;
-  final bool weightEnabled;
+  final Exercise? catalog;
   final ValueChanged<RoutineSet> onChanged;
   final VoidCallback onRemove;
 
@@ -411,25 +411,53 @@ class _SetRow extends StatelessWidget {
       children: [
         Text('${index + 1}.'),
         const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.targetWeightKg?.toString(),
-            enabled: weightEnabled,
-            decoration: const InputDecoration(labelText: 'kg', isDense: true),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (value) => onChanged(set.copyWith(targetWeightKg: double.tryParse(value))),
+        if (catalog?.tracksWeight ?? true) ...[
+          Expanded(
+            child: TextFormField(
+              initialValue: set.targetWeightKg?.toString(),
+              enabled: catalog?.equipment != Equipment.bodyOnly,
+              decoration: const InputDecoration(labelText: 'kg', isDense: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) => onChanged(set.copyWith(targetWeightKg: double.tryParse(value))),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: set.targetReps?.toString(),
-            decoration: const InputDecoration(labelText: 'reps', isDense: true),
-            keyboardType: TextInputType.number,
-            onChanged: (value) => onChanged(set.copyWith(targetReps: int.tryParse(value))),
+          const SizedBox(width: 8),
+        ],
+        if (catalog?.tracksReps ?? true) ...[
+          Expanded(
+            child: TextFormField(
+              initialValue: set.targetReps?.toString(),
+              decoration: const InputDecoration(labelText: 'reps', isDense: true),
+              keyboardType: TextInputType.number,
+              onChanged: (value) => onChanged(set.copyWith(targetReps: int.tryParse(value))),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
+          const SizedBox(width: 8),
+        ],
+        if (catalog?.tracksDistance ?? false) ...[
+          Expanded(
+            child: TextFormField(
+              initialValue: set.targetDistanceKm?.toString(),
+              decoration: const InputDecoration(labelText: 'km', isDense: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) =>
+                  onChanged(set.copyWith(targetDistanceKm: double.tryParse(value))),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        if (catalog?.tracksDuration ?? false) ...[
+          Expanded(
+            child: TextFormField(
+              initialValue: set.targetDurationSeconds?.toString(),
+              decoration: const InputDecoration(labelText: 'sec', isDense: true),
+              keyboardType: TextInputType.number,
+              onChanged: (value) =>
+                  onChanged(set.copyWith(targetDurationSeconds: int.tryParse(value))),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
         DropdownButton<SetType>(
           value: set.setType,
           items: SetType.values
