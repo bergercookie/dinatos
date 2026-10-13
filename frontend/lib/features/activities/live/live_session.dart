@@ -283,9 +283,7 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
           ),
       ],
     );
-    _editExercises(
-      (e) => normalizeSupersets([...e]..insert(index + 1, copy), activitySupersets),
-    );
+    _editExercises((e) => normalizeSupersets([...e]..insert(index + 1, copy), activitySupersets));
   }
 
   void removeExerciseAt(int index) =>
