@@ -49,11 +49,23 @@ void main() {
     expect(find.text('No activities were completed on this day.'), findsOneWidget);
   });
 
-  testWidgets('today shows plans, not completed activities', (tester) async {
+  testWidgets('today lists the activities completed so far, and still offers to schedule', (
+    tester,
+  ) async {
     await _open(tester, today, [Activity(title: 'Leg day', startedAt: today, exercises: const [])]);
+
+    expect(find.text('Leg day'), findsOneWidget);
+    expect(find.text('Nothing planned yet.'), findsNothing);
+    expect(find.text('Schedule workout'), findsOneWidget);
+  });
+
+  testWidgets('a future day never lists activities', (tester) async {
+    final tomorrow = today.add(const Duration(days: 1));
+    await _open(tester, tomorrow, [
+      Activity(title: 'Leg day', startedAt: tomorrow, exercises: const []),
+    ]);
 
     expect(find.text('Leg day'), findsNothing);
     expect(find.text('Nothing planned yet.'), findsOneWidget);
-    expect(find.text('Schedule workout'), findsOneWidget);
   });
 }
