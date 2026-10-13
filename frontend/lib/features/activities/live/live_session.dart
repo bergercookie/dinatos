@@ -259,6 +259,35 @@ class LiveActivityNotifier extends StateNotifier<LiveActivitySession?> {
     );
   }
 
+  /// Inserts a copy of the exercise at [index] right after it: same exercise,
+  /// note and planned sets, but every set back to not-done and the copy in no
+  /// superset -- e.g. the second leg of a single-leg exercise.
+  void duplicateExerciseAt(int index) {
+    final current = state;
+    if (current == null || index < 0 || index >= current.exercises.length) return;
+    final source = current.exercises[index];
+    final copy = ActivityExercise(
+      uid: nextUid(),
+      exerciseId: source.exerciseId,
+      notes: source.notes,
+      sets: [
+        for (final set in source.sets)
+          ActivitySet(
+            uid: nextUid(),
+            setType: set.setType,
+            weightKg: set.weightKg,
+            reps: set.reps,
+            distanceKm: set.distanceKm,
+            durationSeconds: set.durationSeconds,
+            completed: false,
+          ),
+      ],
+    );
+    _editExercises(
+      (e) => normalizeSupersets([...e]..insert(index + 1, copy), activitySupersets),
+    );
+  }
+
   void removeExerciseAt(int index) =>
       _editExercises((e) => removeItem(e, index, activitySupersets));
 

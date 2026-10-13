@@ -209,6 +209,33 @@ void main() {
     expect(find.byTooltip('New personal record'), findsOneWidget);
   });
 
+  testWidgets('copying an exercise adds an un-ticked copy of it right after', (tester) async {
+    final container = await _pump(tester, _dio());
+    final notifier = container.read(liveActivityProvider.notifier);
+    notifier.addExercise(1);
+    notifier.addExercise(2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add set').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'kg'), '40');
+    await tester.enterText(find.widgetWithText(TextField, 'reps'), '8');
+    await tester.tap(find.byKey(const ValueKey('set-done')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Exercise options').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy exercise'));
+    await tester.pumpAndSettle();
+
+    final exercises = container.read(liveActivityProvider)!.exercises;
+    expect(exercises.map((e) => e.exerciseId), [1, 1, 2]);
+    expect(exercises[1].uid, isNot(exercises[0].uid));
+    expect(exercises[1].sets, hasLength(1));
+    expect(exercises[1].sets.single.weightKg, 40);
+    expect(exercises[1].sets.single.reps, 8);
+    expect(exercises[1].sets.single.completed, isFalse);
+  });
+
   testWidgets('a set counts once it is ticked off, and its row turns green', (tester) async {
     final container = await _pump(tester, _dio());
     final notifier = container.read(liveActivityProvider.notifier);
