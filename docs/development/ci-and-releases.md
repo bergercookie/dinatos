@@ -79,7 +79,7 @@ the same Docker image, `.deb`/AppImage and APK.
   versions, and a tag pushed with `GITHUB_TOKEN` can't start a workflow
   anyway -- hence `workflow_call`.
 - **Version string** in the packages: `<newest v* tag, else pyproject
-  version>-nightly.YYYYMMDD` (plus the same `.N` suffix when the tag has one).
+  version, with the minor bumped (1.2.3 -> 1.3.3)>-nightly.YYYYMMDD` (plus the same `.N` suffix when the tag has one).
   A nightly is built from `main` and named after the newest tag whether or not
   a tag was pushed since the previous nightly.
 - **Python package**: the Docker build stamps the version into the backend's
