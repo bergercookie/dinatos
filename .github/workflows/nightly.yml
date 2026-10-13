@@ -7,7 +7,7 @@ name: Nightly
 # competes with real versions for "latest", and sorts by date on its own.
 # The packaged version is `<base>-nightly.YYYYMMDD`, where <base> is the
 # newest stable `v*` tag (or backend/pyproject.toml's version before the
-# first one) -- see `docs/development/ci-and-releases.md`.
+# first one) with its minor bumped (1.2.3 -> 1.3.3) -- see `docs/development/ci-and-releases.md`.
 on:
   schedule:
     - cron: '17 2 * * *'
@@ -60,6 +60,10 @@ jobs:
           base="$(git tag --list 'v*' --sort=-v:refname | head -n1)"
           base="${base#v}"
           base="${base:-$(sed -n 's/^version = "\(.*\)"/\1/p' backend/pyproject.toml | head -n1)}"
+          # ...with the minor bumped (1.2.3 -> 1.3.3), so a nightly sorts above
+          # the stable it was built after.
+          IFS=. read -r major minor patch <<< "$base"
+          base="$major.$((minor + 1)).$patch"
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$base-nightly.${tag#nightly-}" >> "$GITHUB_OUTPUT"
