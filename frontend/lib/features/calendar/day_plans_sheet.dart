@@ -13,8 +13,8 @@ import 'start_planned_workout.dart';
 
 /// What a tap on a calendar day opens. Today and later: that day's planned
 /// workouts (tap one to edit it, or start it when it is due today) and a way
-/// to plan another. A day already behind us: the activities actually logged
-/// on it, since what was planned no longer matters.
+/// to plan another. Today and earlier: the activities actually logged on it;
+/// for a day already behind us that replaces the plans, which no longer matter.
 Future<void> showDayPlansSheet(
   BuildContext context,
   WidgetRef ref,
@@ -27,8 +27,11 @@ Future<void> showDayPlansSheet(
   final today = DateUtils.dateOnly(DateTime.now());
   final isPast = day.isBefore(today);
   final isToday = DateUtils.isSameDay(day, today);
-  final done = activities.where((a) => DateUtils.isSameDay(a.startedAt.toLocal(), day)).toList()
-    ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+  final done =
+      (isPast || isToday ? activities : const <Activity>[])
+          .where((a) => DateUtils.isSameDay(a.startedAt.toLocal(), day))
+          .toList()
+        ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
 
   return showModalBottomSheet<void>(
     context: context,
@@ -43,7 +46,7 @@ Future<void> showDayPlansSheet(
           children: [
             Text(DateFormat.yMMMEd().format(day), style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
-            if (isPast ? done.isEmpty : plans.isEmpty)
+            if (isPast ? done.isEmpty : (plans.isEmpty && done.isEmpty))
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Text(
@@ -51,7 +54,7 @@ Future<void> showDayPlansSheet(
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
-            if (isPast)
+            if (isPast || isToday)
               for (final activity in done)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -69,8 +72,8 @@ Future<void> showDayPlansSheet(
                       context.go('/activities/${activity.id}');
                     },
                   ),
-                )
-            else
+                ),
+            if (!isPast)
               for (final plan in plans)
                 PlannedWorkoutTile(
                   plan: plan,
