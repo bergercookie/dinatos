@@ -443,6 +443,7 @@ class _LiveExerciseCard extends ConsumerWidget {
       collapsible: true,
       onChanged: (updated) => notifier.updateExerciseAt(index, updated),
       onRemove: () => notifier.removeExerciseAt(index),
+      onDuplicate: () => notifier.duplicateExerciseAt(index),
       onLinkWithNext: index + 1 < count ? () => notifier.linkExerciseWithNext(index) : null,
       onUnlink: () => notifier.unlinkExercise(index),
       onMoveUp: index > 0 ? () => notifier.moveExercise(index, index - 1) : null,
