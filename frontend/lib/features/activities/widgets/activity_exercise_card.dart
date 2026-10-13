@@ -34,6 +34,7 @@ class ActivityExerciseCard extends StatefulWidget {
     this.history,
     this.records,
     this.supersetLabel,
+    this.onDuplicate,
     this.onLinkWithNext,
     this.onUnlink,
     this.onMoveUp,
@@ -60,6 +61,9 @@ class ActivityExerciseCard extends StatefulWidget {
 
   /// "A", "B", ... when this exercise is part of a superset.
   final String? supersetLabel;
+
+  /// Adds a copy of this exercise right after it (e.g. for the other leg).
+  final VoidCallback? onDuplicate;
   final VoidCallback? onLinkWithNext;
   final VoidCallback? onUnlink;
   final VoidCallback? onMoveUp;
@@ -76,7 +80,7 @@ class ActivityExerciseCard extends StatefulWidget {
   State<ActivityExerciseCard> createState() => _ActivityExerciseCardState();
 }
 
-enum _ExerciseAction { linkWithNext, unlink, moveUp, moveDown, viewProgress, toggleNotes }
+enum _ExerciseAction { duplicate, linkWithNext, unlink, moveUp, moveDown, viewProgress, toggleNotes }
 
 class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
   late bool _showNotes = (widget.exercise.notes ?? '').isNotEmpty;
@@ -125,6 +129,8 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
 
   void _onAction(_ExerciseAction action) {
     switch (action) {
+      case _ExerciseAction.duplicate:
+        widget.onDuplicate?.call();
       case _ExerciseAction.linkWithNext:
         widget.onLinkWithNext?.call();
       case _ExerciseAction.unlink:
@@ -199,6 +205,11 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                   tooltip: 'Exercise options',
                   onSelected: _onAction,
                   itemBuilder: (context) => [
+                    if (widget.onDuplicate != null)
+                      const PopupMenuItem(
+                        value: _ExerciseAction.duplicate,
+                        child: Text('Copy exercise'),
+                      ),
                     if (widget.onLinkWithNext != null)
                       const PopupMenuItem(
                         value: _ExerciseAction.linkWithNext,

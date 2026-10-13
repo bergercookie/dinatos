@@ -37,7 +37,11 @@ INSTRUCTIONS = (
     "templates, log activities, schedule future workouts on the calendar, and see "
     "which athlete personas the person's body and training resemble. Look up "
     "exercise ids with list_exercises before creating a routine or logging an "
-    "activity that references one."
+    "activity that references one. Single-leg and single-arm exercises (names like "
+    "'Single-Leg ...', 'One-Leg ...', 'Single-Arm ...') are one side at a time: a set "
+    "is for one limb. When the person does both sides, add the exercise twice -- one "
+    "entry per side, adjacent, with the side in the exercise's `notes` (e.g. "
+    "'Left leg', 'Right leg') -- rather than one entry covering both."
 )
 
 
@@ -126,6 +130,9 @@ def build_mcp_server() -> FastMCP:
         """Create a saved routine template: a name plus a prescribed list of
         exercises and sets. Sets here are targets (target_weight_kg,
         target_reps, ...), not performed values -- use log_activity for those.
+        Single-leg/single-arm exercises are per side: for both sides, include
+        the exercise twice (one entry per side) and name the side in each
+        entry's notes.
         """
         result: dict[str, Any] = await _api(
             "POST",
@@ -165,7 +172,9 @@ def build_mcp_server() -> FastMCP:
         """Log a completed activity: what was actually done, and when. May
         reference one of your own routine templates by id (routine_id) -- not
         someone else's, and not required for an ad-hoc session. Sets count as
-        done unless you pass completed=false for one.
+        done unless you pass completed=false for one. Single-leg/single-arm
+        exercises are per side: for both sides, include the exercise twice
+        (one entry per side) and name the side in each entry's notes.
         """
         result: dict[str, Any] = await _api(
             "POST",
