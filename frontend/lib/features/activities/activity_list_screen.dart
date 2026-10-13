@@ -127,7 +127,8 @@ class ActivityListScreen extends ConsumerWidget {
                     return TrainingCalendarCard(
                       activities: data,
                       plannedWorkouts: plans,
-                      onDayTap: (day) => showDayPlansSheet(context, ref, day, plans),
+                      onDayTap: (day) =>
+                          showDayPlansSheet(context, ref, day, plans, activities: data),
                     );
                   }
                   final activity = data[index - 3];
