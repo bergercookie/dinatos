@@ -219,6 +219,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'kg'), '40');
     await tester.enterText(find.widgetWithText(TextField, 'reps'), '8');
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('set-done')));
     await tester.pumpAndSettle();
 
