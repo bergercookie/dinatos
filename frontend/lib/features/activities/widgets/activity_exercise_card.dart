@@ -80,7 +80,15 @@ class ActivityExerciseCard extends StatefulWidget {
   State<ActivityExerciseCard> createState() => _ActivityExerciseCardState();
 }
 
-enum _ExerciseAction { duplicate, linkWithNext, unlink, moveUp, moveDown, viewProgress, toggleNotes }
+enum _ExerciseAction {
+  duplicate,
+  linkWithNext,
+  unlink,
+  moveUp,
+  moveDown,
+  viewProgress,
+  toggleNotes,
+}
 
 class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
   late bool _showNotes = (widget.exercise.notes ?? '').isNotEmpty;
