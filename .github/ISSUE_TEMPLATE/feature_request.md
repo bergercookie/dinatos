@@ -4,6 +4,6 @@ about: Suggest an improvement
 labels: enhancement
 ---
 
-**What you want to do**
+## What you want to do
 
-**Why the app can't do it today**
+## Why the app can't do it today

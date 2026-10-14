@@ -4,10 +4,10 @@ about: Something is broken
 labels: bug
 ---
 
-**What happened**
+## What happened
 
-**What you expected**
+## What you expected
 
-**Steps to reproduce**
+## Steps to reproduce
 
 **Version and platform** (app version, web / Android / Linux, Docker or not)
