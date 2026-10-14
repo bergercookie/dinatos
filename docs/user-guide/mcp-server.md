@@ -1,51 +1,34 @@
-# Using it from an LLM harness (MCP)
+# Using Dinatos from an AI assistant (MCP)
 
-Dinatos has a built-in [MCP](https://modelcontextprotocol.io/) server. Point an
-MCP client (Claude, or any other that takes a URL) at your Dinatos server and it
-can add exercises, build routine templates, log activities and read your
-[persona statistics](#what-it-can-do), all without leaving the chat. There is
-**nothing to install**: the server is part of Dinatos, at `/mcp`.
+Connect an MCP client (a tool that lets an AI assistant use other services, such as Claude) to Dinatos. The assistant can then manage exercises, routines, activities and planned workouts, and read your persona statistics. Nothing to install: the MCP server is built in at `/mcp`.
 
 ## 1. Create an API key
 
-An MCP client **must be configured with an API key** -- not your email and
-password, and not a login token. A key can be revoked on its own without
-changing your password or logging you out anywhere, and it cannot manage keys,
-log out or administer the server.
+MCP clients need an **API key**, not your password or a login token. A key can be revoked alone and cannot manage keys, log out or administer the server.
 
-In the app: **Settings > API keys > Create key**. Give it a name (say, "Claude on
-my laptop") so you can tell your keys apart later, then copy the key straight
-away. **It is shown once and never again** -- afterwards only the name and the
-last three characters (`dnk_…abc`) are kept, and a lost key cannot be
-recovered: delete it and create another.
+1. Open **Settings -> API keys -> Create key**.
+2. Name it, for example "Claude on my laptop".
+3. Copy the key immediately. It is shown once and cannot be recovered. Afterwards only the name and last three characters (`dnk_…abc`) are shown.
 
-Delete a key in the same screen to cut that client off immediately.
+To cut a client off, delete its key on the same screen.
 
-## 2. Point your client at the server
+## 2. Connect your client
 
-The address is your Dinatos server's, plus `/mcp`, and the key goes in an
-`Authorization: Bearer` header. For Claude Code:
+Use your instance address plus `/mcp`, and send the key in an `Authorization: Bearer` header. For Claude Code:
 
 ```bash
 claude mcp add --transport http dinatos https://dinatos.example.com/mcp \
     --header "Authorization: Bearer dnk_your-key-here"
 ```
 
-Any client that supports a remote ("streamable HTTP") MCP server takes the same
-two things: the URL and that header. Use `https://` for anything beyond your
-own machine -- the key is a credential, and a plain `http://` URL sends it in
-the clear (see [Security and networking](../deploy/security-and-networking.md)).
+Any client that supports a remote ("streamable HTTP") MCP server needs the same URL and header. Use `https://` for anything beyond your own machine: plain `http://` sends the key unencrypted.
 
 ### Clients that can only run a local program
 
-Some clients (Claude Desktop's config file, for one) can only launch a command.
-For those, `mcp_server/` is a small stdio server that forwards to the one
-above -- it has no tools of its own, so it always offers exactly what your
-server does:
+Some clients, such as Claude Desktop's config file, can only launch a command. The `mcp_server/` folder of the Dinatos repository is a small adapter for these. It forwards to the server and offers the same tools.
 
-```bash
-cd mcp_server && just install   # once, to create its virtualenv
-```
+1. Clone the repository and run `cd mcp_server && just install` once.
+2. Add this to the client's config:
 
 ```json
 {
@@ -62,34 +45,21 @@ cd mcp_server && just install   # once, to create its virtualenv
 }
 ```
 
-`DINATOS_MCP_BASE_URL` is the address you open in a browser (default
-`http://127.0.0.1:8000`); `DINATOS_MCP_API_KEY` is the only credential it
-takes. The old `DINATOS_MCP_TOKEN`, `DINATOS_MCP_EMAIL` and
-`DINATOS_MCP_PASSWORD` settings no longer exist.
+| Variable | Meaning | Default |
+|---|---|---|
+| `DINATOS_MCP_BASE_URL` | Address you open in a browser | `http://127.0.0.1:8000` |
+| `DINATOS_MCP_API_KEY` | Your API key | none (required) |
 
-## What it can do
+## Tools
 
-- **`list_exercises`** / **`create_exercise`** -- browse or add to the
-  shared exercise catalog.
-- **`list_routines`** / **`create_routine`** -- saved routine templates:
-  a name plus a prescribed list of exercises and target sets.
-- **`list_activities`** / **`log_activity`** -- logged sessions: what was
-  actually done, and when, optionally against one of your own routine
-  templates. Sets you log count as done unless you pass `completed: false`.
-- **`list_planned_workouts`** / **`schedule_workout`** /
-  **`update_planned_workout`** / **`delete_planned_workout`** -- your training
-  calendar: put a routine (or a free-form session) on a future date and time,
-  move or retitle it later, or take it off. Give `schedule_workout` a timezone
-  offset in `scheduled_at`; `reminder_minutes` (default 30, `null` for none) is
-  how long before the start the phone reminds you.
-- **`get_persona_stats`** -- the Personas page as data: how closely your body
-  (from your measurements and profile height) and your training (the sets you
-  completed over the last `month`, `quarter` -- the default -- `year`, or `all`
-  time) match each athlete persona, with a 0-100 score per persona, the
-  numbers behind it, your best matches, and which measurements to log to
-  sharpen the result.
+| Tool | Purpose |
+|---|---|
+| `list_exercises`, `create_exercise` | Browse or add to the shared exercise catalog. |
+| `list_routines`, `create_routine` | Saved routines: a name plus exercises and target sets. |
+| `list_activities`, `log_activity` | Logged workouts, optionally against one of your routines. Logged sets count as done unless you pass `completed: false`. |
+| `list_planned_workouts`, `schedule_workout`, `update_planned_workout`, `delete_planned_workout` | Your training calendar. `scheduled_at` needs a timezone offset. `reminder_minutes` defaults to 30 (`null` for none). |
+| `get_persona_stats` | The Personas page as data: a 0-100 score per athlete persona from your measurements, profile height and completed sets over `month`, `quarter` (default), `year` or `all`, plus your best matches and which measurements to add. |
 
-Every tool acts as the owner of the key and can do only what that person can in
-the app. Ask your client to look up an exercise's id with `list_exercises`
-before referencing it from `create_routine` or `log_activity` -- there's no
-lookup-by-name on those two, the same as the REST API itself.
+Every tool acts as the key's owner and can do only what that person can do in the app.
+
+`create_routine` and `log_activity` take exercise ids, not names. Ask the assistant to look an exercise up with `list_exercises` first.

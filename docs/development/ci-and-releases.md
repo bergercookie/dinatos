@@ -1,154 +1,164 @@
 # CI and releases
 
-## What CI runs
+What GitHub Actions runs on your pull request, and how releases, nightly
+builds, the docs site and link checks work. Workflows live in
+`.github/workflows/`.
 
-`.github/workflows/ci.yml` triggers on every push to `main` and every PR,
-with five independent jobs -- each maps to a `just` recipe you can run
-locally before pushing:
+## CI on every PR
+
+`ci.yml` runs on every pull request and every push to `main`. Each job maps
+to a recipe you can run before pushing:
 
 | CI job | Local equivalent | Needs |
 |---|---|---|
-| `check` | `just check` | Nothing beyond Python/`uv` |
+| `check` | `just check` | Python, `uv` |
 | `migrations` | `just backend test-migrations` | Docker |
 | `frontend` | `just frontend check` | Flutter SDK |
-| `e2e` | `just e2e test` | Docker, Flutter SDK, Playwright's Chromium |
+| `e2e` | `just e2e test` | Docker, Flutter SDK, Chromium |
+| `coverage` | none (merges the numbers from `check` and `frontend`) | |
 
-`check` also verifies the `uv` lockfile is up to date before running
-`just install`/`just check` -- a dependency added to `pyproject.toml` without
-running `uv lock` fails here, not silently. `e2e` uploads a
-screenshot of the page at the moment a browser test failed.
+Notes:
 
-## Coverage
+- `check` also fails if `uv.lock` is stale. After editing a `pyproject.toml`
+  dependency, run `uv lock`.
+- `e2e` uploads a screenshot when a browser test fails (artifact `e2e-debug`).
+- See [Environment setup](environment-setup.md) for tool requirements and
+  [Running and testing](workflow.md) for what each recipe does.
 
-Backend and `mcp_server` (pytest-cov, `--cov` in each `pyproject.toml`'s
-`addopts`, 100% line+branch gate) and the Flutter frontend
-(`just frontend coverage`: `flutter test --coverage` -> `coverage/lcov.info`,
-50% line gate) are all measured on every CI run; `e2e` is not. Nothing is
-sent to an external service: each run's summary page shows the backend and
-`mcp_server` per-file tables and the frontend total, and the `check` and
-`frontend` jobs upload browsable HTML (`backend-coverage-html`,
-`frontend-coverage-html`; `mcp_server` has none in CI). Locally, `just
-backend coverage`, `just mcp_server coverage` and `just frontend coverage`
-write the same reports.
+### Coverage
 
-See [Environment setup](environment-setup.md) for what each of these needs
-installed, and [Running and testing](workflow.md) for what each recipe
-actually does.
+Backend and `mcp_server` are measured with pytest-cov and must stay at 100%
+line and branch coverage. The Flutter frontend (`just frontend coverage`) must
+stay at or above 50% line coverage. `e2e` is not measured. No external service
+is involved.
+
+- **PR comment.** The `coverage` job
+  (`.github/scripts/coverage_report.py`) comments backend, MCP server and
+  frontend coverage on your PR, compared with the latest run on `main`. It
+  updates the same comment on each push. On PRs from forks the token is
+  read-only, so the comment may be missing; the numbers are still on each
+  job's summary page.
+- **Reports.** Per-file tables appear on the run's summary page. The `check`
+  and `frontend` jobs upload browsable HTML (`backend-coverage-html`,
+  `frontend-coverage-html`).
+- **Locally.** `just backend coverage`, `just mcp_server coverage` and
+  `just frontend coverage` write the same reports.
+
+### PR and issue templates
+
+`.github/pull_request_template.md` asks for what and why, a passing
+`just check`, and tests. `.github/ISSUE_TEMPLATE/` has bug-report and
+feature-request forms. Blank issues are off, and the config sends security
+reports to a private advisory form.
 
 ## Documentation site
 
-`.github/workflows/docs.yml` triggers on push to `main` (and manually, via
-`workflow_dispatch`): a `build` job runs `just install` then
-`just docs docs`, uploads `docs/_build/html`, and a `deploy` job publishes it
-to GitHub Pages. Building it locally (`just docs docs`, or `just docs
-docs-serve` to also serve it on `http://127.0.0.1:8000` while you edit) uses
-the exact same `-W --keep-going` Sphinx invocation, so a broken cross-link
-or toctree entry fails the same way locally as it would in CI.
+`docs.yml` runs on push to `main` (or manually). It runs `just install` and
+`just docs docs`, then publishes `docs/_build/html` to GitHub Pages.
+
+```bash
+just docs docs         # build; warnings are errors (-W --keep-going)
+just docs docs-serve   # build, then serve on http://127.0.0.1:8000
+```
+
+A broken cross-link or toctree entry fails the same way locally and in CI.
+`just check` includes the build.
 
 ## Link checking
 
-[lychee](https://github.com/lycheeverse/lychee) checks every link in the
-repo's Markdown (`README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `docs/**`),
-configured in `lychee.toml` (exclusions for placeholder/localhost URLs and
-build output live there, each with its reason). It runs in two places:
+[lychee](https://github.com/lycheeverse/lychee) checks links in `README.md`,
+`CONTRIBUTING.md`, `AGENTS.md` and `docs/**`. Its config, including each
+exclusion and why, is `lychee.toml`.
 
 - **Offline, in `just check`**: the `lychee-offline` pre-commit hook checks
-  relative links and `#anchors` between files, with no network, in well under
-  a second -- so it can't flake and is safe to block on.
-- **Online, outside `just check`**: `just check-links` also fetches every
-  external URL. `.github/workflows/links.yml` runs it weekly, on demand and on
-  PRs touching Markdown, but it is not part of the blocking `check` job: a
-  third-party site going down must not block unrelated PRs. A flaky-but-valid
-  host gets excluded in `lychee.toml` with a comment, not retried forever.
+  relative links and `#anchors`. No network, so it cannot flake.
+- **Online, not in `just check`**: `just check-links` also fetches external
+  URLs. `links.yml` runs it weekly, on demand, and on PRs that touch Markdown.
+  It is not part of the blocking `check` job, because a third-party outage
+  must not block unrelated PRs. Exclude a flaky-but-valid host in
+  `lychee.toml` with a comment.
 
-Both use the `lychee-bin` PyPI wheel, pinned in `.pre-commit-config.yaml` and
-the root `justfile` (bump both together).
+The `lychee-bin` version is pinned in both `.pre-commit-config.yaml` and the
+root `justfile`. Bump both together.
 
-## Nightly releases
+## Other lint hooks (run by `just check`)
 
-`.github/workflows/nightly.yml` runs daily (02:17 UTC, or manually via
-`workflow_dispatch`, which can `force` a release). If `main` has no commits
-since the previous nightly it does nothing (unless run manually with
-`force`); otherwise -- with no new `v*` tag required -- it calls
-`release.yml` (via `workflow_call`) to publish a GitHub **prerelease** with
-the same Docker image, `.deb`/AppImage and APK.
+- `hadolint` lints the `Dockerfile`.
+- `shellcheck` (`--severity=style`) and `shfmt` (2-space indent, check only)
+  lint shell scripts in `backend/`, `packaging/linux/` and `tools/`. Files with
+  a shebang must be executable. Fix formatting with
+  `uvx --from shfmt-py shfmt -i 2 -w <file>`.
+- `markdownlint-cli2` lints Markdown; rules are in `.markdownlint-cli2.yaml`.
 
-- **Tag**: `nightly-YYYYMMDD` (a second release the same day gets
-  `nightly-YYYYMMDD.2`, `.3`, ... rather than being skipped), not `v<version>.nightly`. A `v*` tag would
-  trigger `release.yml` as a stable release, would sort next to real
-  versions, and a tag pushed with `GITHUB_TOKEN` can't start a workflow
-  anyway -- hence `workflow_call`.
-- **Version string** in the packages: `<newest v* tag, else pyproject
-  version, with the minor bumped (1.2.3 -> 1.3.3)>-nightly.YYYYMMDD` (plus the same `.N` suffix when the tag has one).
-  A nightly is built from `main` and named after the newest tag whether or not
-  a tag was pushed since the previous nightly.
-- **Python package**: the Docker build stamps the version into the backend's
-  `pyproject.toml`, so the API, its OpenAPI document and backups report it
-  (`__version__` reads the installed package's metadata). A nightly's
-  `<base>-nightly.YYYYMMDD[.N]` is not valid PEP 440, so the package carries it
-  as `<base>.devYYYYMMDD[N]`.
-- **Docker**: tagged with that version and the moving `nightly` tag;
-  `latest` only ever follows stable releases.
-- Only the 14 newest nightly releases (and their tags) are kept. Old
-  nightly images on GHCR are not pruned.
+All are pre-commit hooks installed as wheels or via `uvx`, so nothing needs
+installing system-wide. `just hooks` installs them as git pre-commit hooks.
 
-## Cutting a release
+## Releases
 
-There's no `just` recipe for "cut a release" -- pushing a `v*` tag (e.g.
-`v1.2.3`) is what triggers `.github/workflows/release.yml`, which builds and
-publishes everything a release needs, in parallel:
+A release is a Git tag named `v<version>` (for example `v1.2.3`). Pushing the
+tag triggers `release.yml`. There is no manual build step.
 
-- The backend and the built web app together, as one Docker image pushed to
-  `ghcr.io/<owner>/dinatos`, tagged with the version and `latest`
-  (`linux/amd64` only). This job's own `Dockerfile` build (context: the repo
-  root) fetches and builds the Flutter web app itself as one of its stages,
-  so it needs no `subosito/flutter-action` step, unlike the two Flutter jobs
-  below.
-- The Linux desktop client, packaged both as a `.deb` and a portable
-  `.AppImage`, both from the same `flutter build linux --release` bundle.
-- An Android APK, debug-signed (a real release keystore is future work, not
-  a gap in the workflow itself).
+```bash
+just release dry   # print the next patch tag (v1.2.3 -> v1.2.4) without creating it
+just release       # create and push that tag at HEAD
+```
 
-A `version` job computes the release version once (the tag with its leading
-`v` stripped) so every artifact and the GitHub Release itself agree on the
-same string; a final `release` job gathers everything into one GitHub
-Release.
+The workflow builds these in parallel:
 
-**First push to GHCR from a repo needs a one-time manual step**: the pushed
-package defaults to private regardless of the repo's own visibility, so make
-it public from the package's own settings page on GitHub if it should be
-downloadable without authentication.
+- **Docker image** (backend plus built web app), pushed to
+  `ghcr.io/<owner>/dinatos` as `<version>` and `latest` (`linux/amd64` only).
+  The `Dockerfile` builds the Flutter web app itself in an earlier stage.
+- **Linux desktop client** as a `.deb` and an `.AppImage`, from one
+  `flutter build linux --release` bundle.
+- **Android APK**, debug-signed. A real release keystore is not set up yet.
 
-### Building the same artifacts locally
+A `version` job strips the leading `v` once so every artifact and the GitHub
+Release agree on the version. A final `release` job gathers everything into one
+GitHub Release.
 
-The release workflow calls the same recipes below, so local and published
-builds stay on the same path:
+Caveats:
+
+- **First push to GHCR.** The package defaults to private even if the repo is
+  public. Make it public once in the package's GitHub settings.
+- **No rollback.** If a later step fails (for example the `.deb` after the
+  Docker image was pushed), the partial release stays on GHCR. Test changes to
+  `packaging/linux/` or the `Dockerfile` locally before tagging.
+
+### Building the artifacts locally
+
+The workflow calls these same recipes:
 
 ```bash
 just packaging build-apk <version> [build-number]
 just packaging build-deb <version>
 just packaging build-appimage <version>
-just packaging build-linux-artifacts <version>   # both Linux formats, one shared Flutter build
+just packaging build-linux-artifacts <version>   # .deb and AppImage, one shared build
+just docker build                                # the Docker image
 ```
 
-APK output lands under `frontend/build/app/outputs/flutter-apk/`; Linux
-packages default to `dist/`, or accept a different output directory as
-their second argument. Test any change to `packaging/linux/`'s scripts or
-the root `Dockerfile` locally (`just docker build`, or a plain
-`docker build .` from the repo root) before tagging -- a failure partway
-through the release workflow (e.g. the `.deb` step failing after the Docker
-image already pushed) leaves a real, partially-published state on GHCR with
-no automatic rollback.
+The APK lands in `frontend/build/app/outputs/flutter-apk/`. Linux packages
+go to `dist/`, or to the directory you pass as the second argument. The
+Linux build needs the apt packages listed in
+[Environment setup](environment-setup.md#flutter-sdk).
 
-`hadolint` lints the `Dockerfile` as a pre-commit hook, so most Dockerfile
-mistakes are caught by `just check` well before a release build.
+## Nightly releases
 
-Shell scripts (`backend/docker-entrypoint.sh`, `packaging/linux/*.sh`,
-`tools/*.sh`) are covered the same way: `shellcheck` (at `--severity=style`)
-and `shfmt` (2-space indent, check-only) run as pre-commit hooks, along with
-checks that anything with a shebang is executable. Both ship as wheels, so
-nothing needs installing system-wide. Fix formatting with
-`uvx --from shfmt-py shfmt -i 2 -w <file>`.
+`nightly.yml` runs daily at 02:17 UTC, or manually (the `force` input
+releases even with no new commits). If `main` has no commits since the last
+nightly, it does nothing. Otherwise it calls `release.yml` to publish a GitHub
+**prerelease** with the same image, packages and APK. No `v*` tag is needed.
 
-Markdown (README, `AGENTS.md`, `docs/`) is linted the same way by
-`markdownlint-cli2`; its rules live in `.markdownlint-cli2.yaml`.
+| Item | Value |
+|---|---|
+| Tag | `nightly-YYYYMMDD`; a second one the same day is `.2`, `.3`, and so on |
+| Version | newest `v*` tag (else the `pyproject.toml` version) with the minor bumped, then `-nightly.YYYYMMDD`. Example: `1.3.3-nightly.20261014` |
+| Python package version | `<base>.devYYYYMMDD[N]`, because the nightly version is not valid PEP 440 |
+| Docker tags | the version and a moving `nightly`; `latest` follows stable releases only |
+| Retention | the 14 newest nightlies and their tags. Old images on GHCR are not pruned |
+
+Why not a `v*` tag: it would trigger `release.yml` as a stable release and sort
+among real versions. A tag pushed with `GITHUB_TOKEN` cannot start a workflow
+anyway, so the nightly calls `release.yml` directly (`workflow_call`).
+
+The Docker build stamps the version into the backend's `pyproject.toml`, so
+the API, its OpenAPI document and backups report it.

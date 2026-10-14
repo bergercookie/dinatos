@@ -365,9 +365,9 @@ assuming it only adds what you asked for.
 
 `.github/workflows/release.yml` triggers on `v*` tags and is the only
 place the Docker image, `.deb`/AppImage, and Android APK get built and
-published together -- there's no `just` recipe for "cut a release"; the
-workflow's `version` job derives the version from the tag itself
-(`${GITHUB_REF_NAME#v}`). Test any change to `packaging/linux/`'s scripts
+published together. `just release` creates and pushes the next patch tag
+(`just release dry` only prints it); the workflow's `version` job derives
+the version from the tag itself (`${GITHUB_REF_NAME#v}`). Test any change to `packaging/linux/`'s scripts
 or the Dockerfile locally before tagging: a failure partway through the
 workflow (e.g. the `.deb` step failing after the Docker image already
 pushed) leaves a real, partially-published state on GHCR with no automatic
