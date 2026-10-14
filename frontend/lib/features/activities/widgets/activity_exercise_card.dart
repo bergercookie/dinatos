@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -12,6 +14,7 @@ import '../../../models/set_type.dart';
 import '../../../models/uid.dart';
 import '../../exercises/exercise_filter_sheet.dart';
 import '../../progress/progression.dart';
+import '../live/elapsed_timer.dart' show formatElapsed;
 import 'plate_calculator.dart';
 
 /// One exercise's card within an activity being built up -- its name, its
@@ -475,6 +478,7 @@ class ActivitySetRow extends StatelessWidget {
 
   /// `false` for a body-weight exercise: there is no load to enter.
   final bool weightEnabled;
+
   final ValueChanged<ActivitySet> onChanged;
   final VoidCallback onRemove;
 
@@ -598,7 +602,11 @@ class ActivitySetRow extends StatelessWidget {
                 onChanged: (value) => onChanged(set.copyWith(durationSeconds: value?.round())),
               ),
             ),
-            const SizedBox(width: 8),
+            SetStopwatch(
+              seconds: set.durationSeconds,
+              onStopped: (seconds) => onChanged(set.copyWith(durationSeconds: seconds)),
+            ),
+            const SizedBox(width: 4),
           ],
           Tooltip(
             message: set.completed ? 'Done -- tap to undo' : 'Mark set as done',
@@ -704,6 +712,93 @@ class _NumberFieldState extends State<_NumberField> {
         FilteringTextInputFormatter.allow(RegExp(widget.decimal ? r'[0-9.]' : r'[0-9]')),
       ],
       onChanged: (text) => widget.onChanged(_modelValueOf(text)),
+    );
+  }
+}
+
+/// A play/stop timer for a timed set. Playing starts counting from the set's
+/// current duration (0 if none); stopping writes the elapsed seconds back
+/// through [onStopped], and playing again resumes from there. Typing a
+/// different duration into the field while stopped moves the timer's starting
+/// point to that value, so the override is never lost.
+class SetStopwatch extends StatefulWidget {
+  const SetStopwatch({
+    super.key,
+    required this.seconds,
+    required this.onStopped,
+    this.now = DateTime.now,
+  });
+
+  /// The set's current duration, as held by the model.
+  final int? seconds;
+  final ValueChanged<int> onStopped;
+
+  /// The clock; injectable so tests can move time without waiting.
+  final DateTime Function() now;
+
+  @override
+  State<SetStopwatch> createState() => _SetStopwatchState();
+}
+
+class _SetStopwatchState extends State<SetStopwatch> {
+  Timer? _ticker;
+  DateTime? _startedAt;
+  late Duration _accumulated = Duration(seconds: widget.seconds ?? 0);
+
+  bool get _running => _startedAt != null;
+
+  Duration get _elapsed =>
+      _accumulated + (_startedAt == null ? Duration.zero : widget.now().difference(_startedAt!));
+
+  @override
+  void didUpdateWidget(SetStopwatch old) {
+    super.didUpdateWidget(old);
+    // A value typed in the field while the timer is stopped wins.
+    if (!_running && widget.seconds != old.seconds && widget.seconds != _accumulated.inSeconds) {
+      _accumulated = Duration(seconds: widget.seconds ?? 0);
+    }
+  }
+
+  void _toggle() {
+    if (_running) {
+      _accumulated = _elapsed;
+      _startedAt = null;
+      _ticker?.cancel();
+      _ticker = null;
+      setState(() {});
+      widget.onStopped(_accumulated.inSeconds);
+    } else {
+      _startedAt = widget.now();
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          key: const ValueKey('set-timer'),
+          tooltip: _running ? 'Stop timer' : 'Start timer',
+          visualDensity: VisualDensity.compact,
+          icon: Icon(_running ? Icons.stop_circle_outlined : Icons.play_circle_outline),
+          onPressed: _toggle,
+        ),
+        if (_running)
+          Text(
+            formatElapsed(_elapsed),
+            key: const ValueKey('set-timer-elapsed'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+      ],
     );
   }
 }
