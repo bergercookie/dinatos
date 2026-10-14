@@ -15,7 +15,7 @@ Dinatos recognises a file by its content, not its name. Hevy names every export 
 
 - Uploading the identical file again shows a dialog with the earlier import's date. Confirm to import it anyway, which creates duplicate activities.
 - A different file, even one with a single new workout, imports normally.
-- To pick up new workouts, export from Hevy again and import the new file. Expect the older workouts to appear twice.
+- To bring over later workouts, export from Hevy again and import the new file.
 
 ## Exercises
 
