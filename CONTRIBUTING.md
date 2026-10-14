@@ -1,98 +1,65 @@
-# Contributing to Dinatos
+# Contributing
 
-Thanks for looking at contributing code. This page is the human-facing front
-door; `AGENTS.md` covers the same ground for a coding agent working
-unattended in a fresh container, and `docs/development/` (rendered as part
-of the Sphinx site, but readable in place too) goes into more depth than
-either.
+Thanks for helping. This page gets you from clone to a passing build; the
+[development docs](https://bergercookie.github.io/dinatos/development/index.html)
+go deeper.
 
-## Devbox + `just` is the interface to this repo
+## The project in one minute
 
-Don't reach for `uv run ...`, `flutter ...`, or `docker compose ...` by hand.
-Every task -- installing dependencies, linting, testing, running the app,
-building the docs, cutting a packaged release -- is a `just` recipe, and
-`just --list` (or `just` on its own) is always the up-to-date list of what's
-available. That's a deliberate choice, not a style preference: a recipe is
-documentation that can't drift out of sync with what actually runs, the way
-a paragraph of prose describing the same command can. If you find yourself
-about to run a raw tool invocation because there's no recipe for it yet, add
-the recipe instead of working around its absence.
+- `backend/`: Python API (FastAPI, SQLAlchemy, Postgres)
+- `frontend/`: Flutter app (web, Android, Linux)
+- `mcp_server/`: lets AI assistants read your data
+- `docs/`: the documentation site
+- `e2e/`, `screenshots/`: browser tests and README screenshots
 
-[Devbox](https://www.jetify.com/devbox) is the recommended way to get every tool a
-recipe might need (Python 3.12, `uv`, a current `just`, Docker, the Flutter
-SDK, CMake) onto your `PATH` without touching your system install of any of
-them:
+## Set up
+
+Every task is a [`just`](https://github.com/casey/just) recipe. Run `just --list`
+to see them all.
+
+You need Python 3.12, [`uv`](https://docs.astral.sh/uv/) and `just` 1.31 or newer.
+(Ubuntu's `apt install just` is too old.)
 
 ```bash
-./tools/install-devbox.sh   # installs Devbox itself if missing, then `devbox install`
-devbox shell                 # enters the pinned environment
-just install                 # backend virtualenv
-just check                   # lint, backend tests, docs build -- what CI runs
+just install   # backend and tool dependencies
+just check     # lint, tests, docs build: what CI runs
 ```
 
-See `docs/development/environment-setup.md` for the non-Devbox path (plain
-`apt`/manual installs), and for exactly why Ubuntu's own `apt install just`
-doesn't work here (it's old enough to reject this repo's `mod`-based root
-`justfile` outright -- see `AGENTS.md`).
+The tests use an in-memory database, so no Postgres is needed.
 
-## Before opening a PR
+Prefer one command that installs everything (Docker, Flutter, CMake too)?
+Use [Devbox](https://www.jetify.com/devbox):
+`./tools/install-devbox.sh && devbox shell`.
+Manual setup is in [environment setup](https://bergercookie.github.io/dinatos/development/environment-setup.html).
 
-- `just check` must pass -- it's the same lint/test/docs gate CI's `check`
-  job runs (pre-commit over the whole tree: ruff, `mypy --strict`, `tach`'s
-  module-boundary check, `hadolint` on the root `Dockerfile`, plus file
-  hygiene hooks -- see `.pre-commit-config.yaml`; then the backend test
-  suite; then a Sphinx docs build with warnings as errors).
-- Added a table or column? `just test` fails until a new table is in the
-  full-server backup's `BACKED_UP_TABLES` (`backend/src/dinatos_backend/
-  services/backup.py`); a user-owned field should also join the per-user
-  export (`schemas/backup.py`, `services/user_export.py`). See "Backup and
-  data export" in `docs/architecture/backend.md`.
-- Touched anything under `backend/alembic/versions/`? Also run
-  `just backend test-migrations` (CI's `migrations` job) -- needs Docker; a
-  sqlite-backed unit test structurally can't catch a Postgres-specific
-  migration bug (see `AGENTS.md`).
-- Touched `frontend/`? Also run `just frontend check` (CI's `frontend` job)
-  -- needs a real Flutter SDK, which is why it's a separate recipe/job from
-  the root `just check` rather than folded into it.
-- Touched anything the app's screens render (a model's shape, a screen's
-  layout)? `just screenshots generate` regenerates
-  `README.md`'s screenshots against a real backend + frontend build; commit
-  the result. (Not checked in CI: pixel output differs between machines.)
-- Touched the first-run tour, or navigation/screens it points at? `just e2e
-  test` (CI's `e2e` job) drives the real web build in a real browser,
-  against a real backend and Postgres, and walks a new account through
-  it -- the one layer neither `flutter test` (mocked API) nor the backend's
-  suite (no UI) covers. Needs Docker and the Flutter SDK, like `screenshots`.
-- Keep each PR to one logical change. If it changes user-visible or
-  operator-visible behavior, update the matching docs section in the same
-  PR -- `docs/user-guide/` for what an end user sees, `docs/deploy/` for
-  what a self-hosting operator needs to know, `docs/architecture/` for why
-  it's built the way it is. A behavior change with no doc update is treated
-  as an incomplete PR, not a follow-up someone else owes.
+## Before you open a PR
 
-## Reporting bugs / proposing changes
+Run `just check`. Then, depending on what you changed:
 
-Security vulnerabilities are the exception: don't open a public issue, follow
-[`SECURITY.md`](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md) instead.
+| You changed | Also run | Needs |
+|---|---|---|
+| `frontend/` | `just frontend check` | Flutter SDK |
+| `backend/alembic/versions/` | `just backend test-migrations` | Docker |
+| screens or navigation | `just e2e test` | Docker, Flutter |
+| what the screens look like | `just screenshots generate`, commit the result | Docker, Flutter |
+| a database table | add it to `BACKED_UP_TABLES` in `backend/src/dinatos_backend/services/backup.py` | |
 
-Open a GitHub issue or PR against `main`. For anything beyond a small fix,
-opening an issue first to agree on the approach saves a rewritten PR later
--- especially for anything touching the domain model or the API surface,
-where `docs/architecture/backend.md` explains the reasoning behind the
-current design (worth reading before proposing to change it).
+Also:
+
+- Keep a PR to one change.
+- If users or operators will notice the change, update the matching page in
+  `docs/` in the same PR.
+- CI comments the test coverage of your branch against `main` on your PR.
+
+## Bugs and ideas
+
+Open an [issue](https://github.com/bergercookie/dinatos/issues). For a
+larger change, open one first so we can agree on the approach.
+
+Security problems: do not open an issue, see [SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
 
 ## Where things are documented
 
-- **`AGENTS.md`** -- environment gotchas and non-obvious failure modes
-  (the `just` version trap, the Dockerfile's `--no-editable` requirement,
-  the coverage/`greenlet` interaction, why Alembic's config lives in
-  `pyproject.toml`). Read this first if something that should work doesn't.
-- **`docs/development/`** -- the full contributor workflow: environment
-  setup (Devbox and manual), running and testing each piece, what CI does
-  and how to reproduce it locally, cutting a release.
-- **`docs/architecture/`** -- the domain model, the backend and frontend's
-  internal design and the reasoning behind it, and how release artifacts
-  are built.
-- **`docs/user-guide/`** and **`docs/deploy/`** -- not aimed at
-  contributors, but worth skimming: they're the spec for what a change
-  should look like from an app user's or a self-hosting operator's side.
+- [Development docs](https://bergercookie.github.io/dinatos/development/index.html): workflow, CI, releases
+- [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code is shaped this way
+- [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, useful for anyone)
