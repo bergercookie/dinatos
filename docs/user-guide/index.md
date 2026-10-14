@@ -1,9 +1,8 @@
 # Using Dinatos
 
-This section is for people using an already-running Dinatos instance --
-someone else's, or one you've set up yourself. If you're the one setting
-that instance up, see [Running your own instance](../deploy/index.md)
-instead.
+How to use the Dinatos workout tracker: log workouts, track your body, import history, connect an AI assistant. Start with [Concepts](concepts.md).
+
+Running the server yourself? See [Running your own instance](../deploy/index.md).
 
 ```{toctree}
 :maxdepth: 2

@@ -1,353 +1,367 @@
 # Frontend
 
-`frontend/` is a Flutter app (web, Android, and Linux desktop -- see
-[Distribution](distribution.md) for how each one ships) against the
-backend's REST API, with no code generation step (no `build_runner`, no
-`freezed`) -- models are hand-written classes with `fromJson`/`toJson`, and
-state management is plain Riverpod (`Provider`, `StateNotifierProvider`,
-`FutureProvider`), not the `@riverpod`-annotated generator variant. One
-dependency less to keep in sync, and nothing to regenerate when a model's
-shape changes.
+How the Flutter app in `frontend/` is built and why. For contributors changing
+the app; no prior knowledge of the code is assumed. To run it, see
+[Running and testing](../development/workflow.md). To ship it, see
+[Distribution](distribution.md).
 
-Layout:
+## Overview
+
+`frontend/` is a [Flutter](https://flutter.dev) app that talks to the backend's
+REST API. One codebase targets web, Android and Linux desktop.
+
+Stack choices:
+
+- **No code generation.** No `build_runner`, no `freezed`. Models are
+  hand-written classes with `fromJson`/`toJson`. Changing a model's shape means
+  editing one file and regenerating nothing.
+- **Plain [Riverpod](https://riverpod.dev)** for state (`Provider`,
+  `StateNotifierProvider`, `FutureProvider`), not the `@riverpod` generator.
+  A *provider* is a global, lazily built value that widgets watch and rebuild on.
+- **[Dio](https://pub.dev/packages/dio)** as the HTTP client and
+  **[go_router](https://pub.dev/packages/go_router)** for navigation.
 
 ```text
 frontend/lib/
-  core/       API client (Dio + an auth interceptor), auth state/storage,
-              routing (go_router), theme
-  models/     Hand-written request/response types, one file per resource
-  features/   One directory per resource (exercises, routines, activities,
-              profile, measurements, auth, home, onboarding) -- each with its own
-              repository (wraps Dio), Riverpod providers, and screens
+  core/       API client (Dio + auth interceptor), auth state and storage,
+              routing, theme
+  models/     Request/response types, one file per resource
+  features/   One directory per area (exercises, routines, activities, calendar,
+              profile, measurements, auth, home, onboarding, ...). Each has a
+              repository (wraps Dio), Riverpod providers, and screens.
 ```
 
-## The first-run tour is an overlay above the router, not a screen
+Vocabulary used below:
 
-`features/onboarding/` walks a new account through setting units, saving a
-first routine and logging a first workout, by dimming everything but the
-real control to press next and pointing at it. It is wired in as
-`MaterialApp.router`'s `builder`, so one widget (`OnboardingOverlay`) sits
-above every route and no screen has to know a tour exists -- beyond
-wrapping the handful of widgets it points at in an `OnboardingTarget`,
-which draws and handles nothing itself, only registers where it is.
+- **Activity**: a logged workout. **Routine**: a saved workout template.
+  **Planned workout**: a routine or workout scheduled for a date. See
+  [Domain model](domain-model.md).
+- **Live workout**: the in-progress workout screen, before it is saved as an
+  activity.
+- **Superset**: exercises done back-to-back.
 
-Three decisions worth knowing before changing it:
+## Authentication
 
-- **Steps complete by what the app did, not by what the user pressed.** A
-  step advances when the router reaches a path (`advanceOnLocation`) or the
-  app reports an event (`advanceOnEvent`, e.g. the profile was saved) --
-  never by a pointer listener on the highlighted widget. A mouse or finger
-  reaches the app as pointer events, but assistive technology (and a
-  browser test driving the accessibility tree) activates a control with a
-  semantic tap, which a pointer listener never sees; the tour would hang on
-  exactly the people who most need guidance to be correct. Pressing the
-  highlighted control is the real thing, so its normal effect is the signal.
-- **Only single-press steps are modal.** The overlay is above the app's own
-  `Navigator`, so anything the app opens in it -- a dropdown menu, the
-  exercise picker's bottom sheet -- renders *beneath* the dimming. A modal
-  step (everything outside the spotlight blocks input) is therefore only
-  used where one press is the whole step; steps that need the user to fill
-  something in leave the app usable and only draw the ring, with "Skip
-  step" as the way out if they get stuck.
-- **A missing target never traps the user.** A modal step blocks only once
-  its target has actually been found on screen -- in a visible branch, not
-  an inactive tab an `IndexedStack` is keeping alive. If the user wandered
-  off, the card still shows (docked, no dimming) and "Skip step"/"Skip
-  tour" always work.
+Mirrors the backend ([Authentication](backend.md#authentication)):
 
-Completion is remembered per account in `shared_preferences`
-(`onboarding_seen_<user id>`), so a second account on the same device gets
-its own tour; Settings' "Take the tour again" restarts it. Its steps are
-data (`onboarding_steps.dart`), so adding or reordering one is an edit to
-that list plus an `OnboardingTarget` where it points.
+- The session token is stored with `flutter_secure_storage`, not a cookie.
+- There is no refresh token. A 401 from *any* request (caught by a Dio
+  interceptor) clears the token and routes to `/login`. A 401 always means
+  "log in again".
+- `go_router` redirects on the auth state held by `AuthNotifier`
+  (`core/auth/auth_notifier.dart`), not on what a screen believes.
+- Logout calls `POST /auth/logout`, then clears the local token *even if the
+  call failed*. An unreachable backend must not leave the person signed in.
 
-`e2e/` drives this in a real browser; see
-[CI and releases](../development/ci-and-releases.md).
+## Server URL
 
-## Auth mirrors the backend's design deliberately
+The backend URL is not only a compile-time constant (`--dart-define=API_BASE_URL`,
+see `core/api_config.dart`). It is also stored on the device
+(`core/server_url_provider.dart`, separate key from the token), so one released
+binary can point at anyone's self-hosted server.
 
-The session token is persisted (`flutter_secure_storage`, not a cookie),
-there is no refresh token, and a 401 from *any* request (caught by a Dio
-interceptor) clears it and routes back to `/login` -- there is nothing to
-refresh, so a 401 always means "log in again," never "retry after
-refreshing." `go_router` redirects based on that auth state, not on which
-screen thinks it's logged in. Logging out (the settings screen's app bar
-icon) calls `POST /auth/logout` to revoke the session server-side, then
-clears the local token regardless of whether that call succeeded -- if the
-backend is unreachable, "logged out on this device" still has to win over
-leaving the person stuck signed in. See
-[Authentication](backend.md#authentication) for the server-side design this
-mirrors.
+- Editable on the login screen. It is committed just before the login/register
+  call, so that call goes to what the field shows now.
+- Editable in Settings, which logs out first: a token from one server is
+  meaningless on another.
+- User-facing description: [Getting started](../user-guide/getting-started.md).
 
-## The backend's base URL is persisted too
+Gotcha: changing the URL rebuilds `AuthNotifier` (it watches `dioProvider`,
+which watches the URL) while a login/logout may be in flight on the new
+instance. Every state transition in `AuthNotifier._bootstrap` is therefore
+guarded by `state is AuthUnknown`. Without the guard, whichever call finished
+last would win.
 
-Not just baked in at compile time via `--dart-define=API_BASE_URL`: a binary
-built once by the release workflow and handed to someone else is only
-useful if it can point at *their* own backend, not whichever one built it
-(a separate storage key from the session token -- see
-`core/server_url_provider.dart`). It's editable from the login screen
-(before ever signing in -- committed just before the actual login/register
-call, so that call always goes to whatever the field currently says) and
-from the settings screen (which logs out first, since a session token from
-one backend is meaningless on another). See
-[Getting started](../user-guide/getting-started.md) for this same field
-explained for someone using the app rather than building it.
+## Secure storage can throw
 
-Every state transition in `AuthNotifier._bootstrap` is guarded by `state is
-AuthUnknown`: changing the server URL rebuilds `AuthNotifier` (it watches
-`dioProvider`, which watches the server URL) at the same moment a
-login/logout call may already be in flight on the fresh instance, and
-without the guard whichever finished last would silently win.
+On Linux, `flutter_secure_storage` uses the system keyring (libsecret). If it
+is not running or unlocked (common outside a full GNOME/KDE session), every
+call throws `PlatformException` instead of returning null.
 
-## Secure storage can throw, and that's expected
+- `TokenStorage`, `ServerUrlStorage` and `InsecureTlsStorage` (all in
+  `frontend/lib/core/`) catch it at every call and treat it as "nothing
+  stored" or "could not persist". Letting it escape `main()`'s startup read
+  crashed the app before any window appeared. Do not remove these catches.
+- All three depend on a small `SecureStore` interface
+  (`core/secure_store.dart`) so tests can inject a fake. `flutter test` has no
+  platform channel.
 
-`flutter_secure_storage`'s Linux backend is the system keyring (libsecret);
-one that isn't running or unlocked -- common outside a full GNOME/KDE
-session -- makes every call throw `PlatformException` instead of returning
-null. `TokenStorage`/`ServerUrlStorage` (`frontend/lib/core/`) both catch
-that at every call site and treat it as "nothing stored"/"couldn't
-persist": the alternative, letting it propagate out of `main()`'s startup
-read, crashed the app before it ever showed a window. Both classes (and the
-later `InsecureTlsStorage`) depend on a small `SecureStore` interface
-(`core/secure_store.dart`) rather than `FlutterSecureStorage` directly,
-specifically so a fake can stand in for it under `flutter test`, which has
-no platform channel at all.
+## Insecure-TLS toggle
 
-## The insecure-TLS toggle
+Next to the server URL (login and Settings) is a per-server switch that skips
+TLS certificate verification. It exists for homelab servers behind a reverse
+proxy with a self-signed certificate.
 
-Next to the server URL, on the same two screens, is a per-server toggle to
-skip TLS certificate verification (`core/insecure_tls_provider.dart`, wired
-into `dioProvider` via `core/insecure_tls_configurator.dart`) -- for a
-homelab server sitting behind a reverse proxy with a self-signed
-certificate, which otherwise can't be reached at all short of installing a
-CA on every device. Off by default: it's a real reduction in security (any
-network path can then impersonate the server), not just a convenience, so
-it's opt-in rather than something CORS-style middleware could paper over.
-It only does anything on Android and Linux desktop -- the web target can't
-touch the browser's own TLS handshake from Dart at all, so
-`insecure_tls_configurator_stub.dart` (picked via `dart.library.io`
-conditional export) is a deliberate no-op there. See
-[Security and networking](../deploy/security-and-networking.md) for when a
-deploying operator would actually turn this on.
+- **Off by default.** It is a real security reduction: any network path can
+  impersonate the server.
+- Code: `core/insecure_tls_provider.dart`, applied to Dio by
+  `core/insecure_tls_configurator.dart`.
+- **Android and Linux only.** A browser owns its TLS handshake, so on web the
+  conditional export (`dart.library.io`) selects
+  `insecure_tls_configurator_stub.dart`, a deliberate no-op.
+- When an operator should enable it:
+  [Security and networking](../deploy/security-and-networking.md).
 
-## Shared editing shape
+## CORS on the web target
 
-`routines` and `activities` share the same nested "exercises, each with
-sets" editing shape the backend's schemas do (see
-[API surface](backend.md#api-surface)), including the same full-replace
-semantics on save (`PUT`, not per-set `PATCH`). An activity's "start from a
-saved routine" button copies a routine's exercises and target weights/reps
-into a new activity client-side -- convenience only, not an API relationship
-beyond the `routine_id` reference already stored on the created activity.
+A browser blocks cross-origin requests unless the server allows them, and the
+web build's origin is rarely the backend's. The backend therefore installs
+`CORSMiddleware` (`backend/src/dinatos_backend/main.py`), configured by
+`cors_allowed_origins` ([Security and networking](../deploy/security-and-networking.md)).
+Android and Linux are unaffected.
 
-## Finishing a workout without a connection
+Neither `flutter analyze` nor `flutter test` can catch a CORS failure, because
+no browser is involved. The symptom is `net::ERR_FAILED` or "could not reach
+the server". Verify web API changes by loading the built app in a browser. The
+`/docs` page ([API documentation](backend.md#api-documentation)) is the same
+kind of browser-only problem.
 
-A live workout is held in `liveActivityProvider` and written to disk on every
-change (`live_session_storage.dart`), so killing the app mid-workout loses
-nothing, and nothing about logging sets needs the server. What *does* use the
-server -- "last time" hints, suggestions, trophies, the end-of-workout record
-check -- is fetched in the background and simply absent when it fails: a
-missing hint is never an error and never blocks a set.
+## First-run tour
 
-Saving is the one thing that needs it, and the summary screen is built around
-that failing:
+`features/onboarding/` guides a new account through setting units, saving a
+first routine and logging a first workout. It dims the screen except the real
+control to press next.
 
-- A failed save leaves the session where it is, on screen and on disk. The
-  summary says so and offers Save again. A workout that is finished but not
-  saved keeps a banner on every tab (`live_workout_banner.dart`), so there is
-  always a way back to that Save button after wandering off.
-- No HTTP status on the error means no response at all (dropped connection,
-  timeout): the server may have stored the workout. The retry has to be
-  recognisable as the same save, and the backend recognises it by title, start
-  and end (see [Retried saves](backend.md#retried-saves)) -- so after such a
-  failure the session records `pendingTitle` and the title field is locked to
-  it. The title would otherwise be the one thing the person could change
-  between attempts. `pendingTitle` is persisted with the session, so it
-  survives the app being killed between attempts, and is cleared by a
-  definite answer from the server (success, or an error with a status).
-- The end-of-workout record check needs the server too. When it fails the
-  summary says it could not check -- which is not the same as "no new
-  records" -- and offers a retry, but only before saving: afterwards the
-  server's "best" already includes this workout.
+It is an overlay, not a screen. `OnboardingOverlay` is `MaterialApp.router`'s
+`builder`, so it sits above every route and screens need not know it exists.
+The only exception is wrapping the widgets it points at in `OnboardingTarget`,
+which draws nothing and only reports its position.
 
-`test/features/activities/live/activity_summary_screen_test.dart` drives these
-paths against a mocked `Dio`; the storage tests cover the kill-and-restore
-round trip through the real `SharedPreferences` path.
+Design rules:
 
-## Planned workouts: reminders and the start flow
+- **Steps complete by what the app did, not what the user pressed.** A step
+  advances when the router reaches a path (`advanceOnLocation`) or the app
+  reports an event (`advanceOnEvent`, e.g. profile saved). Never use a pointer
+  listener on the highlighted widget: assistive technology and browser tests
+  activate controls with a *semantic tap*, which pointer listeners never see,
+  and the tour would hang for exactly the people who need it.
+- **Only single-press steps are modal.** The overlay sits above the app's own
+  `Navigator`, so dropdowns and bottom sheets (the exercise picker) render
+  *beneath* the dimming. Steps that need typing or picking leave the app
+  usable, draw only a ring, and offer "Skip step".
+- **A missing target never traps the user.** A modal step blocks input only
+  once its target is actually visible (not in an inactive tab kept alive by an
+  `IndexedStack`). Otherwise the card is docked with no dimming. "Skip step"
+  and "Skip tour" always work.
 
-A planned workout (`lib/features/calendar/`) is a backend entity, not client
-state -- see "Calendar feed" and `/planned-workouts` in `backend.md`. The client
-parts worth knowing:
+Other facts:
 
-- **Reminders are scheduled local notifications**, not push: `workoutReminderSyncProvider`
-  (watched from the app root, like the live-workout notification) re-schedules
-  the next 50 whenever `plannedWorkoutListProvider` changes, and clears them on
-  logout -- but not while the login is still `AuthUnknown` and not when the fetch
-  fails, so starting the app offline never cancels tomorrow's reminder. They use
-  `AndroidScheduleMode.inexactAllowWhileIdle`: a reminder may be a few minutes late
-  in doze, in exchange for needing no exact-alarm permission (which Play
-  restricts). The date is an absolute instant, passed as UTC so no timezone
-  database is needed. The manifest declares the plugin's two receivers and
-  `RECEIVE_BOOT_COMPLETED`; without them a scheduled notification never shows.
-- **One tap callback for two services.** `flutter_local_notifications` keeps a
-  single `onDidReceiveNotificationResponse`, so a second service's `initialize()`
-  silently replaced the live workout notification's. Both services therefore pass
-  `dispatchNotificationTap` (`core/notification_taps.dart`) and register a listener
-  for the payloads they own (the live one's has none; a reminder's is `planned:<id>`).
-- **A tap opens `/activities/plan/<id>/start`**, a route rather than a callback
-  into a widget: the notification may launch a cold app, and the route survives
-  the login redirect. `StartPlannedWorkoutScreen` loads the plan and its routine,
-  then starts the live workout; `startPlannedWorkout` is the same entry the Home
-  card, the day sheet and the **Start activity** sheet's third option use.
-- **The live session carries `plannedWorkoutId`** (persisted with it, so it
-  survives a restart), and the summary screen sends it with `POST /activities`.
-  It is a plan's *title* that becomes the summary's default title, not the
-  routine's name.
-- The Start-activity sheet reads whatever plans Home already loaded
-  (`valueOrNull`) rather than waiting on the network to open.
+- Completion is stored per account in `shared_preferences`
+  (`onboarding_seen_<user id>`). Settings has "Take the tour again".
+- Steps are data in `onboarding_steps.dart`. To add or reorder one, edit that
+  list and add an `OnboardingTarget` where it points.
+- `e2e/` drives the tour in a real browser:
+  [CI and releases](../development/ci-and-releases.md).
+
+## Routines and activities share an editor shape
+
+Both edit a nested list of exercises, each with sets, matching the backend
+schemas ([API surface](backend.md#api-surface)). Saving replaces the whole
+object (`PUT`, not per-set `PATCH`).
+
+"Start from a saved routine" copies the routine's exercises and target
+weights/reps into a new activity on the client. The only API link is the
+`routine_id` stored on the created activity.
 
 ## Supersets
 
-Exercises sharing a `supersetGroup` are done back-to-back. A group only means
-anything as a run of *adjacent* exercises, so every edit -- link with the next
-exercise, take one out, move, remove -- goes through `models/superset.dart`,
-which re-normalizes the list: each run of neighbours sharing a group has at
-least two members, and runs are numbered 1, 2, ... in order. That also repairs
-group numbers that arrive messy (a Hevy import reuses numbers, a restored
-backup may be anything) the first time such a list is edited. The helpers are
-generic over an accessor, so activities (live workout and the manual form) and
-routines share one implementation and one set of tests.
+Exercises sharing a `supersetGroup` number are done back-to-back. A group only
+makes sense as a run of *adjacent* exercises, so every edit (link, unlink,
+move, remove) goes through `models/superset.dart`, which re-normalizes the
+list:
 
-Rows in these lists carry a `uid`, a process-local id (`models/uid.dart`,
-never sent anywhere) used as their widget key. Without it, removing or moving
-a set would leave a neighbour's `TextFormField` showing the old text, because
-`initialValue` is only read once; reordering exercises made that unavoidable,
-so rows are keyed, and the number fields sync their text to the model when it
-changes from outside (a suggestion being filled in).
+- every run of neighbours sharing a group has at least two members;
+- runs are numbered 1, 2, ... in order.
 
-## What the live workout knows about past sessions
+This also repairs messy numbers from a Hevy import or a restored backup the
+first time the list is edited. The helpers take an accessor, so live workouts,
+the manual activity form and routines share one implementation and one test
+suite.
 
-`GET /exercises/{id}/history` feeds three things, all computed client-side in
-pure functions so they are unit-tested without a widget
-(`features/progress/progression.dart`):
+Rows in these lists carry a `uid`, a process-local id (`models/uid.dart`, never
+sent to the server) used as the widget key. Without it, removing or moving a
+set leaves a neighbour's `TextFormField` showing stale text, because
+`initialValue` is read only once. The number fields also resync their text when
+the model changes from outside, e.g. a suggestion being filled in.
 
-- **Last time** -- the previous session's sets, shown as the fields' hints.
-- **A suggestion** -- a simple double progression: if every working set at the
-  top weight got the same reps, add weight (2.5 kg, or 1 kg under 20 kg); if
-  not, hold the weight and aim for the best set's reps on every set; if the
-  for a body-weight exercise, one more
-  rep. Warm-ups, and drop/failure sets when there are normal ones, are not a
-  baseline. Tapping *Use* fills only values that are still empty.
-- **A plateau** -- the best session (by estimated 1RM, or best reps when there
-  is no load) is at least four sessions behind the latest, with a half-percent
-  tolerance so noise does not count as progress.
+## Live workout
 
-Personal records (`models/exercise_records.dart`) use `GET
-/exercises/{id}/records` and the same rules everywhere: a set counts only if it
-beats the prior best *and* every earlier set in the workout, warm-ups never
-count, and reps count only for a set with no load. The live screen only flags
-an exercise that has history (nothing to have beaten otherwise); the summary
-screen counts a first-ever set as a record, as it always did.
+A live workout is held in `liveActivityProvider` and written to disk on every
+change (`activities/live/live_session_storage.dart`). Killing the app loses
+nothing, and logging sets never needs the server.
 
-## Finishing a live workout drops what was never done
+Server-backed extras are fetched in the background and are simply absent on
+failure: "last time" hints, suggestions, trophies and the record check. A
+missing hint never blocks a set.
 
-`LiveActivityNotifier.finish()` removes the exercises with no completed set and,
-in the others, the sets never ticked off (`LiveActivitySession.unfinished`
-counts them, `finishedExercises` is the result), because only ticked sets count
-anywhere -- records, history, totals -- so saving an untouched planned set would
-record work that did not happen. Exercises go through the same `removeItem`
-path as the remove button, so a superset left with one member is dissolved. The
-screen asks first (`_confirmFinish`) whenever something would be lost, so the
-removal is never a surprise; the dialog's "Keep logging" leaves the session
-untouched. The routine-started workout's planned sets are the common case: a
-set not ticked by the end is a planned set that was skipped.
+### Saving offline
 
-## Adding several exercises to a live workout from a typed list
+Saving is the one step that needs the server. The summary screen
+(`activity_summary_screen.dart`) is built around it failing:
 
-The live screen's *Add several* button opens `bulk_add_sheet.dart`: type (or dictate with the
-keyboard's own mic)
-"1 reverse lunges 2 bench press 3 pull ups", check the matches, add them all
-(no sets -- those are filled in afterwards, as with a single *Add exercise*).
-It is built to be self-explanatory, because a free-text box with a hidden
-format is where people give up: the three steps are always on screen, every
-row says in words how sure the match is, and nothing is added until the person
-presses the button.
+- **A failed save keeps the session** on screen and on disk, with a Save again
+  button. A finished-but-unsaved workout shows a banner on every tab
+  (`features/home/live_workout_banner.dart`).
+- **No HTTP status means no response** (dropped connection, timeout), so the
+  server may have stored the workout. The backend recognises a retry by title,
+  start and end ([Retried saves](backend.md#retried-saves)). After such a
+  failure the session records `pendingTitle` and locks the title field to it,
+  because the title is the one thing the user could otherwise change between
+  attempts. `pendingTitle` is persisted, and cleared by any definite server
+  answer (success, or an error with a status).
+- **The record check also needs the server.** On failure the summary says it
+  could not check (not the same as "no new records") and offers a retry, only
+  before saving. After saving, the server's "best" already includes this
+  workout.
 
-- **Text only, all on the device.** The sheet takes plain text, so it is typed
-  identically everywhere. Dictation is the keyboard's job (Android's keyboard
-  mic types into the box like anything else); the app has no speech
-  recognition of its own -- a "tap and speak" button was removed, since it
-  did not work and the keyboard already does this. The catalog is already in
-  memory on the live screen, so there is no backend call or endpoint for this.
-- **Splitting** (`splitExerciseList`, `exercise_text_matcher.dart`): numbers are
-  the reliable separator, digits or words, because a recogniser gives no
+Tests: `test/features/activities/live/activity_summary_screen_test.dart` (mocked
+`Dio`) and the storage tests (real `SharedPreferences` kill-and-restore).
+
+### Finishing drops what was not done
+
+`LiveActivityNotifier.finish()` removes exercises with no completed set, and
+removes never-ticked sets from the others. Only ticked sets count anywhere
+(records, history, totals), so saving an untouched planned set would record
+work that did not happen.
+
+- `LiveActivitySession.unfinished` counts what would be dropped;
+  `finishedExercises` is the result.
+- Exercises go through the same `removeItem` path as the remove button, so a
+  superset left with one member is dissolved.
+- `_confirmFinish` asks first whenever something would be lost. "Keep logging"
+  leaves the session untouched.
+
+### Past sessions: hints, suggestions, plateaus, records
+
+`GET /exercises/{id}/history` feeds three features, computed client-side in
+pure functions (`features/progress/progression.dart`) so they are unit-tested
+without widgets:
+
+- **Last time**: the previous session's sets, shown as field hints.
+- **Suggestion**: a simple double progression based on the last session.
+  - Every working set at the top weight got the same reps: add weight (2.5 kg,
+    or 1 kg below 20 kg) and aim for those reps.
+  - Otherwise: keep the weight and aim for the best set's reps on every set.
+  - Body-weight exercise: one more rep.
+  - Warm-ups never count as a baseline. Drop and failure sets do not either,
+    unless nothing else exists.
+  - Tapping *Use* fills only values still empty.
+- **Plateau**: the best session (by estimated one-rep max, or best reps when
+  there is no load) is at least four sessions behind the latest. Beating the
+  best by under 0.5% is noise, not progress.
+
+Personal records (`models/exercise_records.dart`, from
+`GET /exercises/{id}/records`) follow the same rules everywhere:
+
+- A set counts only if it beats the prior best *and* every earlier set in the
+  same workout.
+- Warm-ups never count.
+- Reps count only for a set with no load.
+- The live screen flags only exercises that have history. The summary screen
+  counts a first-ever set as a record.
+
+### Adding several exercises from a typed list
+
+*Add several* on the live screen opens `bulk_add_sheet.dart`. The user types
+"1 reverse lunges 2 bench press 3 pull ups", reviews the matches, and adds them
+all (without sets, as with a single *Add exercise*). The three steps stay on
+screen and each row says how sure the match is, because a free-text box with a
+hidden format is where people give up. Nothing is added until the button is
+pressed.
+
+- **Text only, fully on device.** The exercise catalog is already in memory, so
+  there is no endpoint. Dictation is the keyboard's job; the app has no speech
+  recognition.
+- **Splitting** (`splitExerciseList` in `exercise_text_matcher.dart`): numbers,
+  as digits or words, are the separator, because dictation gives no
   punctuation. Only the *next expected* number splits, so "one arm dumbbell
   row" stays whole. A "1" opening a new line starts a new run, which is how a
   second dictation appends. Without a leading "1" it falls back to new lines,
-  commas and "and"/"then"/"next".
-- **Matching** (`ExerciseMatcher`): word order, case, plurals and punctuation are
-  ignored, `db`/`bb` expand, "pull ups" equals "Pullup", and a one-letter slip in
-  a long word is forgiven. A fully matched name with no extra words is
-  *Matched*; all words found in a longer name ("reverse lunges" for "Crossover
-  Reverse Lunge") is a *Best guess*; some words is *Not sure*; none is *No
-  match*. The first two are ticked by default, the last two are not -- a wrong
-  exercise in a workout under way is worse than one more tap. Ties go to what
-  the person has logged most.
-- Covered by `test/features/exercise_text_matcher_test.dart` (parsing and
-  matching) and `test/features/activities/live/bulk_add_sheet_test.dart` (the
-  sheet).
+  commas, and "and"/"then"/"next".
+- **Matching** (`ExerciseMatcher`): ignores word order, case, plurals and
+  punctuation; expands `db`/`bb`; treats "pull ups" as "Pullup"; forgives a
+  one-letter slip in a long word. Ties go to the exercise logged most.
 
-## "Which athlete do you resemble?" is a best-effort estimate, computed on the device
+  | Result | Meaning | Ticked by default |
+  | --- | --- | --- |
+  | Matched | Whole name matches, no extra words | yes |
+  | Best guess | All words appear in a longer name | yes |
+  | Not sure | Some words match | no |
+  | No match | None match | no |
 
-`features/personas/` compares the person with a few hand-picked athlete
-archetypes (sprinter, distance runner, weightlifter, powerlifter,
-bodybuilder, gymnast) and draws two overlaid shapes on a radar chart: how close
-their *body* is to each, and how close their *training* is. Like the stats page
-it has no endpoint -- it reads the measurements, activities, exercise catalog
-and profile height the app already loads. The numbers in `persona_profiles.dart`
-are rough on purpose; this is meant to be fun and explainable, not sports
-science, and the page says so.
+  Unticked by default because a wrong exercise mid-workout costs more than
+  one extra tap.
+- Tests: `test/features/exercise_text_matcher_test.dart` and
+  `test/features/activities/live/bulk_add_sheet_test.dart`.
 
-- **Body.** `computeBodyFeatures` turns the latest value of each measurement
-  field (not just the newest entry: people log partial sets) into ratios --
-  FFMI, body fat, waist and thigh/arm over height, shoulders over waist -- so
-  a short and a tall person with the same build compare alike. Each feature
-  scores a bell curve around the archetype's typical value (one tolerance away
-  is about 60%), weighted (height counts half), and the body score is the
-  weighted mean. Fewer than three known features means no score rather than a
-  guess; the page lists which inputs would unlock more. A smart scale's data
-  adds two more: a muscle index (its muscle mass over height squared) and the
-  lower-body muscle share (leg over arm-plus-leg segmental muscle, which
-  separates leg-heavy builds like sprinters and lifters from upper-body-heavy
-  ones like gymnasts). Scales define "muscle" differently, so the muscle index
-  targets are only approximate.
-- **Training.** Every non-warm-up set goes into exactly one of five focuses
-  (max strength, muscle building, explosive, endurance, bodyweight & skill) by
-  its weight, reps, distance, time and exercise name (`classifySet`). A cardio
-  set counts one set-equivalent per three minutes, otherwise an hour of running
-  would weigh the same as one bench set. The score is one minus the total
-  variation distance between the person's mix and the archetype's, i.e. how
-  much of their training already overlaps it. Under ten set-equivalents there is
-  no score.
-- **Known limitation.** The reference bodies are generic adult-male proportions
-  because the app does not know anyone's sex; the page warns about it. Adding a
-  profile field and per-sex targets would be the fix.
+## Planned workouts and reminders
 
-## The web target needs the backend's CORS middleware
+A planned workout (`lib/features/calendar/`) is stored by the backend, not
+client state: see "Calendar feed" in [Backend](backend.md) and
+`/planned-workouts`. Client-side points:
 
-A browser enforces CORS on cross-origin requests, and the frontend's origin
-(whatever serves the Flutter web build) is never the backend's own -- native
-targets (Android) don't go through a browser and aren't affected either
-way. This was found, not assumed -- by actually running the built web app in
-a browser against a live backend, which is what surfaced the missing
-`CORSMiddleware` (`backend/src/dinatos_backend/main.py`) as a
-`net::ERR_FAILED`/"could not reach the server" in the first place;
-`flutter analyze`/`flutter test` have no way to catch a CORS problem, since
-there's no browser involved in either. See
-[Security and networking](../deploy/security-and-networking.md) for the
-`cors_allowed_origins` setting this depends on.
+- **Reminders are local notifications, not push.**
+  `workoutReminderSyncProvider` (watched from the app root) reschedules the next
+  50 reminders whenever `plannedWorkoutListProvider` changes, and clears them on
+  logout. It does *not* clear them while auth is still `AuthUnknown` or when
+  the fetch fails, so starting offline never cancels tomorrow's reminder.
+  - Android uses `AndroidScheduleMode.inexactAllowWhileIdle`: a reminder may be
+    a few minutes late in doze, but no exact-alarm permission is needed (Play
+    restricts it).
+  - The time is an absolute instant passed as UTC, so no timezone database is
+    needed.
+  - `AndroidManifest.xml` must declare the plugin's two receivers and
+    `RECEIVE_BOOT_COMPLETED`. Without them a scheduled notification never shows.
+- **One tap callback, two services.** `flutter_local_notifications` keeps a
+  single `onDidReceiveNotificationResponse`, and a second `initialize()` call
+  silently replaces the first. Both the live-workout notification and the
+  reminders therefore pass `dispatchNotificationTap`
+  (`core/notification_taps.dart`) and register a listener for their own
+  payloads (the live one has none; a reminder's is `planned:<id>`).
+- **A tap opens the route `/activities/plan/<id>/start`**, not a callback into
+  a widget: the notification may cold-start the app, and a route survives the
+  login redirect. `StartPlannedWorkoutScreen` loads the plan and its routine,
+  then starts the live workout. `startPlannedWorkout` is the shared entry point,
+  also used by the Home card, the day sheet and the third option of the
+  **Start activity** sheet.
+- **The live session carries `plannedWorkoutId`** (persisted with it) and the
+  summary sends it with `POST /activities`. The plan's *title*, not the
+  routine's name, becomes the default activity title.
+- The Start activity sheet reads the plans Home already loaded (`valueOrNull`)
+  rather than waiting on the network.
 
-The `/docs` route (see [API documentation](backend.md#api-documentation)) is
-the same kind of browser-only problem, and needed a browser to find for the
-same reason.
+## "Which athlete do you resemble?"
+
+`features/personas/` compares the user with hand-picked archetypes (sprinter,
+distance runner, weightlifter, powerlifter, bodybuilder, gymnast) and draws two
+radar-chart shapes: body closeness and training closeness. It has no endpoint.
+It reads measurements, activities, the exercise catalog and profile height the
+app already loads. The numbers in `persona_profiles.dart` are rough on purpose:
+this is for fun and explainable, not sports science, and the page says so.
+
+- **Body** (`computeBodyFeatures`):
+  - Uses the latest value of *each* measurement field, not just the newest
+    entry, because people log partial sets.
+  - Converts them to ratios (FFMI, body fat, waist and thigh/arm over height,
+    shoulders over waist) so short and tall people compare alike.
+  - Each feature scores a bell curve around the archetype's typical value (one
+    tolerance away is about 60%). The body score is the weighted mean, with
+    height weighted half.
+  - Fewer than three known features gives no score. The page lists which
+    inputs would unlock more.
+  - Smart-scale data adds a muscle index (muscle mass over height squared) and
+    the lower-body muscle share (leg over arm-plus-leg segmental muscle).
+    Scales define "muscle" differently, so the muscle-index targets are
+    approximate.
+- **Training** (`classifySet`):
+  - Every non-warm-up set goes into exactly one of five focuses: max strength,
+    muscle building, explosive, endurance, bodyweight & skill. Inputs are
+    weight, reps, distance, time and exercise name.
+  - A cardio set counts one set-equivalent per three minutes, otherwise an hour
+    of running would weigh the same as one bench set.
+  - Score = 1 minus the total variation distance between the user's mix and the
+    archetype's, i.e. how much they overlap. Under ten set-equivalents gives
+    no score.
+- **Known limitation:** reference bodies are generic adult-male proportions,
+  because the app does not know sex. The page warns about it. The fix is a
+  profile field plus per-sex targets.
