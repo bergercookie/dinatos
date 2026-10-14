@@ -351,10 +351,26 @@ void _cardTests() {
       expect(find.text('Remove set'), findsOneWidget);
     });
 
+    testWidgets('only barbell exercises offer the plate calculator', (tester) async {
+      await tester.pumpWidget(
+        const _Harness(
+          initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet(weightKg: 100)]),
+          catalog: Exercise(id: 5, name: 'Leg Press', equipment: Equipment.machine),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Set options'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Plate calculator'), findsNothing);
+      expect(find.text('Remove set'), findsOneWidget);
+    });
+
     testWidgets('the plate calculator opens on the set weight', (tester) async {
       await tester.pumpWidget(
         const _Harness(
           initial: ActivityExercise(exerciseId: 5, sets: [ActivitySet(weightKg: 100)]),
+          catalog: Exercise(id: 5, name: 'Squat', equipment: Equipment.barbell),
         ),
       );
 
