@@ -1,36 +1,20 @@
 # Concepts
 
-Dinatos organizes everything around four kinds of thing:
+The terms Dinatos uses. Dinatos is a self-hosted workout tracker: it runs on a server (an "instance") that someone, maybe you, operates.
 
-- **Exercises** -- a single movement, e.g. "Romanian deadlift." Every
-  account on an instance shares the same exercise catalog: if you add one,
-  everyone on that instance sees it. The catalog Dinatos ships with (marked
-  "Built-in" in the app) is a fixed, widely-agreed-upon staple set and can't
-  be renamed, edited, or deleted -- only an exercise you add yourself can.
-  Most exercises come with a tutorial -- a picture or GIF plus instructions,
-  target muscles, and equipment -- see
-  [Browsing exercises](using-the-app.md#exercises).
-- **Routines** -- a named, reusable plan: a list of exercises, with a target
-  number of sets/reps/weight for each. Think of this as a template -- "Upper
-  body A," "Leg day" -- that you build once and reuse. Routines are private
-  to your own account.
-- **Activities** -- a record of a gym session you actually did: a list of
-  exercises with the sets, reps, and weight you actually performed. An
-  activity can start from one of your saved routines (copying its exercises
-  in as a starting point) or be built from scratch on the spot. Also
-  private to your own account.
-- **Measurements** (the **Body** tab) -- dated body-measurement entries (weight, smart-scale
-  body composition, and tape measurements -- whatever you choose to track),
-  separate from any routine.
+| Term | Meaning | Who sees it |
+|---|---|---|
+| **Exercise** | One movement, such as "Romanian deadlift". Most have a tutorial: picture, instructions, target muscles, equipment. | Everyone on the instance |
+| **Built-in exercise** | Ships with Dinatos. Cannot be renamed, edited or deleted. | Everyone |
+| **Custom exercise** | One you add. You can edit or delete it. | Everyone |
+| **Routine** | A reusable plan: exercises with target sets, reps and weight ("Leg day"). | Only you |
+| **Activity** | A workout you actually did: exercises with the sets, reps and weight you performed. | Only you |
+| **Planned workout** | A routine, or a free-form session, scheduled for a future date. It becomes an activity only when you do it. | Only you |
+| **Measurement** | A dated body entry (weight, body composition, tape measurements). Lives in the **Body** tab. | Only you |
+| **Instance** | One Dinatos server. The app connects to one at a time. | n/a |
 
-- **Planned workouts** -- a routine (or a free-form session) scheduled for a
-  future day and time, shown on Home's calendar. A plan is not an activity: it
-  only becomes one when you do the workout, and then it is marked done.
+Everything except exercises belongs to one account. On an instance with several accounts, nobody sees anyone else's routines, activities or measurements.
 
-Your **profile** holds account-level settings and is where you log out,
-change the server you're pointed at, and import history from Hevy or Intervals.icu.
+The **Settings** tab holds your account options. It is where you log out, change the server, import and export data, and manage API keys.
 
-Everything except the exercise catalog belongs to exactly one account --
-Dinatos is a household app from the start, so if your instance has more
-than one person logged in, nobody sees anyone else's routines, activities,
-or measurements.
+See [Using the app](using-the-app.md) for how to use each of these.
