@@ -1,51 +1,39 @@
 # Security policy
 
+How to report a vulnerability in Dinatos, and a summary of its security design.
+
 ## Supported versions
 
-Dinatos is pre-1.0 (`0.x`). Only the latest release, and `main`, receive
-security fixes; please reproduce against the latest release before
-reporting.
+Dinatos is pre-1.0 (`0.x`). Only the latest release and `main` receive security fixes. Reproduce on the latest release before reporting.
 
-## Reporting a vulnerability
+## Report a vulnerability
 
-Please do not open a public issue or PR for a security problem. Report it
-privately through GitHub's private vulnerability reporting: on the
-repository's **Security** tab, choose **Report a vulnerability**
-(<https://github.com/bergercookie/dinatos/security/advisories/new>).
+Do not open a public issue or pull request.
 
-Helpful to include: the affected version or commit, how it is deployed
-(Docker image, native client), steps to reproduce, and the impact you see.
+1. Go to the repository's **Security** tab.
+2. Choose **Report a vulnerability**, or open <https://github.com/bergercookie/dinatos/security/advisories/new>.
+3. Include the affected version or commit, how you deploy it (Docker image or native client), steps to reproduce, and the impact.
 
 ## What to expect
 
-Dinatos is maintained by an individual, so these are good-faith targets, not
-guarantees:
+One individual maintains Dinatos. These are good-faith targets, not guarantees:
 
-- an acknowledgement of your report within about a week;
-- a follow-up once the issue is confirmed or ruled out;
-- a fix in a new release for confirmed issues, and credit in the advisory
-  if you want it.
+- Acknowledgement within about a week.
+- A follow-up once the issue is confirmed or ruled out.
+- A fix in a new release for confirmed issues, with credit in the advisory if you want it.
 
-Please allow time for a fix before any public disclosure.
+Please allow time for a fix before public disclosure.
 
-## Security-relevant design
+## Security design
 
-A short summary; `docs/architecture/backend.md` ("Authentication") has the
-reasoning.
+| Area | Behaviour |
+|---|---|
+| Sessions | `POST /auth/login` returns a random bearer token. Only its SHA-256 hash is stored. Every request checks the session in the database. |
+| Logout | `POST /auth/logout` revokes only the session whose token you send. Revoked, expired and unknown tokens all return `401`. |
+| Lifetime | 30 days by default (`DINATOS_SESSION_TTL_DAYS`). |
+| Passwords | Hashed with Argon2. Never stored in the clear. |
+| Registration | Open unless `DINATOS_ALLOW_REGISTRATION=false`. The first account becomes administrator. `/admin/*` needs the admin role. |
+| API keys | `dnk_` keys for the MCP endpoint. Shown once, stored as a hash, revocable individually. They cannot manage keys or administer the server. |
+| Cookies and CORS | Auth uses an `Authorization` header, not cookies, so CORS allows any origin by default (without credentials). Restrict it with `DINATOS_CORS_ALLOWED_ORIGINS`. |
 
-- **Server-side sessions with opaque tokens.** `POST /auth/login` returns a
-  random high-entropy bearer token, not a JWT. Only its SHA-256 hash is
-  stored (`AuthSession`), and every authenticated request looks the session
-  up.
-- **Real logout.** `POST /auth/logout` revokes exactly the session its token
-  names; other sessions of the same account are unaffected. Revoked,
-  expired and unknown sessions all produce the same `401`.
-- **Session lifetime.** 30 days by default (`session_ttl_days`).
-- **Password hashing.** Argon2 (`argon2-cffi`); passwords are never stored
-  in the clear.
-- **Registration control.** Anyone can register unless
-  `DINATOS_ALLOW_REGISTRATION=false`; the first account becomes admin, and
-  `/admin/*` routes require the admin role.
-- **Bearer token, not cookies.** Auth is an `Authorization` header, so the
-  default CORS policy allows any origin (`cors_allowed_origins`, without
-  credentials). Operators can restrict it for a locked-down deployment.
+For operators: see [Security and networking](https://github.com/bergercookie/dinatos/blob/main/docs/deploy/security-and-networking.md).

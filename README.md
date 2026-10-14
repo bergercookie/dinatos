@@ -1,13 +1,13 @@
 # Dinatos
 
-A self-hosted workout tracker: exercises, routines, and the activities you
-log against them. Inspired by Hevy, built to run on your own homelab.
+A self-hosted workout tracker. Log exercises, build routines, record
+workouts, and see your progress. Inspired by Hevy, built to run on your own
+server.
 
-**Status:** a FastAPI + async SQLAlchemy backend (multi-user accounts with
-session-based auth, exercises, routines, activities, a profile, body
-measurements, a Hevy CSV importer, a pick-what-to-import Intervals.icu importer) and a Flutter frontend against it (web,
-Android, and Linux desktop) that also charts your training: frequency,
-workout time, muscle split, go-to exercises and best lifts.
+- Multi-user accounts, exercises, routines, live workout logging
+- Stats: frequency, time, muscle split, best lifts
+- Import your history from Hevy (CSV) and Intervals.icu
+- Web, Android and Linux desktop apps, one backend
 
 ## Screenshots
 
@@ -56,56 +56,43 @@ workout time, muscle split, go-to exercises and best lifts.
 </table>
 <!-- screenshots:end -->
 
-Generated against a real backend and a real frontend build, not mocked --
-see [`screenshots/`](screenshots/). `just screenshots generate` regenerates
-them.
+## Run it
 
-## Quickstart
+You need Docker.
 
 ```bash
-cp .env.example .env   # then edit it -- see the file for what to set
-docker compose up -d    # Postgres + the app (API and web UI, same origin)
+cp .env.example .env      # set POSTGRES_PASSWORD; the file explains the rest
+docker compose up -d      # Postgres + the app
 ```
 
-Then open `http://127.0.0.1:8000` in a browser -- that's the app itself, no
-separate frontend to build or serve. See
-[Running your own instance](https://bergercookie.github.io/dinatos/deploy/index.html)
-for configuration, upgrades/backups, and native (Android/Linux) clients.
+Open <http://127.0.0.1:8000>. The web UI is served by the same container, so
+there is nothing else to build.
 
-## Using it
+More: [configuration, upgrades, backups and native clients](https://bergercookie.github.io/dinatos/deploy/index.html).
 
-Already have access to a running instance and just want to log workouts,
-track measurements, or import your history from Hevy or Intervals.icu? See
-[Using Dinatos](https://bergercookie.github.io/dinatos/user-guide/index.html).
+## Use it
 
-## Contributing
+[User guide](https://bergercookie.github.io/dinatos/user-guide/index.html):
+logging workouts, measurements, importing history.
 
-Changing the code itself starts at [`CONTRIBUTING.md`](CONTRIBUTING.md) --
-Devbox + `just` are the supported way to interact with this repo. See
-[Contributing](https://bergercookie.github.io/dinatos/development/index.html)
-and [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html)
-for everything beyond the quick version.
+## Contribute
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md): it
+gets you from clone to passing tests in a few commands.
+
+How it is built: [architecture docs](https://bergercookie.github.io/dinatos/architecture/index.html).
 
 ## Releases
 
-Pushing a `v*` tag builds and publishes a Docker image with the backend and
-web UI together (to `ghcr.io/bergercookie/dinatos`), a Linux
-`.deb`/`.AppImage`, and an Android APK -- see the
-[Releases page](https://github.com/bergercookie/dinatos/releases) for the
-latest. The native builds ask for the backend's URL on first launch (or
-later, from the settings screen), so one release works against anyone's own
-homelab instance rather than whichever one built it.
-
-## Documentation
-
-Rendered at [the GitHub Pages site](https://bergercookie.github.io/dinatos/)
-(once published), and readable in place under [`docs/`](docs/).
+Each release publishes a Docker image (`ghcr.io/bergercookie/dinatos`), a
+Linux `.deb` and `.AppImage`, and an Android APK. See the
+[releases page](https://github.com/bergercookie/dinatos/releases). The native
+apps ask for your server's URL on first launch.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for supported versions and how to report a
-vulnerability privately.
+Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
 
 ## License
 
-[MIT](LICENSE) -- (c) Nikos Koukis.
+[MIT](LICENSE)
