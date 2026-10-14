@@ -89,7 +89,7 @@ Gotchas:
   frame renders empty (console: `SwaggerUIBundle is not defined`).
   `/openapi.json` is unaffected. Vendoring `swagger-ui-dist` would fix it at
   the cost of a copied bundle and license to keep in sync. See
-  [Browsing the API documentation](../deploy/quickstart.md#browsing-the-api-documentation).
+  [Browsing the API documentation](../deploy/quickstart.md#api-documentation).
 
 ## Authentication
 

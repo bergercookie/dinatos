@@ -23,7 +23,7 @@ def python_percent(package: str) -> float | None:
         return None
     out = Path(package, "coverage.json")
     subprocess.run(
-        ["uv", "run", "coverage", "json", "-o", "coverage.json"],
+        ["uv", "run", "coverage", "json", "-o", "coverage.json"],  # noqa: S607
         cwd=package,
         check=True,
         capture_output=True,
