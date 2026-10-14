@@ -289,7 +289,7 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                   previous: last != null && i < last.sets.length ? last.sets[i] : null,
                   record: i < recordFlags.length ? recordFlags[i] : null,
                   weightEnabled: catalog?.equipment != Equipment.bodyOnly,
-                  showPlateCalculator: catalog?.equipment == Equipment.barbell,
+                  plateCalculatorEnabled: catalog?.equipment == Equipment.barbell,
                   // Until the catalog loads, show the defaults (weight x reps).
                   showWeight: catalog?.tracksWeight ?? true,
                   showReps: catalog?.tracksReps ?? true,
@@ -453,7 +453,7 @@ class ActivitySetRow extends StatelessWidget {
     required this.onChanged,
     required this.onRemove,
     this.weightEnabled = true,
-    this.showPlateCalculator = false,
+    this.plateCalculatorEnabled = false,
     this.previous,
     this.record,
     this.showWeight = true,
@@ -483,7 +483,7 @@ class ActivitySetRow extends StatelessWidget {
 
   /// Plates only make sense on a barbell, so the calculator is offered only
   /// for barbell exercises.
-  final bool showPlateCalculator;
+  final bool plateCalculatorEnabled;
   final ValueChanged<ActivitySet> onChanged;
   final VoidCallback onRemove;
 
@@ -634,7 +634,7 @@ class ActivitySetRow extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
-              if (weightEnabled && showPlateCalculator)
+              if (weightEnabled && plateCalculatorEnabled)
                 const PopupMenuItem<Object>(
                   value: _SetAction.plateCalculator,
                   child: Text('Plate calculator'),

@@ -101,6 +101,12 @@ class AndroidLiveWorkoutNotificationService implements LiveWorkoutNotificationSe
         body: paused == null
             ? '$exercises · tap to return'
             : '${formatElapsed(paused)} · $exercises · tap to return',
+        // Not sticky: a sticky service is restarted by Android with a null
+        // intent after the process is killed (e.g. while the phone is
+        // locked), and the plugin's onStartCommand crashes on that -- a
+        // crash loop right after unlocking. The app re-posts this
+        // notification itself when it next runs.
+        startType: AndroidServiceStartType.startNotSticky,
         foregroundServiceTypes: {AndroidServiceForegroundType.foregroundServiceTypeSpecialUse},
         notificationDetails: AndroidNotificationDetails(
           _channelId,

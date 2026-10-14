@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dinatos/features/activities/widgets/activity_exercise_card.dart';
+import 'package:dinatos_frontend/features/activities/widgets/activity_exercise_card.dart';
 
 void main() {
   testWidgets('stopping writes elapsed seconds; replay resumes; override wins', (tester) async {
