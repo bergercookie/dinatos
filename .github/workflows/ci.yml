@@ -39,6 +39,14 @@ jobs:
             echo "### $pkg coverage" >> "$GITHUB_STEP_SUMMARY"
             (cd $pkg && uv run coverage report --format=markdown --skip-covered >> "$GITHUB_STEP_SUMMARY") || true
           done
+      - if: always()
+        run: python3 .github/scripts/coverage_report.py collect coverage-python.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python
+          path: coverage-python.json
+          if-no-files-found: ignore
       # pytest writes backend/htmlcov/ on every run (see addopts in
       # backend/pyproject.toml); `if: always()` keeps the report when the
       # coverage gate itself is what failed.
@@ -89,6 +97,14 @@ jobs:
         run: |
           awk -F: '/^LF:/{t+=$2} /^LH:/{h+=$2} END{if(t) printf "### frontend coverage\n\nLine coverage: %.2f%% (%d/%d)\n", 100*h/t, h, t}' frontend/coverage/lcov.info >> "$GITHUB_STEP_SUMMARY" || true
       - if: always()
+        run: python3 .github/scripts/coverage_report.py collect coverage-frontend.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: coverage-frontend.json
+          if-no-files-found: ignore
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage-html
@@ -118,3 +134,51 @@ jobs:
           name: e2e-debug
           path: /tmp/dinatos-e2e-*.png
           if-no-files-found: ignore
+
+  coverage:
+    # Merges the numbers the jobs above collected and, on a pull request,
+    # comments them next to the latest ones from main. Runs on main too, to
+    # leave those numbers behind as an artifact for the next pull request.
+    needs: [check, frontend]
+    if: always() && needs.check.result != 'cancelled' && needs.frontend.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: parts
+          merge-multiple: false
+      - name: Merge
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          merged = {}
+          for part in pathlib.Path("parts").glob("*/*.json"):
+              merged.update(json.loads(part.read_text()))
+          pathlib.Path("coverage.json").write_text(json.dumps(merged))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: coverage-main
+          path: coverage.json
+      - name: Comment on the pull request
+        if: github.event_name == 'pull_request'
+        # Pull requests from forks get a read-only token, so the comment can
+        # fail there; the numbers are still on each job's summary.
+        continue-on-error: true
+        run: |
+          run_id=$(gh run list --workflow ci.yml --branch main --event push --status completed --limit 20 \
+            --json databaseId --jq '.[].databaseId' | while read -r id; do
+              if gh run download "$id" --name coverage-main --dir base 2>/dev/null; then echo "$id"; break; fi
+            done)
+          python3 .github/scripts/coverage_report.py comment coverage.json base/coverage.json > comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file comment.md --edit-last --create-if-none
