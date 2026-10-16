@@ -87,6 +87,7 @@ class ActivityExercise {
     this.supersetGroup,
     this.notes,
     this.sets = const [],
+    this.collapsed = false,
   });
 
   factory ActivityExercise.fromJson(Map<String, dynamic> json) => ActivityExercise(
@@ -113,6 +114,11 @@ class ActivityExercise {
   final String? notes;
   final List<ActivitySet> sets;
 
+  /// Whether the live workout shows this exercise folded to its summary. Pure
+  /// screen state, kept here only so it survives the app being killed: it is
+  /// stored with the live session but never sent to the server.
+  final bool collapsed;
+
   /// The sets that were actually done (ticked off); the rest are only planned.
   Iterable<ActivitySet> get completedSets => sets.where((s) => s.completed);
 
@@ -127,6 +133,7 @@ class ActivityExercise {
     Object? supersetGroup = _unset,
     Object? notes = _unset,
     List<ActivitySet>? sets,
+    bool? collapsed,
   }) => ActivityExercise(
     id: id,
     uid: uid,
@@ -135,6 +142,7 @@ class ActivityExercise {
     supersetGroup: identical(supersetGroup, _unset) ? this.supersetGroup : supersetGroup as int?,
     notes: identical(notes, _unset) ? this.notes : notes as String?,
     sets: sets ?? this.sets,
+    collapsed: collapsed ?? this.collapsed,
   );
 }
 
