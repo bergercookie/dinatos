@@ -39,7 +39,8 @@ final keepScreenOnProvider = StateProvider<bool>((ref) => false);
 /// Only Android has the window flag this drives.
 bool get keepScreenOnSupported => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
-const _channel = MethodChannel('dev.bergercookie.dinatos/screen');
+/// Native window flags (keep-on, show-when-locked); see `MainActivity.kt`.
+const screenChannel = MethodChannel('dev.bergercookie.dinatos/screen');
 
 /// Applies [keepScreenOnProvider] to the Android window. Watched once from the
 /// app root, like the notification sync providers.
@@ -47,7 +48,7 @@ final keepScreenOnSyncProvider = Provider<void>((ref) {
   if (!keepScreenOnSupported) return;
   Future<void> apply(bool on) async {
     try {
-      await _channel.invokeMethod<void>('setKeepScreenOn', on);
+      await screenChannel.invokeMethod<void>('setKeepScreenOn', on);
     } on PlatformException catch (error) {
       debugPrint('Could not change keep-screen-on: $error');
     } on MissingPluginException {

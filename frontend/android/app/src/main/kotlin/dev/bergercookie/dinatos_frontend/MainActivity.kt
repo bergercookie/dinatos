@@ -1,5 +1,6 @@
 package dev.bergercookie.dinatos_frontend
 
+import android.os.Build
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,7 +14,21 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "dev.bergercookie.dinatos/screen")
             .setMethodCallHandler { call, result ->
-                if (call.method == "setKeepScreenOn") {
+                if (call.method == "setShowWhenLocked") {
+                    // Only draws the app above the keyguard; the phone stays
+                    // locked, so nothing outside the app becomes reachable.
+                    val on = call.arguments as? Boolean ?: false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                        setShowWhenLocked(on)
+                    } else if (on) {
+                        @Suppress("DEPRECATION")
+                        window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+                    }
+                    result.success(null)
+                } else if (call.method == "setKeepScreenOn") {
                     val on = call.arguments as? Boolean ?: false
                     if (on) {
                         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

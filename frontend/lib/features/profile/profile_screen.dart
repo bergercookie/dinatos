@@ -13,6 +13,7 @@ import '../../core/file_io.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/keep_screen_on.dart';
+import '../../core/show_over_lock_screen.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
@@ -648,6 +649,22 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 onChanged: (value) async {
                   ref.read(keepScreenOnProvider.notifier).state = value;
                   await ref.read(keepScreenOnStorageProvider).write(value);
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Card(
+              child: SwitchListTile(
+                secondary: const Icon(Icons.phonelink_lock_outlined),
+                title: const Text('Show workout on lock screen'),
+                subtitle: const Text(
+                  'During a live workout, waking the phone shows the app without '
+                  'unlocking. Anyone who picks up the phone can then use the app.',
+                ),
+                value: ref.watch(showOverLockScreenProvider),
+                onChanged: (value) async {
+                  ref.read(showOverLockScreenProvider.notifier).state = value;
+                  await ref.read(showOverLockScreenStorageProvider).write(value);
                 },
               ),
             ),
