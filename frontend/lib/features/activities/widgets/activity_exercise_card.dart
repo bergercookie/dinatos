@@ -95,11 +95,18 @@ enum _ExerciseAction {
 
 class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
   late bool _showNotes = (widget.exercise.notes ?? '').isNotEmpty;
-  bool _expanded = true;
+  late bool _expanded = !widget.exercise.collapsed;
 
   bool get _collapsed => widget.collapsible && !_expanded;
 
   ActivityExercise get _exercise => widget.exercise;
+
+  /// Folds or unfolds the card, and records it on the exercise so a live
+  /// workout restored after the app was killed comes back the same way.
+  void _toggleExpanded() {
+    setState(() => _expanded = !_expanded);
+    widget.onChanged(_exercise.copyWith(collapsed: !_expanded));
+  }
 
   void _addSet() {
     widget.onChanged(
@@ -190,11 +197,11 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                   IconButton(
                     tooltip: _collapsed ? 'Expand exercise' : 'Collapse exercise',
                     icon: Icon(_collapsed ? Icons.expand_more : Icons.expand_less),
-                    onPressed: () => setState(() => _expanded = !_expanded),
+                    onPressed: _toggleExpanded,
                   ),
                 Expanded(
                   child: InkWell(
-                    onTap: widget.collapsible ? () => setState(() => _expanded = !_expanded) : null,
+                    onTap: widget.collapsible ? _toggleExpanded : null,
                     child: Text(
                       catalog?.name ?? '#${_exercise.exerciseId}',
                       style: Theme.of(context).textTheme.titleSmall,
@@ -489,6 +496,24 @@ class ActivitySetRow extends StatelessWidget {
 
   static String? _hint(num? value) => value == null ? null : formatKg(value.toDouble());
 
+  /// [set] ticked as done. A field left empty takes the value its hint was
+  /// suggesting, so a completed set holds real numbers and is
+  /// indistinguishable from one typed by hand; [durationSeconds], when given
+  /// (the stopwatch ran), wins over the suggestion.
+  ActivitySet _complete(ActivitySet set, {int? durationSeconds}) {
+    final previous = this.previous;
+    return set.copyWith(
+      completed: true,
+      weightKg: set.weightKg ?? (showWeight && weightEnabled ? previous?.weightKg : null),
+      reps: set.reps ?? (showReps ? previous?.reps : null),
+      distanceKm: set.distanceKm ?? (showDistance ? previous?.distanceKm : null),
+      durationSeconds:
+          durationSeconds ??
+          set.durationSeconds ??
+          (showDuration ? previous?.durationSeconds : null),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -609,7 +634,9 @@ class ActivitySetRow extends StatelessWidget {
             ),
             SetStopwatch(
               seconds: set.durationSeconds,
-              onStopped: (seconds) => onChanged(set.copyWith(durationSeconds: seconds)),
+              completed: set.completed,
+              // Stopping the timer finishes the set.
+              onStopped: (seconds) => onChanged(_complete(set, durationSeconds: seconds)),
             ),
             const SizedBox(width: 4),
           ],
@@ -621,7 +648,8 @@ class ActivitySetRow extends StatelessWidget {
               activeColor: _doneGreen(context),
               visualDensity: VisualDensity.compact,
               semanticLabel: set.completed ? 'Set done' : 'Mark set as done',
-              onChanged: (value) => onChanged(set.copyWith(completed: value ?? false)),
+              onChanged: (value) =>
+                  onChanged(value == true ? _complete(set) : set.copyWith(completed: false)),
             ),
           ),
           PopupMenuButton<Object>(
@@ -731,12 +759,17 @@ class SetStopwatch extends StatefulWidget {
     super.key,
     required this.seconds,
     required this.onStopped,
+    this.completed = false,
     this.now = DateTime.now,
   });
 
   /// The set's current duration, as held by the model.
   final int? seconds;
   final ValueChanged<int> onStopped;
+
+  /// Whether the set is ticked as done. Ticking it while the timer runs stops
+  /// the timer, reporting the elapsed time through [onStopped].
+  final bool completed;
 
   /// The clock; injectable so tests can move time without waiting.
   final DateTime Function() now;
@@ -761,6 +794,12 @@ class _SetStopwatchState extends State<SetStopwatch> {
     // A value typed in the field while the timer is stopped wins.
     if (!_running && widget.seconds != old.seconds && widget.seconds != _accumulated.inSeconds) {
       _accumulated = Duration(seconds: widget.seconds ?? 0);
+    }
+    if (_running && widget.completed && !old.completed) {
+      // Reporting during the build would rebuild the parent mid-build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _running) _toggle();
+      });
     }
   }
 
