@@ -171,18 +171,27 @@ void main() {
       expect(calls, ['setShowWhenLocked(false)']);
     });
 
-    test(
-      'a finished-but-unsaved workout (the summary screen) still counts as in progress',
-      () async {
-        // Documents current behaviour: the session is held until saved or
-        // discarded, and the summary is where it is saved.
-        final c = app(setting: true);
-        final notifier = c.read(liveActivityProvider.notifier)..start();
-        notifier.finish();
-        await settle();
-        expect(lastShowWhenLocked(), 'setShowWhenLocked(true)');
-      },
-    );
+    test('stops as soon as the workout is finished, though the summary is still open', () async {
+      final c = app(setting: true);
+      final notifier = c.read(liveActivityProvider.notifier)..start();
+      await settle();
+      expect(lastShowWhenLocked(), 'setShowWhenLocked(true)');
+      notifier.finish();
+      await settle();
+      expect(c.read(liveActivityProvider), isNotNull, reason: 'the summary still needs it');
+      expect(lastShowWhenLocked(), 'setShowWhenLocked(false)');
+    });
+
+    test('a restored workout that was already finished stays hidden', () async {
+      app(
+        setting: true,
+        restored: PersistedLiveSession(
+          session: LiveActivitySession(startedAt: DateTime(2026), endedAt: DateTime(2026, 1, 1, 1)),
+        ),
+      );
+      await settle();
+      expect(calls, ['setShowWhenLocked(false)']);
+    });
 
     test('does not touch keep-screen-on', () async {
       final c = app(setting: true);

@@ -43,10 +43,12 @@ final showOverLockScreenProvider = StateProvider<bool>((ref) => false);
 
 /// Applies [showOverLockScreenProvider] to the Android window, but only while
 /// a live workout is in progress -- outside one, nothing should show over the
-/// lock screen whatever the setting says.
+/// lock screen whatever the setting says. Tapping "Finish workout" ends it:
+/// the summary screen that follows is no longer shown over the lock screen.
 final showOverLockScreenSyncProvider = Provider<void>((ref) {
   if (!keepScreenOnSupported) return;
-  final on = ref.watch(showOverLockScreenProvider) && ref.watch(liveActivityProvider) != null;
+  final session = ref.watch(liveActivityProvider);
+  final on = ref.watch(showOverLockScreenProvider) && session != null && session.endedAt == null;
   () async {
     try {
       await screenChannel.invokeMethod<void>('setShowWhenLocked', on);
