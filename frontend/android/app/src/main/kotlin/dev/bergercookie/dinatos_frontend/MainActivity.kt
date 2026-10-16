@@ -1,8 +1,32 @@
 package dev.bergercookie.dinatos_frontend
 
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    // The "Keep screen on" setting: FLAG_KEEP_SCREEN_ON stops the screen timing
+    // out while this window is in the foreground. It is not a wake lock, so it
+    // costs nothing once the app is left or the phone is locked by hand.
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "dev.bergercookie.dinatos/screen")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "setKeepScreenOn") {
+                    val on = call.arguments as? Boolean ?: false
+                    if (on) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                    result.success(null)
+                } else {
+                    result.notImplemented()
+                }
+            }
+    }
+
     // Locking the phone (or leaving the app) with the keyboard up can make
     // Android skip the "keyboard is gone" window-insets update on return, so
     // Flutter keeps a stale keyboard-sized bottom inset: the UI stays cropped

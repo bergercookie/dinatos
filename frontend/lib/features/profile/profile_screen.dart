@@ -12,6 +12,7 @@ import '../../core/external_link.dart';
 import '../../core/file_io.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
+import '../../core/keep_screen_on.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
@@ -636,6 +637,21 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               ),
             ),
           ),
+          if (keepScreenOnSupported) ...[
+            const SizedBox(height: AppSpacing.md),
+            Card(
+              child: SwitchListTile(
+                secondary: const Icon(Icons.screen_lock_portrait_outlined),
+                title: const Text('Keep screen on'),
+                subtitle: const Text('Stops the screen dimming while the app is open'),
+                value: ref.watch(keepScreenOnProvider),
+                onChanged: (value) async {
+                  ref.read(keepScreenOnProvider.notifier).state = value;
+                  await ref.read(keepScreenOnStorageProvider).write(value);
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xl),
           const _SectionHeader('Preferences'),
           OnboardingTarget(

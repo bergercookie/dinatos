@@ -6,6 +6,7 @@ import 'core/auth/auth_notifier.dart';
 import 'core/auth/auth_state.dart';
 import 'core/insecure_tls_provider.dart';
 import 'core/insecure_tls_storage.dart';
+import 'core/keep_screen_on.dart';
 import 'core/router.dart';
 import 'core/server_url_provider.dart';
 import 'core/server_url_storage.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
   final storedServerUrl = await ServerUrlStorage().read();
   final storedAllowInsecureTls = await InsecureTlsStorage().read();
   final storedThemeMode = await const ThemeModeStorage().read();
+  final storedKeepScreenOn = await const KeepScreenOnStorage().read();
   const liveSessionStorage = PrefsLiveSessionStorage();
   final restoredLiveSession = await liveSessionStorage.read();
   runApp(
@@ -47,6 +49,7 @@ Future<void> main() async {
         if (storedServerUrl != null) serverUrlProvider.overrideWith((ref) => storedServerUrl),
         allowInsecureTlsProvider.overrideWith((ref) => storedAllowInsecureTls),
         themeModeProvider.overrideWith((ref) => storedThemeMode),
+        keepScreenOnProvider.overrideWith((ref) => storedKeepScreenOn),
       ],
       child: const DinatosApp(),
     ),
@@ -62,6 +65,7 @@ class DinatosApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(liveWorkoutNotificationSyncProvider);
+    ref.watch(keepScreenOnSyncProvider);
     ref.watch(workoutReminderSyncProvider);
 
     if (authState is AuthUnknown) {
