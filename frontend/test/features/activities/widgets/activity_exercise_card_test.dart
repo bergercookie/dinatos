@@ -491,6 +491,35 @@ void _collapsibleTests() {
       expect(find.byKey(const Key('collapsedSummary')), findsNothing);
     });
 
+    testWidgets('stays collapsed when the card is disposed and rebuilt (scrolled away)', (
+      tester,
+    ) async {
+      var exercise = const ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1)]);
+      Widget card() => ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: ActivityExerciseCard(
+              collapsible: true,
+              exercise: exercise,
+              catalogExercise: const Exercise(id: 1, name: 'Bench Press'),
+              onChanged: (updated) => exercise = updated,
+              onRemove: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(card());
+      await tester.tap(find.byTooltip('Collapse exercise'));
+      await tester.pump();
+      expect(exercise.collapsed, isTrue);
+
+      // Scrolling away drops the card from the tree; scrolling back builds a new one.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(card());
+      expect(find.byKey(const Key('collapsedSummary')), findsOneWidget);
+    });
+
     testWidgets('tapping the title toggles it too', (tester) async {
       await tester.pumpWidget(collapsible());
 

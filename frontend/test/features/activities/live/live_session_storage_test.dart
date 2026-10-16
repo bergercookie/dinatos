@@ -246,4 +246,18 @@ void main() {
     );
     expect(container.read(liveActivityProvider), isNull);
   });
+
+  test('the collapsed flag survives a round trip but is not sent to the server', () {
+    final session = LiveActivitySession(
+      startedAt: DateTime(2026),
+      exercises: const [
+        ActivityExercise(exerciseId: 1, collapsed: true),
+        ActivityExercise(exerciseId: 2),
+      ],
+    );
+    final restored = PersistedLiveSession.fromJson(PersistedLiveSession(session: session).toJson())
+        .session;
+    expect(restored.exercises.map((e) => e.collapsed), [true, false]);
+    expect(session.exercises.first.toJson().containsKey('collapsed'), isFalse);
+  });
 }

@@ -45,4 +45,35 @@ void main() {
     await tester.tap(button);
     expect(seconds, 31);
   });
+
+  testWidgets('ticking the set done while running stops the timer', (tester) async {
+    int? seconds;
+    var completed = false;
+    var clock = DateTime(2026);
+    late StateSetter rebuild;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return SetStopwatch(
+                seconds: seconds,
+                completed: completed,
+                onStopped: (v) => seconds = v,
+                now: () => clock,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('set-timer')));
+    clock = clock.add(const Duration(seconds: 4));
+    rebuild(() => completed = true);
+    await tester.pump();
+    await tester.pump();
+    expect(seconds, 4);
+    expect(find.byKey(const ValueKey('set-timer-elapsed')), findsNothing);
+  });
 }
