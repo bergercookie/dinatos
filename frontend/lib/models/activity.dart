@@ -16,6 +16,8 @@ class ActivitySet {
     this.distanceKm,
     this.durationSeconds,
     this.completed = true,
+    this.suggestedReps,
+    this.suggestedDurationSeconds,
   });
 
   factory ActivitySet.fromJson(Map<String, dynamic> json) => ActivitySet(
@@ -47,6 +49,13 @@ class ActivitySet {
   /// unticked (`completed: false`).
   final bool completed;
 
+  /// A routine's target reps/duration for this set in a live workout: shown as
+  /// the fields' hints and taken when the set is ticked with the field empty,
+  /// but never a value of the set itself (so the stopwatch starts from zero).
+  /// Not sent to the server.
+  final int? suggestedReps;
+  final int? suggestedDurationSeconds;
+
   Map<String, dynamic> toJson() => {
     'set_type': setType.toJson(),
     'weight_kg': weightKg,
@@ -54,6 +63,13 @@ class ActivitySet {
     'distance_km': distanceKm,
     'duration_seconds': durationSeconds,
     'completed': completed,
+  };
+
+  /// [toJson] plus the suggestions, for persisting a live workout on-device.
+  Map<String, dynamic> toLocalJson() => {
+    ...toJson(),
+    'suggested_reps': suggestedReps,
+    'suggested_duration_seconds': suggestedDurationSeconds,
   };
 
   ActivitySet copyWith({
@@ -75,6 +91,8 @@ class ActivitySet {
         ? this.durationSeconds
         : durationSeconds as int?,
     completed: completed ?? this.completed,
+    suggestedReps: suggestedReps,
+    suggestedDurationSeconds: suggestedDurationSeconds,
   );
 }
 
