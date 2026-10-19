@@ -22,3 +22,6 @@ docs/_build/
 .claude/
 release.jks
 coverage.json
+
+# Docker Compose data (Postgres files)
+/data/
