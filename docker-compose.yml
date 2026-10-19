@@ -11,16 +11,34 @@
 name: dinatos
 
 services:
+  # One-shot, as root: makes sure the data directory exists and belongs to
+  # DINATOS_UID:DINATOS_GID. Without it, Docker creates a missing bind-mount
+  # directory owned by root, which the (non-root) postgres below can't write.
+  postgres-init:
+    image: postgres:16
+    container_name: dinatos-postgres-init
+    user: "0:0"
+    restart: "no"
+    entrypoint: ["sh", "-c", "mkdir -p /data/postgres && chown ${DINATOS_UID:-1000}:${DINATOS_GID:-1000} /data/postgres && chmod 700 /data/postgres"]
+    volumes:
+      - ${DINATOS_DATA_DIR:-./data}:/data
+
   postgres:
-    image: postgres:16-alpine
+    # Debian-based, not -alpine: only this variant can run under an
+    # arbitrary UID that has no /etc/passwd entry (via nss_wrapper).
+    image: postgres:16
     container_name: dinatos-postgres
     restart: unless-stopped
+    user: "${DINATOS_UID:-1000}:${DINATOS_GID:-1000}"
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-dinatos}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set this in .env}
       POSTGRES_DB: ${POSTGRES_DB:-dinatos}
     volumes:
-      - dinatos-postgres-data:/var/lib/postgresql/data
+      - ${DINATOS_DATA_DIR:-./data}/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dinatos}"]
       interval: 5s
@@ -38,6 +56,8 @@ services:
     image: dinatos:local
     container_name: dinatos
     restart: unless-stopped
+    # Overrides the image's built-in 10001:10001, so no rebuild is needed.
+    user: "${DINATOS_UID:-1000}:${DINATOS_GID:-1000}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +68,3 @@ services:
       DINATOS_ADMIN_PASSWORD: ${DINATOS_ADMIN_PASSWORD:-}
     ports:
       - "127.0.0.1:8000:8000"
-
-volumes:
-  dinatos-postgres-data:

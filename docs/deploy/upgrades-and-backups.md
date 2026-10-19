@@ -20,7 +20,11 @@ Prebuilt images are published at `ghcr.io/bergercookie/dinatos` (tags `latest` a
 
 ## What to back up
 
-All data is in the `dinatos-postgres-data` Docker volume. Dump the database rather than copying volume files, so a restore works across Postgres versions.
+All data is in `./data/postgres` (or `$DINATOS_DATA_DIR/postgres`), owned by `DINATOS_UID:DINATOS_GID` from your `.env` -- set them to your own user (`id -u`, `id -g`) and you can read and copy it without `sudo`. Prefer a dump over copying the live directory, so a restore works across Postgres versions; if you do copy it, stop the stack first.
+
+### Moving from the old `dinatos-postgres-data` volume
+
+Older versions kept the data in a named Docker volume. Dump it first (`pg_dump` below) while the old stack is still up, then `docker compose down --volumes`, `git pull`, set `DINATOS_UID`/`DINATOS_GID`, `docker compose up -d --wait postgres`, and restore the dump. The old volume's files are Postgres 16-alpine's (uid 70), so don't try to reuse them in place.
 
 ## Back up with `pg_dump`
 
@@ -32,7 +36,7 @@ Use your own `POSTGRES_USER` and `POSTGRES_DB` if you changed them. Dinatos has 
 
 ## Restore with `psql`
 
-Restore only onto an empty database: a fresh volume, with the app having started once to run migrations.
+Restore only onto an empty database: a fresh data directory, with the app having started once to run migrations.
 
 ```bash
 docker compose up -d --wait postgres
@@ -57,4 +61,4 @@ Each user can also export their own data. See [Exporting and importing your data
 | Command | Effect |
 |---|---|
 | `docker compose down` | Stops containers. **Keeps** data. |
-| `docker compose down --volumes` | **Deletes** the database volume permanently. |
+| `docker compose down --volumes` | Keeps `./data` too. Delete `./data/postgres` to wipe the database. |
