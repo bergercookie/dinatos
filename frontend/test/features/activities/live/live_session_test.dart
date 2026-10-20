@@ -66,8 +66,28 @@ void main() {
       expect(session.exercises[0].notes, 'slow negatives');
       expect(session.exercises[0].sets.map((s) => s.setType), [SetType.warmup, SetType.normal]);
       expect(session.exercises[0].sets.map((s) => s.weightKg), [40, 80]);
-      expect(session.exercises[0].sets.map((s) => s.reps), [12, 5]);
+      // Reps are suggestions (hints), not values the set already holds.
+      expect(session.exercises[0].sets.map((s) => s.reps), [null, null]);
+      expect(session.exercises[0].sets.map((s) => s.suggestedReps), [12, 5]);
       expect(session.exercises[1].sets, isEmpty);
+    });
+
+    test('a routine target duration is a suggestion, so a stopwatch starts from zero', () {
+      final notifier = LiveActivityNotifier();
+
+      notifier.startFromRoutine(
+        const Routine(
+          id: 7,
+          name: 'Core',
+          exercises: [
+            RoutineExercise(exerciseId: 3, sets: [RoutineSet(targetDurationSeconds: 60)]),
+          ],
+        ),
+      );
+
+      final set = notifier.state!.exercises[0].sets[0];
+      expect(set.durationSeconds, isNull);
+      expect(set.suggestedDurationSeconds, 60);
     });
 
     test('editing a workout started from a routine keeps its routine link', () {

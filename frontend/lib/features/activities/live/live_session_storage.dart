@@ -30,7 +30,15 @@ class PersistedLiveSession {
     'planned_workout_id': session.plannedWorkoutId,
     // `ActivityExercise.toJson` is exactly the shape wanted here (no server ids).
     // plus the screen-only collapsed flag, which the server payload omits.
-    'exercises': session.exercises.map((e) => {...e.toJson(), 'collapsed': e.collapsed}).toList(),
+    'exercises': session.exercises
+        .map(
+          (e) => {
+            ...e.toJson(),
+            'sets': e.sets.map((s) => s.toLocalJson()).toList(),
+            'collapsed': e.collapsed,
+          },
+        )
+        .toList(),
   };
 
   static PersistedLiveSession fromJson(Map<String, dynamic> json) {
@@ -77,6 +85,8 @@ ActivityExercise _exerciseFromJson(Map<String, dynamic> json) => ActivityExercis
       durationSeconds: set['duration_seconds'] as int?,
       // A session saved before sets could be ticked off: all of it was done.
       completed: set['completed'] as bool? ?? true,
+      suggestedReps: set['suggested_reps'] as int?,
+      suggestedDurationSeconds: set['suggested_duration_seconds'] as int?,
     );
   }).toList(),
 );
