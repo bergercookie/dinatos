@@ -496,6 +496,11 @@ class ActivitySetRow extends StatelessWidget {
 
   static String? _hint(num? value) => value == null ? null : formatKg(value.toDouble());
 
+  /// What an empty reps/duration field suggests: the routine's target, else
+  /// the last session's value.
+  int? get _repsSuggestion => set.suggestedReps ?? previous?.reps;
+  int? get _durationSuggestion => set.suggestedDurationSeconds ?? previous?.durationSeconds;
+
   /// [set] ticked as done. A field left empty takes the value its hint was
   /// suggesting, so a completed set holds real numbers and is
   /// indistinguishable from one typed by hand; [durationSeconds], when given
@@ -505,12 +510,12 @@ class ActivitySetRow extends StatelessWidget {
     return set.copyWith(
       completed: true,
       weightKg: set.weightKg ?? (showWeight && weightEnabled ? previous?.weightKg : null),
-      reps: set.reps ?? (showReps ? previous?.reps : null),
+      reps: set.reps ?? (showReps ? _repsSuggestion : null),
       distanceKm: set.distanceKm ?? (showDistance ? previous?.distanceKm : null),
       durationSeconds:
           durationSeconds ??
           set.durationSeconds ??
-          (showDuration ? previous?.durationSeconds : null),
+          (showDuration ? _durationSuggestion : null),
     );
   }
 
@@ -519,7 +524,9 @@ class ActivitySetRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final record = this.record;
     final previous = this.previous;
-    final floating = previous == null ? null : FloatingLabelBehavior.always;
+    final floating = previous == null && set.suggestedReps == null && set.suggestedDurationSeconds == null
+        ? null
+        : FloatingLabelBehavior.always;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -598,7 +605,7 @@ class ActivitySetRow extends StatelessWidget {
               child: _NumberField(
                 value: set.reps?.toDouble(),
                 label: 'reps',
-                hint: _hint(previous?.reps),
+                hint: _hint(_repsSuggestion),
                 floating: floating,
                 decimal: false,
                 onChanged: (value) => onChanged(set.copyWith(reps: value?.round())),
@@ -626,7 +633,7 @@ class ActivitySetRow extends StatelessWidget {
               child: _NumberField(
                 value: set.durationSeconds?.toDouble(),
                 label: 'sec',
-                hint: _hint(previous?.durationSeconds),
+                hint: _hint(_durationSuggestion),
                 floating: floating,
                 decimal: false,
                 onChanged: (value) => onChanged(set.copyWith(durationSeconds: value?.round())),
