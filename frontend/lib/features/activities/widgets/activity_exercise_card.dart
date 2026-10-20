@@ -513,9 +513,7 @@ class ActivitySetRow extends StatelessWidget {
       reps: set.reps ?? (showReps ? _repsSuggestion : null),
       distanceKm: set.distanceKm ?? (showDistance ? previous?.distanceKm : null),
       durationSeconds:
-          durationSeconds ??
-          set.durationSeconds ??
-          (showDuration ? _durationSuggestion : null),
+          durationSeconds ?? set.durationSeconds ?? (showDuration ? _durationSuggestion : null),
     );
   }
 
@@ -524,7 +522,8 @@ class ActivitySetRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final record = this.record;
     final previous = this.previous;
-    final floating = previous == null && set.suggestedReps == null && set.suggestedDurationSeconds == null
+    final floating =
+        previous == null && set.suggestedReps == null && set.suggestedDurationSeconds == null
         ? null
         : FloatingLabelBehavior.always;
     return Container(
