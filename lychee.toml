@@ -35,6 +35,8 @@ exclude = [
   '^https?://[^/]*\.(local|internal|invalid|test)(/|:|$)',
   # GitHub renders README anchors client-side; lychee can't see them (false positive).
   '^https://github\.com/casey/just#installation$',
+  # Third-party site that routinely times out from CI runners.
+  '^https://workoutxapp\.com/?$',
   '\{\{', # template placeholders
   '<[a-z_-]+>', # <owner>, <host> style placeholders
 ]

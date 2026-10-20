@@ -139,7 +139,9 @@ void main() {
     expect(session.routineId, 4);
     expect(session.routineName, 'Plan 8');
     expect(session.exercises.single.exerciseId, 2);
-    expect(session.exercises.single.sets.single.reps, 8);
+    // The routine's target is a suggestion (field hint), not a value of the set.
+    expect(session.exercises.single.sets.single.reps, isNull);
+    expect(session.exercises.single.sets.single.suggestedReps, 8);
   });
 
   testWidgets('several plans today ask which one', (tester) async {
