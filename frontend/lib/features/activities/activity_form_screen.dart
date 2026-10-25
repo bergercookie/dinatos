@@ -86,7 +86,8 @@ class _ActivityFormScreenState extends ConsumerState<ActivityFormScreen> {
                       uid: nextUid(),
                       setType: s.setType,
                       weightKg: s.targetWeightKg,
-                      reps: s.targetReps,
+                      suggestedReps: s.targetReps,
+                      suggestedDurationSeconds: s.targetDurationSeconds,
                       completed: false,
                     ),
                   )
