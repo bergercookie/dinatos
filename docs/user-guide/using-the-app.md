@@ -44,6 +44,8 @@ Press **Start activity** and choose one:
 
 Press **Finish workout** to save. Unticked sets, and exercises with no ticked set, are removed. If anything would be removed, the app tells you and asks you to confirm. **Keep logging** takes you back.
 
+On the summary, tick **Also save as a routine** to turn the workout into a routine, named after its title. Each ticked set becomes a set in the routine, with its weight, reps, distance and duration as suggestions. The routine is made right after the workout is saved. If that step fails, the workout is still saved and a **Retry saving as routine** button appears.
+
 ### Without a connection
 
 Your workout is kept on the device as you go. If **Save workout** cannot reach the server, it says so and keeps the workout. A banner on every tab returns you to it. Retry when online. The title is locked after a failed attempt, so a retry cannot save the workout twice.
