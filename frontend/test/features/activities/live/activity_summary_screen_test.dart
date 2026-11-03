@@ -53,6 +53,26 @@ Map<String, dynamic> _savedActivity(Map<String, dynamic> body, {int id = 9}) => 
   'exercises': <dynamic>[],
 };
 
+/// What `POST /routines` answers: the request body plus the ids and positions
+/// the server assigns, which `Routine.fromJson` insists on.
+Map<String, dynamic> _savedRoutine(Map<String, dynamic> body) => {
+  ...body,
+  'id': 3,
+  'description': null,
+  'exercises': [
+    for (final (i, e) in (body['exercises'] as List).indexed)
+      {
+        ...(e as Map<String, dynamic>),
+        'id': i + 1,
+        'position': i,
+        'sets': [
+          for (final (j, set) in (e['sets'] as List).indexed)
+            {...(set as Map<String, dynamic>), 'id': j + 1, 'position': j},
+        ],
+      },
+  ],
+};
+
 final _finished = LiveActivitySession(
   startedAt: DateTime.utc(2026, 9, 24, 21, 13, 0, 123),
   endedAt: DateTime.utc(2026, 9, 24, 21, 54),
@@ -112,6 +132,99 @@ Future<ProviderContainer> _pump(
 }
 
 void main() {
+  testWidgets('ticking "Also save as a routine" also creates a routine from the workout', (
+    tester,
+  ) async {
+    final dio = _dio();
+    when(() => dio.post<Map<String, dynamic>>('/activities', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          final body = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/activities', _savedActivity(body), status: 201);
+        });
+    Map<String, dynamic>? routineBody;
+    when(() => dio.post<Map<String, dynamic>>('/routines', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          routineBody = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/routines', _savedRoutine(routineBody!), status: 201);
+        });
+    await _pump(
+      tester,
+      dio: dio,
+      storage: _MemoryStorage(),
+      restored: PersistedLiveSession(session: _finished),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('save-as-routine')));
+    await tester.pump();
+    await tester.tap(find.text('Save workout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Also saved as a routine.'), findsOneWidget);
+    expect(routineBody!['name'], 'Push day');
+    final sets = (routineBody!['exercises'] as List).single['sets'] as List;
+    expect(sets.map((s) => s['target_reps']), [5, 8]);
+    expect(sets.map((s) => s['target_weight_kg']), [85, 80]);
+  });
+
+  testWidgets('no routine is made unless asked for', (tester) async {
+    final dio = _dio();
+    when(() => dio.post<Map<String, dynamic>>('/activities', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          final body = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/activities', _savedActivity(body), status: 201);
+        });
+    await _pump(
+      tester,
+      dio: dio,
+      storage: _MemoryStorage(),
+      restored: PersistedLiveSession(session: _finished),
+    );
+
+    await tester.tap(find.text('Save workout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Workout saved'), findsOneWidget);
+    verifyNever(() => dio.post<Map<String, dynamic>>('/routines', data: any(named: 'data')));
+  });
+
+  testWidgets('a routine that fails to save does not undo the saved workout, and can be retried', (
+    tester,
+  ) async {
+    final dio = _dio();
+    when(() => dio.post<Map<String, dynamic>>('/activities', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          final body = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/activities', _savedActivity(body), status: 201);
+        });
+    var attempt = 0;
+    when(() => dio.post<Map<String, dynamic>>('/routines', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          if (++attempt == 1) throw _rejected(422, 'nope');
+          final body = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/routines', _savedRoutine(body), status: 201);
+        });
+    await _pump(
+      tester,
+      dio: dio,
+      storage: _MemoryStorage(),
+      restored: PersistedLiveSession(session: _finished),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('save-as-routine')));
+    await tester.pump();
+    await tester.tap(find.text('Save workout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Workout saved'), findsOneWidget);
+    expect(find.textContaining('Workout saved, but not as a routine'), findsOneWidget);
+
+    await tester.tap(find.text('Retry saving as routine'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Also saved as a routine.'), findsOneWidget);
+    expect(attempt, 2);
+  });
+
   testWidgets('a workout finished offline is kept, and a retry saves it exactly once', (
     tester,
   ) async {

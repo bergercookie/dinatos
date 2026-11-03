@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../support/fakes.dart';
@@ -32,7 +33,12 @@ Map<String, dynamic> _session(int day, double? kg, int reps, {int count = 3}) =>
 };
 
 /// [history] newest first, as the server sends it.
-Future<void> _pump(WidgetTester tester, List<Map<String, dynamic>> history) async {
+Future<void> _pump(
+  WidgetTester tester,
+  List<Map<String, dynamic>> history, {
+  Map<String, dynamic>? records,
+  bool routed = false,
+}) async {
   tester.view.physicalSize = const Size(800, 3000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -57,10 +63,25 @@ Future<void> _pump(WidgetTester tester, List<Map<String, dynamic>> history) asyn
       queryParameters: any(named: 'queryParameters'),
     ),
   ).thenAnswer((_) async => _ok<List<dynamic>>('/exercises/1/history', history));
+  if (records != null) {
+    when(() => dio.get<Map<String, dynamic>>('/exercises/1/records'))
+        .thenAnswer((_) async => _ok<Map<String, dynamic>>('/exercises/1/records', records));
+  }
+  const screen = ExerciseProgressScreen(exerciseId: 1);
+  final router = GoRouter(
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => screen),
+      GoRoute(
+        path: '/exercises/1/tutorial',
+        builder: (context, state) => const Scaffold(body: Text('tutorial page')),
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [dioProvider.overrideWithValue(dio)],
-      child: const MaterialApp(home: ExerciseProgressScreen(exerciseId: 1)),
+      child: routed ? MaterialApp.router(routerConfig: router) : const MaterialApp(home: screen),
     ),
   );
   await tester.pumpAndSettle();
@@ -70,6 +91,29 @@ List<double> _plotted(WidgetTester tester) =>
     tester.widget<LineChart>(find.byType(LineChart)).values;
 
 void main() {
+  testWidgets('shows the all-time records above the recent sessions', (tester) async {
+    await _pump(tester, [_session(1, 60, 5)], records: {'max_weight_kg': 100.0, 'max_reps': 12});
+
+    expect(find.text('Records'), findsOneWidget);
+    expect(find.text('Heaviest weight'), findsOneWidget);
+    expect(find.text('100 kg'), findsOneWidget);
+    expect(find.text('Most reps'), findsOneWidget);
+    expect(find.text('12 reps'), findsOneWidget);
+  });
+
+  testWidgets('the instructions and video are one tap away', (tester) async {
+    await _pump(tester, [_session(1, 60, 5)], routed: true);
+
+    await tester.tap(find.byTooltip('Instructions and video'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('tutorial page'), findsOneWidget);
+    // Pushed on top, so going back returns to the progress page.
+    Navigator.of(tester.element(find.text('tutorial page'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Bench Press'), findsOneWidget);
+  });
+
   testWidgets('charts the estimated 1RM per session, oldest first, and suggests the next step', (
     tester,
   ) async {

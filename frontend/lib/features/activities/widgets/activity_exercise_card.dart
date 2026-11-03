@@ -201,7 +201,9 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                   ),
                 Expanded(
                   child: InkWell(
-                    onTap: widget.collapsible ? _toggleExpanded : null,
+                    // In a live workout the name opens the exercise's history and
+                    // records; the chevron beside it folds the card instead.
+                    onTap: widget.onViewProgress ?? (widget.collapsible ? _toggleExpanded : null),
                     child: Text(
                       catalog?.name ?? '#${_exercise.exerciseId}',
                       style: Theme.of(context).textTheme.titleSmall,

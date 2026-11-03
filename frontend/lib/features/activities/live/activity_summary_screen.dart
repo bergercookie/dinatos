@@ -13,6 +13,9 @@ import '../../../models/muscle_group.dart';
 import '../../exercises/exercises_providers.dart';
 import '../../exercises/exercises_repository.dart';
 import '../../calendar/planned_workouts_providers.dart';
+import '../../routines/routine_from_activity.dart';
+import '../../routines/routines_providers.dart';
+import '../../routines/routines_repository.dart';
 import '../activities_providers.dart';
 import '../activities_repository.dart';
 import 'elapsed_timer.dart';
@@ -63,6 +66,12 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
   final _titleController = TextEditingController();
   bool _submitting = false;
   String? _error;
+
+  /// Whether the person ticked "Also save as a routine" before saving.
+  bool _saveAsRoutine = false;
+  bool _savingRoutine = false;
+  bool _routineSaved = false;
+  String? _routineError;
   Future<_RecordsOutcome>? _recordsFuture;
 
   @override
@@ -166,6 +175,8 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       ref.invalidate(activityListProvider);
       if (session.plannedWorkoutId != null) ref.invalidate(plannedWorkoutListProvider);
       if (mounted) notifier.markSaved(activityId: saved.id!, title: saved.title);
+      // Never throws: a failed routine must not read as a failed workout save.
+      if (_saveAsRoutine) await _createRoutine(saved.title, session);
     } on ApiException catch (error) {
       // No HTTP status means no response: the workout may or may not have been
       // stored. A status means the server looked at it and said no.
@@ -189,6 +200,34 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// Creates a routine named [name] from what [session] did. Called once the
+  /// workout itself is saved, and again by "Save as routine" if it failed.
+  Future<void> _createRoutine(String name, LiveActivitySession session) async {
+    if (mounted) {
+      setState(() {
+        _savingRoutine = true;
+        _routineError = null;
+      });
+    }
+    try {
+      await ref
+          .read(routinesRepositoryProvider)
+          .create(routineFromActivity(name, session.exercises));
+      ref.invalidate(routineListProvider);
+      if (mounted) setState(() => _routineSaved = true);
+    } on ApiException catch (error) {
+      if (mounted) {
+        setState(() => _routineError = 'Workout saved, but not as a routine: ${error.message}');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _routineError = 'Workout saved, but it could not be saved as a routine.');
+      }
+    } finally {
+      if (mounted) setState(() => _savingRoutine = false);
     }
   }
 
@@ -365,13 +404,42 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
               const SizedBox(height: AppSpacing.md),
               ErrorBanner(message: _error!),
             ],
+            if (_routineError != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              ErrorBanner(message: _routineError!),
+            ],
             const SizedBox(height: AppSpacing.xl),
-            if (savedActivityId == null)
+            if (savedActivityId == null) ...[
+              CheckboxListTile(
+                key: const ValueKey('save-as-routine'),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Also save as a routine'),
+                subtitle: const Text('Reuse this workout later, with these sets as suggestions.'),
+                value: _saveAsRoutine,
+                onChanged: _submitting
+                    ? null
+                    : (value) => setState(() => _saveAsRoutine = value ?? false),
+              ),
+              const SizedBox(height: AppSpacing.sm),
               FilledButton(
                 onPressed: _submitting ? null : () => _save(session),
                 child: const Text('Save workout'),
-              )
-            else ...[
+              ),
+            ] else ...[
+              if (_routineSaved)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Text('Also saved as a routine.', textAlign: TextAlign.center),
+                )
+              else if (_routineError != null && !_savingRoutine)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: OutlinedButton(
+                    onPressed: () => _createRoutine(savedTitle ?? _titleController.text, session),
+                    child: const Text('Retry saving as routine'),
+                  ),
+                ),
               FilledButton(onPressed: _done, child: const Text('Done')),
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton(
