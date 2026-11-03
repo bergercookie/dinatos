@@ -472,6 +472,38 @@ void _collapsibleTests() {
     ),
   );
 
+  testWidgets('with a progress page, the name opens it and the chevron still folds the card', (
+    tester,
+  ) async {
+    var opened = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ActivityExerciseCard(
+              exercise: const ActivityExercise(exerciseId: 1, sets: [ActivitySet(uid: 1)]),
+              catalogExercise: const Exercise(id: 1, name: 'Bench Press'),
+              collapsible: true,
+              onChanged: (_) {},
+              onRemove: () {},
+              onViewProgress: () => opened++,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Bench Press'));
+    await tester.pump();
+    expect(opened, 1);
+    expect(find.byKey(const Key('collapsedSummary')), findsNothing);
+
+    await tester.tap(find.byTooltip('Collapse exercise'));
+    await tester.pump();
+    expect(find.byKey(const Key('collapsedSummary')), findsOneWidget);
+    expect(opened, 1);
+  });
+
   group('collapsible', () {
     testWidgets('collapses to a summary and expands again', (tester) async {
       await tester.pumpWidget(collapsible());

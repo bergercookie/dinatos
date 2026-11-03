@@ -40,7 +40,8 @@ Press **Start activity** and choose one:
 - **Trophy:** a ticked set that beats your all-time best weight for that exercise. Warm-ups never count.
 - **Set menu (⋮):** opens the plate calculator (which plates go on each side; the bar defaults to 20 kg and can be changed) or removes the set.
 - **Exercise menu (⋮):** add a note or open its progress page.
-- **Collapse:** tap an exercise name to shrink it to one line. Tap again to expand.
+- **Exercise name:** tap it to open that exercise's page: your records, a progress chart and recent sessions. The play button in its top bar opens the exercise's instructions and video tutorial.
+- **Collapse:** tap the arrow beside an exercise name to shrink it to one line. Tap again to expand.
 
 Press **Finish workout** to save. Unticked sets, and exercises with no ticked set, are removed. If anything would be removed, the app tells you and asks you to confirm. **Keep logging** takes you back.
 

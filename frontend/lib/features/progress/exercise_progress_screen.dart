@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/async_value_view.dart';
@@ -8,6 +9,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/line_chart.dart';
 import '../../core/widgets/responsive_body.dart';
 import '../../models/exercise_history.dart';
+import '../../models/exercise_records.dart';
 import '../exercises/exercises_providers.dart';
 import 'progression.dart';
 
@@ -57,7 +59,17 @@ class _ExerciseProgressScreenState extends ConsumerState<ExerciseProgressScreen>
     final exercise = ref.watch(exerciseProvider(widget.exerciseId));
     final history = ref.watch(exerciseHistoryProvider(widget.exerciseId));
     return Scaffold(
-      appBar: AppBar(title: Text(exercise.valueOrNull?.name ?? 'Progress')),
+      appBar: AppBar(
+        title: Text(exercise.valueOrNull?.name ?? 'Progress'),
+        actions: [
+          // `push`, not `go`: from a live workout this must stack on top of it.
+          IconButton(
+            tooltip: 'Instructions and video',
+            icon: const Icon(Icons.play_circle_outline),
+            onPressed: () => context.push('/exercises/${widget.exerciseId}/tutorial'),
+          ),
+        ],
+      ),
       body: ResponsiveBody(
         child: AsyncValueView(
           value: history,
@@ -97,6 +109,7 @@ class _ExerciseProgressScreenState extends ConsumerState<ExerciseProgressScreen>
     final suggestion = suggestOverload(entries.isEmpty ? null : entries.first);
     final plateau = detectPlateau(entries);
     final dateFormat = DateFormat.yMMMd();
+    final records = ref.watch(exerciseRecordsProvider(widget.exerciseId)).valueOrNull;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -152,6 +165,12 @@ class _ExerciseProgressScreenState extends ConsumerState<ExerciseProgressScreen>
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
+        if (records != null && !records.isEmpty) ...[
+          Text('Records', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
+          _RecordsCard(records: records),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         Text('Recent sessions', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         for (final entry in entries.take(10))
@@ -167,6 +186,36 @@ class _ExerciseProgressScreenState extends ConsumerState<ExerciseProgressScreen>
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The all-time bests the live workout's trophies are measured against.
+class _RecordsCard extends StatelessWidget {
+  const _RecordsCard({required this.records});
+
+  final ExerciseRecords records;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Column(
+        children: [
+          if (records.maxWeightKg != null)
+            ListTile(
+              leading: Icon(Icons.emoji_events, color: scheme.tertiary),
+              title: const Text('Heaviest weight'),
+              trailing: Text('${formatKg(records.maxWeightKg!)} kg'),
+            ),
+          if (records.maxReps != null)
+            ListTile(
+              leading: Icon(Icons.emoji_events, color: scheme.tertiary),
+              title: const Text('Most reps'),
+              trailing: Text('${records.maxReps} reps'),
+            ),
+        ],
+      ),
     );
   }
 }
