@@ -176,14 +176,18 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
     // the sets after them.
     final recordFlags = records == null ? const <SetRecord>[] : _recordFlags(records);
     final inSuperset = widget.supersetLabel != null;
+    final supersetColor = inSuperset
+        ? _supersetColor(context, widget.supersetLabel!)
+        : scheme.primary;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      // A superset's members are outlined, so the run reads as one block.
+      // A superset's members are outlined in the superset's own colour, so the
+      // run reads as one block and neighbouring supersets are told apart.
       shape: inSuperset
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              side: BorderSide(color: scheme.primary, width: 1.5),
+              side: BorderSide(color: supersetColor, width: 1.5),
             )
           : null,
       child: Padding(
@@ -216,8 +220,8 @@ class _ActivityExerciseCardState extends State<ActivityExerciseCard> {
                     child: Chip(
                       label: Text('Superset ${widget.supersetLabel}'),
                       visualDensity: VisualDensity.compact,
-                      backgroundColor: scheme.primaryContainer,
-                      labelStyle: TextStyle(color: scheme.onPrimaryContainer, fontSize: 12),
+                      backgroundColor: supersetColor.withValues(alpha: 0.2),
+                      labelStyle: TextStyle(color: scheme.onSurface, fontSize: 12),
                       side: BorderSide.none,
                     ),
                   ),
@@ -446,6 +450,22 @@ class _MetadataChip extends StatelessWidget {
 }
 
 enum _SetAction { plateCalculator, remove }
+
+/// One colour per superset, picked from its "A", "B", ... label. Green is left
+/// out on purpose: it already means "set done" here.
+Color _supersetColor(BuildContext context, String label) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  final palette = [
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.pink,
+    Colors.teal,
+    Colors.amber,
+  ];
+  final base = palette[(label.codeUnitAt(0) - 0x41) % palette.length];
+  return dark ? base.shade300 : base.shade700;
+}
 
 Color _doneGreen(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark ? Colors.green.shade400 : Colors.green.shade600;
