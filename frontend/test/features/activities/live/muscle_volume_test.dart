@@ -43,6 +43,40 @@ void main() {
       expect(volumes[MuscleGroup.chest], 500 + 640 + 240);
     });
 
+    test('counts a timed set (no reps) as duration / secondsPerRep reps', () {
+      final catalog = [
+        const Exercise(
+          id: 1,
+          name: 'Plank',
+          primaryMuscles: [MuscleGroup.abdominals],
+          secondaryMuscles: [MuscleGroup.shoulders],
+        ),
+        const Exercise(id: 2, name: 'Weighted Hold', primaryMuscles: [MuscleGroup.quadriceps]),
+      ];
+      final exercises = [
+        const ActivityExercise(exerciseId: 1, sets: [ActivitySet(durationSeconds: 60)]),
+        const ActivityExercise(
+          exerciseId: 2,
+          sets: [ActivitySet(weightKg: 10, durationSeconds: 30)],
+        ),
+      ];
+
+      final volumes = computeMuscleVolumes(exercises, catalog);
+
+      expect(volumes[MuscleGroup.abdominals], 60 / secondsPerRep);
+      expect(volumes[MuscleGroup.shoulders], 60 / secondsPerRep * 0.5);
+      expect(volumes[MuscleGroup.quadriceps], 10 * 30 / secondsPerRep);
+    });
+
+    test('reps win over duration when a set has both', () {
+      final catalog = [const Exercise(id: 1, name: 'X', primaryMuscles: [MuscleGroup.chest])];
+      final exercises = [
+        const ActivityExercise(exerciseId: 1, sets: [ActivitySet(reps: 5, durationSeconds: 90)]),
+      ];
+
+      expect(computeMuscleVolumes(exercises, catalog)[MuscleGroup.chest], 5);
+    });
+
     test('falls back to rep count alone for a set with no weight tracked', () {
       final catalog = [
         const Exercise(id: 1, name: 'Pull-up', primaryMuscles: [MuscleGroup.lats]),
