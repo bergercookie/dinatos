@@ -6,6 +6,7 @@ import '../../core/api_config.dart';
 import '../../core/app_info.dart';
 import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
+import '../../core/update_channel.dart';
 import '../../core/update_check.dart';
 import '../../core/widgets/responsive_body.dart';
 
@@ -92,6 +93,22 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                       title: const Text('App version'),
                       subtitle: Text(appVersion),
                     ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.science_outlined),
+                    title: const Text('Follow nightly builds'),
+                    subtitle: Text(
+                      ref.watch(updateChannelProvider) == UpdateChannel.nightly
+                          ? 'Update checks include nightly prereleases'
+                          : 'Update checks only look at stable releases',
+                    ),
+                    value: ref.watch(updateChannelProvider) == UpdateChannel.nightly,
+                    onChanged: (on) async {
+                      final channel = on ? UpdateChannel.nightly : UpdateChannel.stable;
+                      ref.read(updateChannelProvider.notifier).state = channel;
+                      setState(() => _result = null);
+                      await ref.read(updateChannelStorageProvider).write(channel);
+                    },
+                  ),
                   _updateTile(),
                   ListTile(
                     leading: const Icon(Icons.commit),

@@ -1,5 +1,6 @@
 import 'package:dinatos_frontend/core/app_info.dart';
 import 'package:dinatos_frontend/core/external_link.dart';
+import 'package:dinatos_frontend/core/update_channel.dart';
 import 'package:dinatos_frontend/core/update_check.dart';
 import 'package:dinatos_frontend/features/profile/about_screen.dart';
 import 'package:flutter/material.dart';
@@ -127,11 +128,37 @@ void main() {
     test('updateCheckProvider turns a fetch failure into UpdateCheckFailed', () async {
       final container = ProviderContainer(
         overrides: [
-          latestReleaseFetcherProvider.overrideWithValue(() async => throw Exception('offline')),
+          latestReleaseFetcherProvider.overrideWithValue((_) async => throw Exception('offline')),
         ],
       );
       addTearDown(container.dispose);
       expect(await container.read(updateCheckProvider)(), isA<UpdateCheckFailed>());
     });
   });
+
+  testWidgets('the nightly toggle switches the update channel', (tester) async {
+    final container = ProviderContainer(
+      overrides: [updateChannelStorageProvider.overrideWithValue(const _NoopChannelStorage())],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: AboutScreen()),
+      ),
+    );
+    expect(container.read(updateChannelProvider), UpdateChannel.stable);
+
+    await tester.tap(find.text('Follow nightly builds'));
+    await tester.pump();
+
+    expect(container.read(updateChannelProvider), UpdateChannel.nightly);
+  });
+}
+
+class _NoopChannelStorage extends UpdateChannelStorage {
+  const _NoopChannelStorage();
+
+  @override
+  Future<void> write(UpdateChannel channel) async {}
 }

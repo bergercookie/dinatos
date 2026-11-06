@@ -69,7 +69,9 @@ void main() {
     });
 
     test('reps win over duration when a set has both', () {
-      final catalog = [const Exercise(id: 1, name: 'X', primaryMuscles: [MuscleGroup.chest])];
+      final catalog = [
+        const Exercise(id: 1, name: 'X', primaryMuscles: [MuscleGroup.chest]),
+      ];
       final exercises = [
         const ActivityExercise(exerciseId: 1, sets: [ActivitySet(reps: 5, durationSeconds: 90)]),
       ];
