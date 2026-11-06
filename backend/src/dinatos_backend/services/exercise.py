@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dinatos_backend.config import get_settings
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
+from dinatos_backend.services.exercise_additions import ADDITIONS
 from dinatos_backend.services.tutorials.free_exercise_db import load_free_exercise_db
 
 
@@ -81,6 +82,21 @@ def _default_exercises() -> Iterator[dict[str, Any]]:
         }
 
 
+def _addition_exercises() -> Iterator[dict[str, Any]]:
+    for addition in ADDITIONS:
+        yield {
+            "name": addition.name,
+            "tracks_weight": addition.tracks_weight,
+            "tracks_reps": addition.tracks_reps,
+            "tracks_distance": addition.tracks_distance,
+            "tracks_duration": addition.tracks_duration,
+            "is_custom": False,
+            "equipment": addition.equipment,
+            "muscles": [ExerciseMuscle(muscle=m, is_primary=True) for m in addition.primary]
+            + [ExerciseMuscle(muscle=m, is_primary=False) for m in addition.secondary],
+        }
+
+
 async def bootstrap_default_exercises(db: AsyncSession) -> None:
     """Seeds the vendored catalog into a brand new instance's empty
     `exercises` table -- a no-op the moment any exercise exists, whether
@@ -96,5 +112,9 @@ async def bootstrap_default_exercises(db: AsyncSession) -> None:
     if count.scalar_one() > 0:
         return
 
-    db.add_all(Exercise(**fields) for fields in _default_exercises())
+    seeded: dict[str, dict[str, Any]] = {f["name"]: f for f in _default_exercises()}
+    # Supplementary exercises (see `exercise_additions`); the dataset wins on a name clash.
+    for fields in _addition_exercises():
+        seeded.setdefault(fields["name"], fields)
+    db.add_all(Exercise(**fields) for fields in seeded.values())
     await db.commit()
