@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from dinatos_backend.config import Settings
 from dinatos_backend.models.exercise import Equipment, Exercise, MuscleGroup
 from dinatos_backend.services.exercise import bootstrap_default_exercises, exercise_muscles
+from dinatos_backend.services.exercise_additions import ADDITIONS
 from dinatos_backend.services.tutorials.free_exercise_db import load_free_exercise_db
 
 
@@ -28,7 +29,9 @@ async def test_bootstrap_default_exercises_seeds_an_empty_catalog(db: AsyncSessi
 
     result = await db.execute(select(Exercise.name))
     names = set(result.scalars())
-    assert names == {entry["name"] for entry in load_free_exercise_db()}
+    assert names == {entry["name"] for entry in load_free_exercise_db()} | {
+        a.name for a in ADDITIONS
+    }
 
 
 async def test_bootstrap_default_exercises_seeds_built_in_exercises(db: AsyncSession) -> None:

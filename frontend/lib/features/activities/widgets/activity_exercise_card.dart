@@ -786,12 +786,17 @@ class SetStopwatch extends StatefulWidget {
   State<SetStopwatch> createState() => _SetStopwatchState();
 }
 
-class _SetStopwatchState extends State<SetStopwatch> {
+class _SetStopwatchState extends State<SetStopwatch> with AutomaticKeepAliveClientMixin {
   Timer? _ticker;
   DateTime? _startedAt;
   late Duration _accumulated = Duration(seconds: widget.seconds ?? 0);
 
   bool get _running => _startedAt != null;
+
+  /// A running timer lives only in this State, so scrolling its card out of
+  /// the (lazy) list must not dispose it -- that would silently reset it to 0.
+  @override
+  bool get wantKeepAlive => _running;
 
   Duration get _elapsed =>
       _accumulated + (_startedAt == null ? Duration.zero : widget.now().difference(_startedAt!));
@@ -818,11 +823,13 @@ class _SetStopwatchState extends State<SetStopwatch> {
       _ticker?.cancel();
       _ticker = null;
       setState(() {});
+      updateKeepAlive();
       widget.onStopped(_accumulated.inSeconds);
     } else {
       _startedAt = widget.now();
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
       setState(() {});
+      updateKeepAlive();
     }
   }
 
@@ -834,6 +841,7 @@ class _SetStopwatchState extends State<SetStopwatch> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

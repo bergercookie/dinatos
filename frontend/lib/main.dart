@@ -11,6 +11,7 @@ import 'core/server_url_provider.dart';
 import 'core/server_url_storage.dart';
 import 'core/theme.dart';
 import 'core/theme_mode_provider.dart';
+import 'core/update_channel.dart';
 import 'features/activities/live/live_session.dart';
 import 'features/activities/live/live_session_storage.dart';
 import 'features/activities/live/live_workout_notification.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
   final storedServerUrl = await ServerUrlStorage().read();
   final storedAllowInsecureTls = await InsecureTlsStorage().read();
   final storedThemeMode = await const ThemeModeStorage().read();
+  final storedUpdateChannel = await const UpdateChannelStorage().read();
   const liveSessionStorage = PrefsLiveSessionStorage();
   final restoredLiveSession = await liveSessionStorage.read();
   runApp(
@@ -47,6 +49,7 @@ Future<void> main() async {
         if (storedServerUrl != null) serverUrlProvider.overrideWith((ref) => storedServerUrl),
         allowInsecureTlsProvider.overrideWith((ref) => storedAllowInsecureTls),
         themeModeProvider.overrideWith((ref) => storedThemeMode),
+        updateChannelProvider.overrideWith((ref) => storedUpdateChannel ?? defaultUpdateChannel()),
       ],
       child: const DinatosApp(),
     ),
