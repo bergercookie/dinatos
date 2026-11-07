@@ -28,14 +28,14 @@ async def test_auth_config_reports_registration_enabled_by_default(
 ) -> None:
     response = await anonymous_client.get("/auth/config")
     assert response.status_code == 200
-    assert response.json() == {"registration_enabled": True}
+    assert response.json()["registration_enabled"] is True
 
 
 @pytest.mark.usefixtures("registration_disabled")
 async def test_disabled_registration_still_allows_the_very_first_account(
     anonymous_client: AsyncClient,
 ) -> None:
-    assert (await anonymous_client.get("/auth/config")).json() == {"registration_enabled": True}
+    assert (await anonymous_client.get("/auth/config")).json()["registration_enabled"] is True
     response = await anonymous_client.post(
         "/auth/register", json={"email": "first@example.com", "password": _PASSWORD}
     )
@@ -47,7 +47,7 @@ async def test_disabled_registration_still_allows_the_very_first_account(
 async def test_disabled_registration_rejects_later_accounts(anonymous_client: AsyncClient) -> None:
     await _register(anonymous_client, "first@example.com")
 
-    assert (await anonymous_client.get("/auth/config")).json() == {"registration_enabled": False}
+    assert (await anonymous_client.get("/auth/config")).json()["registration_enabled"] is False
     response = await anonymous_client.post(
         "/auth/register", json={"email": "second@example.com", "password": _PASSWORD}
     )

@@ -109,6 +109,45 @@ void main() {
       ).called(1);
     });
 
+    test('setMcpEnabled patches the MCP switch', () async {
+      final dio = buildMockDio();
+      when(() => dio.patch<Map<String, dynamic>>('/admin/settings', data: any(named: 'data')))
+          .thenAnswer(
+            (_) async => Response(
+              requestOptions: RequestOptions(path: '/admin/settings'),
+              statusCode: 200,
+              data: {
+                'allow_registration': true,
+                'allow_registration_locked': false,
+                'mcp_enabled': false,
+                'mcp_enabled_locked': false,
+              },
+            ),
+          );
+
+      final settings = await AdminRepository(dio).setMcpEnabled(enabled: false);
+
+      expect(settings.mcpEnabled, isFalse);
+      verify(() => dio.patch<Map<String, dynamic>>('/admin/settings', data: {'mcp_enabled': false}))
+          .called(1);
+    });
+
+    test('an older server without the MCP switch reads as on and unlocked', () async {
+      final dio = buildMockDio();
+      when(() => dio.get<Map<String, dynamic>>('/admin/settings')).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/admin/settings'),
+          statusCode: 200,
+          data: {'allow_registration': true, 'allow_registration_locked': false},
+        ),
+      );
+
+      final settings = await AdminRepository(dio).getSettings();
+
+      expect(settings.mcpEnabled, isTrue);
+      expect(settings.mcpEnabledLocked, isFalse);
+    });
+
     test('setAllowRegistration surfaces the 409 explanation while the variable is set', () {
       final dio = buildMockDio();
       when(() => dio.patch<Map<String, dynamic>>('/admin/settings', data: any(named: 'data')))

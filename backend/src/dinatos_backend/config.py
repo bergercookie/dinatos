@@ -72,9 +72,11 @@ class Settings(BaseSettings):
     seed_default_routines: bool = True
 
     # Whether the built-in MCP server answers at `/mcp` (see `api/mcp.py`).
-    # On by default; `DINATOS_MCP_ENABLED=false` makes `/mcp` reply 404 and
-    # never starts the MCP transport at all. API keys keep working for
-    # everything else -- they just have nothing to connect an MCP client to.
+    # On by default. Like `allow_registration`, an admin normally switches it
+    # in the app (`services.instance_settings`); setting the variable at all
+    # pins it and locks that switch. Off, `/mcp` replies 404, and when the
+    # variable pins it off the MCP transport never starts. API keys keep
+    # working for everything else.
     mcp_enabled: bool = True
 
     # Where to look for a built Flutter web app (an `index.html` plus its

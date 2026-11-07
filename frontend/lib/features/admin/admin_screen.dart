@@ -9,6 +9,7 @@ import '../../core/design_tokens.dart';
 import '../../core/file_io.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
+import '../../models/admin_settings.dart';
 import '../activities/activities_providers.dart';
 import '../exercises/exercises_providers.dart';
 import '../measurements/measurements_providers.dart';
@@ -73,7 +74,7 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const _RegistrationCard(),
+              const _ServerSwitchesCard(),
               const SizedBox(height: AppSpacing.xl),
               const _BackupCard(),
             ],
@@ -84,26 +85,26 @@ class AdminScreen extends ConsumerWidget {
   }
 }
 
-/// Whether people can register themselves from the login screen.
+/// Server-wide switches: self-registration and the built-in MCP server.
 ///
-/// When the operator set `DINATOS_ALLOW_REGISTRATION` on the server, that
-/// value wins: the switch shows it but is disabled, with the reason and the
-/// way out (clear the variable, restart), because the server would refuse the
-/// change anyway.
-class _RegistrationCard extends ConsumerStatefulWidget {
-  const _RegistrationCard();
+/// When the operator set a switch's environment variable on the server
+/// (`DINATOS_ALLOW_REGISTRATION`, `DINATOS_MCP_ENABLED`), that value wins: the
+/// switch shows it but is disabled, with the reason and the way out (clear the
+/// variable, restart), because the server would refuse the change anyway.
+class _ServerSwitchesCard extends ConsumerStatefulWidget {
+  const _ServerSwitchesCard();
 
   @override
-  ConsumerState<_RegistrationCard> createState() => _RegistrationCardState();
+  ConsumerState<_ServerSwitchesCard> createState() => _ServerSwitchesCardState();
 }
 
-class _RegistrationCardState extends ConsumerState<_RegistrationCard> {
+class _ServerSwitchesCardState extends ConsumerState<_ServerSwitchesCard> {
   bool _busy = false;
 
-  Future<void> _set(bool allowed) async {
+  Future<void> _set(Future<AdminSettings> Function(AdminRepository repository) change) async {
     setState(() => _busy = true);
     try {
-      await ref.read(adminRepositoryProvider).setAllowRegistration(allowed: allowed);
+      await change(ref.read(adminRepositoryProvider));
       ref.invalidate(adminSettingsProvider);
     } on ApiException catch (error) {
       if (mounted) {
@@ -127,43 +128,91 @@ class _RegistrationCardState extends ConsumerState<_RegistrationCard> {
         ),
         error: (error, _) => ListTile(
           leading: const Icon(Icons.error_outline),
-          title: const Text('Could not load the registration setting'),
+          title: const Text('Could not load the server settings'),
           subtitle: Text(error is ApiException ? error.message : '$error'),
           trailing: TextButton(
             onPressed: () => ref.invalidate(adminSettingsProvider),
             child: const Text('Retry'),
           ),
         ),
-        data: (data) {
-          final locked = data.allowRegistrationLocked;
-          return Column(
-            children: [
-              SwitchListTile(
-                secondary: const Icon(Icons.how_to_reg_outlined),
-                title: const Text('Allow registration'),
-                subtitle: Text(
-                  data.allowRegistration
-                      ? 'Anyone who can reach this server can create an account.'
-                      : 'Only an admin can add accounts (Add user).',
-                ),
-                value: data.allowRegistration,
-                // `null` disables the switch.
-                onChanged: locked || _busy ? null : _set,
-              ),
-              if (locked)
-                ListTile(
-                  leading: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.error),
-                  title: const Text('Locked by the server settings'),
-                  subtitle: Text(
-                    'The environment variable DINATOS_ALLOW_REGISTRATION is set to '
-                    '${data.allowRegistration}, and it overrides this option. '
-                    'To change it here, clear the variable and restart the server.',
-                  ),
-                ),
-            ],
-          );
-        },
+        data: (data) => Column(
+          children: [
+            _LockableSwitch(
+              icon: Icons.how_to_reg_outlined,
+              title: 'Allow registration',
+              onText: 'Anyone who can reach this server can create an account.',
+              offText: 'Only an admin can add accounts (Add user).',
+              value: data.allowRegistration,
+              locked: data.allowRegistrationLocked,
+              envVar: 'DINATOS_ALLOW_REGISTRATION',
+              busy: _busy,
+              onChanged: (value) => _set((repo) => repo.setAllowRegistration(allowed: value)),
+            ),
+            const Divider(height: 1),
+            _LockableSwitch(
+              icon: Icons.smart_toy_outlined,
+              title: 'MCP server',
+              onText: 'AI assistants can connect at /mcp with an API key.',
+              offText: '/mcp answers 404. API keys still work for everything else.',
+              value: data.mcpEnabled,
+              locked: data.mcpEnabledLocked,
+              envVar: 'DINATOS_MCP_ENABLED',
+              busy: _busy,
+              onChanged: (value) => _set((repo) => repo.setMcpEnabled(enabled: value)),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// One server switch, disabled with an explanation while [envVar] pins it.
+class _LockableSwitch extends StatelessWidget {
+  const _LockableSwitch({
+    required this.icon,
+    required this.title,
+    required this.onText,
+    required this.offText,
+    required this.value,
+    required this.locked,
+    required this.envVar,
+    required this.busy,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String onText;
+  final String offText;
+  final bool value;
+  final bool locked;
+  final String envVar;
+  final bool busy;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          secondary: Icon(icon),
+          title: Text(title),
+          subtitle: Text(value ? onText : offText),
+          value: value,
+          // `null` disables the switch.
+          onChanged: locked || busy ? null : onChanged,
+        ),
+        if (locked)
+          ListTile(
+            leading: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.error),
+            title: const Text('Locked by the server settings'),
+            subtitle: Text(
+              'The environment variable $envVar is set to $value, and it overrides this '
+              'option. To change it here, clear the variable and restart the server.',
+            ),
+          ),
+      ],
     );
   }
 }

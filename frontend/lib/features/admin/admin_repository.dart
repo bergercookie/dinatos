@@ -58,12 +58,17 @@ class AdminRepository {
   /// Turns self-registration on or off (`PATCH /admin/settings`). The server
   /// answers 409 while `DINATOS_ALLOW_REGISTRATION` is set; that surfaces as an
   /// [ApiException] carrying the server's explanation.
-  Future<AdminSettings> setAllowRegistration({required bool allowed}) async {
+  Future<AdminSettings> setAllowRegistration({required bool allowed}) =>
+      _patchSettings({'allow_registration': allowed});
+
+  /// Turns the built-in MCP server on or off. Refused (409) while
+  /// `DINATOS_MCP_ENABLED` is set, like [setAllowRegistration].
+  Future<AdminSettings> setMcpEnabled({required bool enabled}) =>
+      _patchSettings({'mcp_enabled': enabled});
+
+  Future<AdminSettings> _patchSettings(Map<String, bool> changes) async {
     try {
-      final response = await _dio.patch<Map<String, dynamic>>(
-        '/admin/settings',
-        data: {'allow_registration': allowed},
-      );
+      final response = await _dio.patch<Map<String, dynamic>>('/admin/settings', data: changes);
       return AdminSettings.fromJson(response.data!);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);

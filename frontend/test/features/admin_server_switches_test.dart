@@ -48,6 +48,7 @@ void main() {
   }
 
   Finder switchTile() => find.widgetWithText(SwitchListTile, 'Allow registration');
+  Finder mcpTile() => find.widgetWithText(SwitchListTile, 'MCP server');
 
   testWidgets('shows registration as on and lets the admin turn it off', (tester) async {
     when(() => admin.setAllowRegistration(allowed: false)).thenAnswer((_) async {
@@ -130,11 +131,67 @@ void main() {
     });
     await pump(tester);
 
-    expect(find.text('Could not load the registration setting'), findsOneWidget);
+    expect(find.text('Could not load the server settings'), findsOneWidget);
 
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
     expect(switchTile(), findsOneWidget);
+  });
+
+  testWidgets('shows the MCP server as on and lets the admin turn it off', (tester) async {
+    when(() => admin.setMcpEnabled(enabled: false)).thenAnswer((_) async {
+      current = const AdminSettings(
+        allowRegistration: true,
+        allowRegistrationLocked: false,
+        mcpEnabled: false,
+      );
+      return current;
+    });
+    await pump(tester);
+
+    expect(tester.widget<SwitchListTile>(mcpTile()).value, isTrue);
+
+    await tester.tap(mcpTile());
+    await tester.pumpAndSettle();
+
+    verify(() => admin.setMcpEnabled(enabled: false)).called(1);
+    verifyNever(() => admin.setAllowRegistration(allowed: any(named: 'allowed')));
+    expect(tester.widget<SwitchListTile>(mcpTile()).value, isFalse);
+    expect(find.textContaining('/mcp answers 404'), findsOneWidget);
+  });
+
+  testWidgets('locks only the MCP switch while DINATOS_MCP_ENABLED is set', (tester) async {
+    current = const AdminSettings(
+      allowRegistration: true,
+      allowRegistrationLocked: false,
+      mcpEnabled: false,
+      mcpEnabledLocked: true,
+    );
+    await pump(tester);
+
+    expect(tester.widget<SwitchListTile>(mcpTile()).onChanged, isNull);
+    expect(tester.widget<SwitchListTile>(switchTile()).onChanged, isNotNull);
+    expect(find.text('Locked by the server settings'), findsOneWidget);
+    expect(find.textContaining('DINATOS_MCP_ENABLED is set to false'), findsOneWidget);
+    expect(find.textContaining('DINATOS_ALLOW_REGISTRATION is set'), findsNothing);
+
+    await tester.tap(mcpTile());
+    await tester.pumpAndSettle();
+    verifyNever(() => admin.setMcpEnabled(enabled: any(named: 'enabled')));
+  });
+
+  testWidgets('both switches can be locked at once', (tester) async {
+    current = const AdminSettings(
+      allowRegistration: false,
+      allowRegistrationLocked: true,
+      mcpEnabled: true,
+      mcpEnabledLocked: true,
+    );
+    await pump(tester);
+
+    expect(find.text('Locked by the server settings'), findsNWidgets(2));
+    expect(find.textContaining('DINATOS_MCP_ENABLED is set to true'), findsOneWidget);
+    expect(find.textContaining('DINATOS_ALLOW_REGISTRATION is set to false'), findsOneWidget);
   });
 }

@@ -43,8 +43,10 @@ The MCP server does not need sticky sessions.
 
 To keep MCP internal, use one of these methods:
 
+- Turn off **MCP server** in **Settings -> Administration**. This is the recommended method. `/mcp` then answers 404 at once, without a restart. Nothing else depends on it.
 - Block `/mcp` at the proxy.
-- Set `DINATOS_MCP_ENABLED=false` in the app. See the [Configuration reference](configuration.md). `/mcp` then answers 404. Nothing else depends on it.
+
+You can also set `DINATOS_MCP_ENABLED=false`. The variable overrides the switch in the app and locks it. See the [Configuration reference](configuration.md).
 
 ## Self-signed certificates
 

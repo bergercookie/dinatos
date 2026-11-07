@@ -2,7 +2,7 @@
 
 An MCP client is a tool that lets an AI assistant use other services. Claude is an example. This page shows how to connect an MCP client to Dinatos. The assistant can then manage exercises, routines, activities and planned workouts. It can also read your persona statistics.
 
-You do not need to install anything. The MCP server is part of the app, at `/mcp`. It is on by default. The operator of your instance can turn it off with `DINATOS_MCP_ENABLED=false`. In this case, `/mcp` answers 404 and these steps do not work.
+You do not need to install anything. The MCP server is part of the app, at `/mcp`. It is on by default. An administrator of your instance can turn it off in **Settings -> Administration**. In this case, `/mcp` answers 404 and these steps do not work.
 
 ## 1. Create an API key
 

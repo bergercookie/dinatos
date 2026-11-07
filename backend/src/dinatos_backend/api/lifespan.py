@@ -15,7 +15,7 @@ from dinatos_backend.api.mcp import mcp_gateway
 from dinatos_backend.db import async_session_factory
 from dinatos_backend.services.auth import bootstrap_admin_user
 from dinatos_backend.services.exercise import bootstrap_default_exercises
-from dinatos_backend.services.instance_settings import warn_if_registration_pinned
+from dinatos_backend.services.instance_settings import warn_about_pinned_switches
 
 
 @asynccontextmanager
@@ -23,7 +23,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # Migrations are expected to have already run by this point (the
     # Docker image's entrypoint does this; `just dev` does too) -- this
     # only creates rows, never touches schema.
-    warn_if_registration_pinned()
+    warn_about_pinned_switches()
     async with async_session_factory() as db:
         # Exercises first: a new account's starter routines are built from them.
         await bootstrap_default_exercises(db)

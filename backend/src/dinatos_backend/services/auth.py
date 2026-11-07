@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dinatos_backend.config import get_settings
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
-from dinatos_backend.services.instance_settings import get_registration_setting
+from dinatos_backend.services.instance_settings import get_switch
 from dinatos_backend.services.starter_routines import seed_starter_routines
 
 _hasher = PasswordHasher()
@@ -59,7 +59,7 @@ async def is_registration_open(db: AsyncSession) -> bool:
     yet is always open -- nobody could create the first (admin) one
     otherwise, short of `admin_email`/`admin_password` being configured.
     """
-    return (await get_registration_setting(db)).allowed or not await _has_any_user(db)
+    return (await get_switch(db, "allow_registration")).enabled or not await _has_any_user(db)
 
 
 async def create_user(

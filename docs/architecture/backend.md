@@ -132,6 +132,11 @@ Who decides whether registration is off:
   app shows the switch disabled. The server also logs a warning at startup
   (`services/instance_settings.py`).
 
+The [MCP server](#mcp-server) switch (`mcp_enabled`, `DINATOS_MCP_ENABLED`)
+follows the same rules. `services/instance_settings.py` handles both switches
+with one set of functions. A `PATCH` that names a locked switch changes
+nothing, also if the other switch in the request is free to change.
+
 An admin can create accounts with `POST /admin/users`, also when the flag is
 off. The `require_admin` dependency protects `/admin/*`.
 
@@ -387,10 +392,14 @@ client needs only the server URL and an API key.
 - **Lifecycle.** The lifespan of the app starts and stops the transport
   (`McpGateway.running()`). The server builds a new transport each time, so
   a test can start it for each test.
-- **Switch.** The server reads `Settings.mcp_enabled` (`DINATOS_MCP_ENABLED`,
-  default on) for each request and in `running()`. If it is off, the transport
-  does not start and `/mcp` returns 404. The routes stay registered. Therefore, the
-  catch-all fallback of the web UI never answers `/mcp` with `index.html`.
+- **Switch.** `mcp_enabled` works like the registration switch (see
+  [Authentication](#authentication)): an admin changes it with `PATCH
+  /admin/settings`, and `DINATOS_MCP_ENABLED` pins and locks it. The gateway
+  checks it for each request through `GET /auth/config`, in the same process,
+  so it reads the same database as the rest of the app. If it is off, `/mcp`
+  returns 404 at once. If the variable pins it off, `running()` also does not
+  start the transport. The routes stay registered. Therefore, the catch-all
+  fallback of the web UI never answers `/mcp` with `index.html`.
 - **Tools.** The tools are thin wrappers for these areas:
   - Exercises, routines and activities.
   - Planned workouts: `list_planned_workouts`, `schedule_workout`,

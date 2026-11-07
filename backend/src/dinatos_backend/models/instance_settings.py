@@ -18,3 +18,4 @@ class InstanceSettings(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     allow_registration: Mapped[bool | None] = mapped_column(Boolean)
+    mcp_enabled: Mapped[bool | None] = mapped_column(Boolean)

@@ -28,10 +28,11 @@ from dinatos_backend.services.backup import (
     restore_backup,
 )
 from dinatos_backend.services.instance_settings import (
-    REGISTRATION_ENV_VAR,
-    RegistrationLockedError,
-    get_registration_setting,
-    set_allow_registration,
+    ENV_VARS,
+    Switch,
+    get_switch,
+    pinned_by_env,
+    set_switch,
 )
 
 # A backup holds the whole server; far more than any real instance's, but a
@@ -57,9 +58,13 @@ async def create_account(payload: AdminUserCreate, db: AsyncSession = Depends(ge
 
 @router.get("/settings", response_model=AdminSettings)
 async def read_settings(db: AsyncSession = Depends(get_db)) -> AdminSettings:
-    registration = await get_registration_setting(db)
+    registration = await get_switch(db, "allow_registration")
+    mcp = await get_switch(db, "mcp_enabled")
     return AdminSettings(
-        allow_registration=registration.allowed, allow_registration_locked=registration.locked
+        allow_registration=registration.enabled,
+        allow_registration_locked=registration.locked,
+        mcp_enabled=mcp.enabled,
+        mcp_enabled_locked=mcp.locked,
     )
 
 
@@ -67,19 +72,28 @@ async def read_settings(db: AsyncSession = Depends(get_db)) -> AdminSettings:
 async def update_settings(
     payload: AdminSettingsUpdate, db: AsyncSession = Depends(get_db)
 ) -> AdminSettings:
-    """Changes the options that are given. `allow_registration` is refused
-    with 409 while `DINATOS_ALLOW_REGISTRATION` is set: the variable wins, and
-    must be cleared (then the server restarted) before the app can change it.
+    """Changes the switches that are given, all or nothing. A switch whose
+    environment variable is set (`DINATOS_ALLOW_REGISTRATION`,
+    `DINATOS_MCP_ENABLED`) is refused with 409: the variable wins, and must be
+    cleared (then the server restarted) before the app can change it.
     """
-    if payload.allow_registration is not None:
-        try:
-            await set_allow_registration(db, payload.allow_registration)
-        except RegistrationLockedError as error:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                f"{REGISTRATION_ENV_VAR} is set, so registration cannot be changed here. "
-                f"Clear {REGISTRATION_ENV_VAR} and restart the server first.",
-            ) from error
+    requested: list[tuple[Switch, bool | None]] = [
+        ("allow_registration", payload.allow_registration),
+        ("mcp_enabled", payload.mcp_enabled),
+    ]
+    changes: dict[Switch, bool] = {
+        switch: value for switch, value in requested if value is not None
+    }
+    locked = [ENV_VARS[switch] for switch in changes if pinned_by_env(switch) is not None]
+    if locked:
+        names = " and ".join(locked)
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"{names} is set on the server, so this cannot be changed here. "
+            f"Clear {names} and restart the server first.",
+        )
+    for switch, value in changes.items():
+        await set_switch(db, switch, value)
     return await read_settings(db)
 
 

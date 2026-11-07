@@ -27,10 +27,10 @@ from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from dinatos_backend.config import get_settings
 from dinatos_backend.schemas.activity import ActivityExerciseCreate
 from dinatos_backend.schemas.routine import RoutineExerciseCreate
 from dinatos_backend.services.api_keys import looks_like_api_key
+from dinatos_backend.services.instance_settings import pinned_by_env
 from dinatos_backend.services.personas import analyse_personas
 
 INSTRUCTIONS = (
@@ -311,8 +311,10 @@ class McpGateway:
     is calling for the tools, and hands the request to the MCP transport.
 
     `running()` must be active (the app's lifespan does this) for requests to be
-    served. With `Settings.mcp_enabled` off, `running()` starts nothing and every
-    request gets a 404; a fresh transport is built each time it starts, so tests and
+    served. Whether `/mcp` answers is the `mcp_enabled` switch: an admin turns it
+    on and off at runtime, and while it is off every request gets a 404. When
+    `DINATOS_MCP_ENABLED` pins it off, `running()` does not even start the
+    transport; a fresh transport is built each time it starts, so tests and
     restarts never reuse a spent one.
     """
 
@@ -322,7 +324,7 @@ class McpGateway:
 
     @asynccontextmanager
     async def running(self) -> AsyncIterator[None]:
-        if not get_settings().mcp_enabled:
+        if pinned_by_env("mcp_enabled") is False:
             yield
             return
         manager = StreamableHTTPSessionManager(
@@ -345,7 +347,7 @@ class McpGateway:
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover - lifespan etc. never reach a route
             return
-        if not get_settings().mcp_enabled:
+        if not await self._enabled(scope["app"]):
             # 404, not 401/403: as far as a client can tell, there is no MCP here.
             response = JSONResponse({"detail": "the MCP server is disabled"}, status_code=404)
             await response(scope, receive, send)
@@ -381,6 +383,18 @@ class McpGateway:
             await self._manager.handle_request(scope, receive, send)
         finally:
             _caller.reset(reset)
+
+    @staticmethod
+    async def _enabled(app: ASGIApp) -> bool:
+        """The `mcp_enabled` switch, asked of the app itself (`GET /auth/config`)
+        so it reads the same database as every other request.
+        """
+        async with httpx2.AsyncClient(
+            transport=httpx2.ASGITransport(app=app), base_url="http://dinatos.internal"
+        ) as client:
+            response = await client.get("/auth/config")
+        enabled: bool = response.json().get("mcp_enabled", True)
+        return enabled
 
     @staticmethod
     async def _check_key(caller: _Caller) -> None:

@@ -30,6 +30,7 @@ from dinatos_backend.services.auth import (
     register_user,
     revoke_session,
 )
+from dinatos_backend.services.instance_settings import get_switch
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,9 +38,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.get("/config", response_model=AuthConfig)
 async def read_auth_config(db: AsyncSession = Depends(get_db)) -> AuthConfig:
     """Public: lets the login screen hide its "Register" link when
-    self-registration is turned off (`DINATOS_ALLOW_REGISTRATION`).
+    self-registration is turned off, and tells clients (and the MCP gateway)
+    whether `/mcp` answers.
     """
-    return AuthConfig(registration_enabled=await is_registration_open(db))
+    return AuthConfig(
+        registration_enabled=await is_registration_open(db),
+        mcp_enabled=(await get_switch(db, "mcp_enabled")).enabled,
+    )
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
