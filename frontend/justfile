@@ -45,9 +45,12 @@ check: check-format analyze test
 run:
     flutter run -d web-server --web-port 8081
 
-# Production web build, output in build/web/.
-build-web:
-    flutter build web --release
+# Production web build, output in build/web/. To host the web app on its own
+# origin, pass the API's address (sets API_BASE_URL), for example
+# `just frontend build-web https://api.example.com`. Without it, the app calls
+# the address it is served from (the Docker image's setup).
+build-web api_base_url="":
+    flutter build web --release {{ if api_base_url != "" { "--dart-define=API_BASE_URL=" + api_base_url } else { "" } }}
 
 # Flutter clean
 clean:

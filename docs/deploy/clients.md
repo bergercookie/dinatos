@@ -21,14 +21,13 @@ Dinatos has no build for macOS, Windows or iOS. We can add one if people need it
 
 Do this only if the web app must be on a different address than the API. One example is a web app behind a CDN.
 
-1. Build the web app. This needs the Flutter SDK.
+1. Build the web app. This needs the Flutter SDK and [`just`](https://github.com/casey/just). Run the command from the root of the repository, and give the address of the API:
 
    ```bash
-   cd frontend
-   flutter build web --release --dart-define=API_BASE_URL=https://api.example.com
+   just frontend build-web https://api.example.com
    ```
 
 2. Serve `frontend/build/web/` with a static file server.
 3. Allow the origin of the web app on the backend. See [CORS](security-and-networking.md#cors).
 
-If you build without `API_BASE_URL`, the web app sends requests to its own address. If you set `API_BASE_URL`, the web app sends requests to that URL. It also pre-fills **Server URL** with that URL.
+If you leave out the address, the web app sends requests to its own address. If you give an address, the recipe sets `API_BASE_URL`, and the web app sends requests to that URL. It also pre-fills **Server URL** with that URL.
