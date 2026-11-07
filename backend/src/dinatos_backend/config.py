@@ -41,9 +41,10 @@ class Settings(BaseSettings):
     admin_password: str | None = None
 
     # Whether anyone can self-register from the login screen via `POST
-    # /auth/register`. On by default (unchanged behavior for an existing
-    # instance); set `DINATOS_ALLOW_REGISTRATION=false` for an invite-only
-    # one, where an admin creates accounts instead (`POST /admin/users`).
+    # /auth/register`. On by default. For an invite-only instance, an admin
+    # turns it off in the app (or the operator sets
+    # `DINATOS_ALLOW_REGISTRATION=false`), and admins create accounts instead
+    # (`POST /admin/users`).
     # Never locks out the very first account: with no users yet there is no
     # admin to create one, so registration stays open until it exists --
     # see `services.auth.is_registration_open`.

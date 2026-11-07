@@ -32,7 +32,8 @@ Please allow time for a fix before public disclosure.
 | Logout | `POST /auth/logout` revokes only the session whose token you send. Revoked, expired and unknown tokens all return `401`. |
 | Lifetime | 30 days by default (`DINATOS_SESSION_TTL_DAYS`). |
 | Passwords | Hashed with Argon2. Never stored in the clear. |
-| Registration | Open unless `DINATOS_ALLOW_REGISTRATION=false`. The first account becomes administrator. `/admin/*` needs the admin role. |
+| Registration | Open by default. An administrator turns it off in **Settings -> Administration**. If the operator sets `DINATOS_ALLOW_REGISTRATION`, it overrides that switch and locks it. The first account becomes administrator. `/admin/*` needs the admin role. |
+| MCP endpoint | `/mcp` is on by default and accepts only API keys. An administrator turns it off in **Settings -> Administration**; it then answers `404`. If the operator sets `DINATOS_MCP_ENABLED`, it overrides that switch and locks it. |
 | API keys | `dnk_` keys for the MCP endpoint. Shown once, stored as a hash, revocable individually. They cannot manage keys or administer the server. |
 | Cookies and CORS | Auth uses an `Authorization` header, not cookies, so CORS allows any origin by default (without credentials). Restrict it with `DINATOS_CORS_ALLOWED_ORIGINS`. |
 

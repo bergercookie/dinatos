@@ -60,7 +60,7 @@ A certificate from a certificate authority, for example Let's Encrypt, removes t
 
 - Dinatos hashes passwords with Argon2.
 - A login lasts `DINATOS_SESSION_TTL_DAYS` days (default 30). A user can end a login at any time with a logout.
-- Anyone can register, until an administrator turns registration off in **Settings -> Administration**, or you set `DINATOS_ALLOW_REGISTRATION=false`. The variable overrides the administrator.
+- Anyone can register, until an administrator turns registration off in **Settings -> Administration**. You can also set `DINATOS_ALLOW_REGISTRATION=false`. The variable overrides the switch in the app and locks it. See the [Configuration reference](configuration.md).
 - The first account is the administrator.
 
 To report a vulnerability, follow the [security policy](security-policy.md).

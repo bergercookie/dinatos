@@ -19,8 +19,8 @@ import 'admin_providers.dart';
 import 'admin_repository.dart';
 
 /// Lists every account and lets an admin add one -- the way in when
-/// self-registration is turned off (`DINATOS_ALLOW_REGISTRATION=false`) --
-/// and download or restore a full backup of the server.
+/// self-registration is off -- shows the server switches (registration, MCP
+/// server), and downloads or restores a full backup of the server.
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
 

@@ -12,6 +12,8 @@ This page lists every backend setting as an environment variable. Each variable 
 - `DINATOS_ADMIN_EMAIL`
 - `DINATOS_ADMIN_PASSWORD`
 
+If you do not set `DINATOS_ALLOW_REGISTRATION` or `DINATOS_MCP_ENABLED` in `.env`, Compose passes it as an empty value. Dinatos treats an empty value as unset. The switches in **Settings -> Administration** then stay in control. Set either variable only to override its switch.
+
 To set any other variable from the table below, do these steps:
 
 1. Add the variable under `services.backend.environment` in `docker-compose.yml`.

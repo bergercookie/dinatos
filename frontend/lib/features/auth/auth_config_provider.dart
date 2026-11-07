@@ -2,8 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/dio_provider.dart';
 
-/// Whether the server currently accepts self-registration
-/// (`DINATOS_ALLOW_REGISTRATION`; always true while it has no accounts).
+/// Whether the server currently accepts self-registration (the admin's switch,
+/// or `DINATOS_ALLOW_REGISTRATION` when the operator set it; always true while
+/// the server has no accounts).
 ///
 /// Watches [dioProvider], so it re-asks whenever the login screen's server
 /// URL changes. Anything that goes wrong (an older server without the
