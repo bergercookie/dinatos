@@ -59,6 +59,8 @@ Also follow these rules:
 - Make one change in each PR.
 - If users or operators can see your change, update the matching page in
   `docs/` in the same PR.
+- To write a warning or a note in the docs, use the alert syntax of GitHub,
+  for example `> [!WARNING]`. The docs site shows it as an admonition too.
 - CI adds a comment to your PR. The comment compares the test coverage of your
   branch with `main`.
 

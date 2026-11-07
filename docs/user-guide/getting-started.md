@@ -14,7 +14,8 @@ The app saves the address on your device. To change it, open **Settings**. If yo
 
 If the instance uses a self-signed certificate, the app refuses to connect. To allow it, turn on **Allow self-signed certificates** in **Settings**. This option is only in the Android and Linux apps.
 
-Warning: This option turns off certificate checks for that server. Use it only on a network that you control.
+> [!WARNING]
+> This option turns off certificate checks for that server. Use it only on a network that you control.
 
 ## 2. Get an account
 

@@ -12,7 +12,8 @@ An MCP client needs an **API key**. Do not give it your password or a login toke
 2. Enter a name for the key, for example "Claude on my laptop".
 3. Copy the key immediately.
 
-Warning: The app shows the key only once. You cannot recover it later. After this step, the app shows only the name and the last three characters (`dnk_…abc`).
+> [!WARNING]
+> The app shows the key only once. You cannot recover it later. After this step, the app shows only the name and the last three characters (`dnk_…abc`).
 
 To stop a client from using Dinatos, delete its key on the same screen.
 

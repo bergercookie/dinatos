@@ -36,7 +36,8 @@ If the file is not a Dinatos export, or the data in it is not consistent, the ap
 
 ## Clear all account data
 
-Warning: This action deletes your data. You cannot undo it.
+> [!WARNING]
+> This action deletes your data. You cannot undo it.
 
 1. In **Settings**, turn on **Advanced**.
 2. Choose **Clear all account data**.

@@ -58,7 +58,8 @@ If you changed `POSTGRES_USER` or `POSTGRES_DB`, use your own values. Dinatos ha
 
 ## Restore with `psql`
 
-Warning: restore only onto an empty database. Use a new data directory, and start the app one time to run the migrations.
+> [!WARNING]
+> Restore only onto an empty database. Use a new data directory, and start the app one time to run the migrations.
 
 ```bash
 docker compose up -d --wait postgres
@@ -71,9 +72,10 @@ docker compose exec -T postgres psql -U dinatos dinatos < dinatos-backup.sql
 
 The backup is one JSON file. It contains every account, exercise, routine, activity, measurement, planned workout and import record. It works across Postgres versions.
 
-Warning: the backup file contains password hashes and stored WorkoutX API keys. Keep it as private as the database.
-
-Warning: a restore replaces everything on the server in one step. If the file is not valid, nothing changes.
+> [!WARNING]
+> The backup file contains password hashes and stored WorkoutX API keys. Keep it as private as the database.
+>
+> A restore replaces everything on the server in one step. If the file is not valid, nothing changes.
 
 After a restore, these rules apply:
 

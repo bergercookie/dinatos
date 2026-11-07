@@ -79,11 +79,12 @@ of any person.
 - For the user description, see
   [Getting started](../user-guide/getting-started.md).
 
-Note: if the URL changes, the app rebuilds `AuthNotifier`. `AuthNotifier`
-watches `dioProvider`, and `dioProvider` watches the URL. A login or logout
-can be in progress on the new instance at that time. For this reason, a guard
-protects every state change in `AuthNotifier._bootstrap`. The guard is
-`state is AuthUnknown`. Without the guard, the call that finishes last wins.
+> [!NOTE]
+> If the URL changes, the app rebuilds `AuthNotifier`. `AuthNotifier`
+> watches `dioProvider`, and `dioProvider` watches the URL. A login or logout
+> can be in progress on the new instance at that time. For this reason, a guard
+> protects every state change in `AuthNotifier._bootstrap`. The guard is
+> `state is AuthUnknown`. Without the guard, the call that finishes last wins.
 
 ## Secure storage can throw
 

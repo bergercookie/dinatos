@@ -54,8 +54,9 @@ Android. The backend also publishes them as an ICS feed. See
 | `body_measurements` | Weigh-ins and tape measurements, with dates |
 | `hevy_import_records`, `intervals_imported_activities` | Duplicate tracking for imports |
 
-Note: when you add a table, you must also register it for backup. See
-[Backup and data export](backend.md#backup-and-data-export).
+> [!NOTE]
+> When you add a table, you must also register it for backup. See
+> [Backup and data export](backend.md#backup-and-data-export).
 
 ## Repository layout
 

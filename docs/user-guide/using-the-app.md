@@ -36,7 +36,8 @@ In the Android app, you can put a shortcut to a routine on your home screen. Whe
 2. Tap **Add to home screen** at the top of the screen.
 3. Confirm in the prompt that Android shows.
 
-Note: Android launchers differ. If your launcher cannot add shortcuts, the app tells you.
+> [!NOTE]
+> Android launchers differ. If your launcher cannot add shortcuts, the app tells you.
 
 Adding the same routine again updates its shortcut. It does not make a copy. The shortcut uses the name that the routine had when you added it. To change the label, add the shortcut again.
 
@@ -92,7 +93,8 @@ A dot shows each day that has a pending workout. To see future months, page forw
 
 Your planned workouts appear as events with reminders. Calendar apps check for changes about once each hour. Google Calendar can take a few hours.
 
-Warning: Anyone who has the link can see your planned workouts. Do not share the link. If the link leaks, choose **Create a new link**. The old link then stops working. You can also choose **Turn the feed off**.
+> [!WARNING]
+> Anyone who has the link can see your planned workouts. Do not share the link. If the link leaks, choose **Create a new link**. The old link then stops working. You can also choose **Turn the feed off**.
 
 ## Progress
 

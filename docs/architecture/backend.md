@@ -257,9 +257,10 @@ only, because SQLite takes the next rowid from the table. A unit test checks
 the SQL. A test with a stub checks the switch for the dialect. No test runs
 the SQL against a real Postgres.
 
-**Secrets.** Warning: the backup file contains password hashes and stored
-WorkoutX API keys in clear text. A restore must produce a working server, so
-it needs them. Treat the file as a credential.
+> [!WARNING]
+> **Secrets.** The backup file contains password hashes and stored WorkoutX API
+> keys in clear text. A restore must produce a working server, so it needs
+> them. Treat the file as a credential.
 
 **Sessions.** The backup does not include `auth_sessions`. A row in this
 table is a live login. A backup must not carry it, and a restore must not

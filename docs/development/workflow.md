@@ -21,9 +21,10 @@ backend (`http://127.0.0.1:8000`) and the frontend. Open
 - To stop the containers and keep the data, run `just docker down`.
 - To remove the containers, run `just dev-clean`.
 
-Warning: `just dev-clean` **deletes the Postgres data volume**. Before you use
-it on data you want to keep, read
-[Upgrades and backups](../deploy/upgrades-and-backups.md).
+> [!WARNING]
+> `just dev-clean` **deletes the Postgres data volume**. Before you use
+> it on data you want to keep, read
+> [Upgrades and backups](../deploy/upgrades-and-backups.md).
 
 ## Running pieces separately
 

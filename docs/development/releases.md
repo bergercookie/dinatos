@@ -34,15 +34,17 @@ Before you push a tag, read these cautions:
 - **First push to GHCR.** The package is private by default, even if the
   repository is public. To let people pull the image without a login, make the
   package public once, in its settings on GitHub.
-- **No rollback.** Warning: there is no `just` recipe that undoes a release.
-  If a job fails after other jobs finished, the release is partial. For
-  example, the image is on GHCR and then the `.deb` step fails. The workflow
-  cannot roll back by itself. Before you tag, test changes to `packaging/linux/`
-  or the `Dockerfile` on your computer.
 - **Scan failure.** If Trivy finds a fixable CRITICAL vulnerability, the
   `docker` job stops before the push. The other jobs continue. See
   [Security scanning](ci.md#security-scanning) for how to fix or accept the
   finding.
+
+> [!WARNING]
+> **No rollback.** No `just` recipe undoes a release. If a job fails after
+> other jobs finished, the release is partial. For example, the image is on
+> GHCR and then the `.deb` step fails. The workflow cannot roll back by itself.
+> Before you tag, test changes to `packaging/linux/` or the `Dockerfile` on
+> your computer.
 
 ## Nightly releases
 
