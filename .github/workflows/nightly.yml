@@ -64,9 +64,11 @@ jobs:
           # the stable it was built after.
           IFS=. read -r major minor patch <<< "$base"
           base="$major.$((minor + 1)).$patch"
-          echo "changed=$changed" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=$base-nightly.${tag#nightly-}" >> "$GITHUB_OUTPUT"
+          {
+            echo "changed=$changed"
+            echo "tag=$tag"
+            echo "version=$base-nightly.${tag#nightly-}"
+          } >> "$GITHUB_OUTPUT"
 
   release:
     needs: check

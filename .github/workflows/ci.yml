@@ -176,9 +176,11 @@ jobs:
         # fail there; the numbers are still on each job's summary.
         continue-on-error: true
         run: |
-          run_id=$(gh run list --workflow ci.yml --branch main --event push --status completed --limit 20 \
+          # Downloads the newest main run's coverage into base/ (the loop is only
+          # for its side effect).
+          gh run list --workflow ci.yml --branch main --event push --status completed --limit 20 \
             --json databaseId --jq '.[].databaseId' | while read -r id; do
-              if gh run download "$id" --name coverage-main --dir base 2>/dev/null; then echo "$id"; break; fi
-            done)
+              if gh run download "$id" --name coverage-main --dir base 2>/dev/null; then break; fi
+            done
           python3 .github/scripts/coverage_report.py comment coverage.json base/coverage.json > comment.md
           gh pr comment "${{ github.event.pull_request.number }}" --body-file comment.md --edit-last --create-if-none
