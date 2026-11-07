@@ -42,7 +42,6 @@ headless, without Chrome or the Android SDK.
 | Chromium for Playwright | `just e2e test`, `just screenshots generate` | Run `just e2e install` (or `just screenshots install`). It downloads the browser. |
 | Android SDK and a JDK (17 or newer) | `just packaging build-apk`, `just android ...` | Run `./tools/install-android-sdk.sh` for the SDK. Install a JDK with your package manager. The emulator (`just android emulator`) also needs KVM (`/dev/kvm`). |
 | Linux desktop build libraries | `flutter build linux`, `just packaging build-deb` and `build-appimage` | Install `clang ninja-build pkg-config libgtk-3-dev libsecret-1-dev` with `apt`. Or use the `*-docker` recipes, which need only Docker. See [Releases and packaging](releases.md#linux-desktop-target). |
-| `desktop-file-utils` | The `desktop-file-validate` pre-commit hook (`just lint`) | Install it with `apt install desktop-file-utils`. |
 
 To start the Docker daemon by hand:
 

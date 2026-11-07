@@ -151,9 +151,8 @@ run:
   `needs:` references and action inputs.
 - `check-xml` checks that the Android manifests and resources are well-formed
   XML.
-- `desktop-file-validate` validates `packaging/linux/dinatos.desktop`.
 
-Pre-commit installs all hooks as wheels or through `uvx`, with one exception.
-`desktop-file-validate` needs the system package `desktop-file-utils`. To
-install it, run `apt install desktop-file-utils`. CI installs it. To install
-the hooks as git pre-commit hooks, run `just hooks`.
+Pre-commit installs every hook by itself, as wheels, through `uvx`, or with
+its own copy of Node. You do not need system packages from your
+distribution. To install the hooks as git pre-commit
+hooks, run `just hooks`.

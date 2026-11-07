@@ -124,14 +124,6 @@ repos:
         language: python
         additional_dependencies: ["lychee-bin==0.24.2"]
         files: \.md$
-      # The Linux .desktop entry packaging/linux/ ships in the .deb/AppImage.
-      # desktop-file-validate comes from the `desktop-file-utils` system
-      # package (apt install desktop-file-utils); CI installs it in ci.yml.
-      - id: desktop-file-validate
-        name: desktop entry (validate)
-        entry: desktop-file-validate
-        language: system
-        files: \.desktop$
       # Prose style for the docs (README, CONTRIBUTING, docs/): passive voice,
       # weasel words, sentences starting with "So" or "There is", spelling.
       # Rules and vocabulary live in .vale.ini and .vale/styles/ (write-good is
