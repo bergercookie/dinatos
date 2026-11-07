@@ -16,4 +16,6 @@ ignores:
   - "**/.venv/**"
   - "**/build/**"
   - "docs/_build/**"
+  # Vendored Vale styles (see .vale.ini), not ours to lint.
+  - ".vale/**"
   - "frontend/**/ephemeral/**"
