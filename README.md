@@ -1,15 +1,14 @@
 # Dinatos
 
 Dinatos is a self-hosted workout tracker. You log exercises, build routines,
-record workouts, and see your progress. It is inspired by Hevy. It runs on
+record workouts, and see your progress. Hevy inspired it. It runs on
 your own server.
 
 - Log all your activities: cardio, strength and bodyweight exercises.
 - Save frequently used activities as routines, and use them again.
 - Choose exercises from a catalog, or add your own.
 - Track bodyweight measurements and personal records.
-- Use the web app, the Android app or the Linux desktop app. A Garmin app is
-  planned.
+- Use the web app, the Android app or the Linux desktop app. The project plans a Garmin app.
 - Import runs from [intervals.icu](https://intervals.icu/) and workouts from
   [Hevy](https://hevy.com).
 - Connect an AI agent to the built-in MCP server.
@@ -88,7 +87,7 @@ It shows you how to go from a clone to passing tests in a few commands.
 
 For the daily workflow, CI and releases, read the
 [development guide](https://bergercookie.github.io/dinatos/development/index.html).
-To learn how the code is built, read the
+To learn how the code works, read the
 [architecture docs](https://bergercookie.github.io/dinatos/architecture/index.html).
 
 ## Releases

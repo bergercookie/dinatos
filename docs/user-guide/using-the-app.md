@@ -51,7 +51,7 @@ On the summary, you can tick **Also save as a routine**. The app then makes a ro
 
 ### Without a connection
 
-The app keeps your workout on the device while you log it. If **Save workout** cannot reach the server, the app tells you and keeps the workout. A banner on every tab takes you back to the workout. Try again when you have a connection. After a failed attempt, the title is locked. This prevents a double save when you try again.
+The app keeps your workout on the device while you log it. If **Save workout** cannot reach the server, the app tells you and keeps the workout. A banner on every tab takes you back to the workout. Try again when you have a connection. After a failed attempt, the app locks the title. This prevents a double save when you try again.
 
 ## Plan workouts
 
@@ -63,7 +63,7 @@ The app keeps your workout on the device while you log it. If **Save workout** c
 A dot shows each day that has a pending workout. To see future months, page forward.
 
 - **Reminders (Android):** By default, a notification arrives 30 minutes before the workout. Tap the notification to start the workout. Allow notifications when the app asks. While the phone is idle, a reminder can arrive a few minutes late.
-- **On the day:** **Start activity** offers **Planned workout**. If you planned several workouts, the app asks which one to start.
+- **On the day:** **Start activity** offers **Planned workout**. If you planned more than one workout, the app asks which one to start.
 - **Done:** When you save a workout that you started from a plan, the app marks the plan as done. A plan does not count for statistics or streaks until you do the workout.
 - An AI assistant that connects through [MCP](mcp-server.md) can also manage planned workouts.
 
@@ -72,7 +72,7 @@ A dot shows each day that has a pending workout. To see future months, page forw
 1. Open **Settings -> Calendar feed** and create the link.
 2. In your calendar app, subscribe to the link by URL. In Google Calendar, use "From URL". In Apple Calendar, use "New Calendar Subscription". Outlook also supports this.
 
-Your planned workouts appear as events with reminders. Calendar apps check for changes about once each hour. Google Calendar can take several hours.
+Your planned workouts appear as events with reminders. Calendar apps check for changes about once each hour. Google Calendar can take a few hours.
 
 Warning: Anyone who has the link can see your planned workouts. Do not share the link. If the link leaks, choose **Create a new link**. The old link then stops working. You can also choose **Turn the feed off**.
 
@@ -85,7 +85,7 @@ Tap the chart icon next to an exercise. The icon is in **Exercises**. In a worko
 - the volume of each session
 - the most reps in a session
 - a suggestion for the next session
-- a note if your best result is several sessions old
+- a note if your best result is a few sessions old
 
 The note suggests a lighter week, a different rep range, or more rest.
 

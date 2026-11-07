@@ -23,7 +23,7 @@ Hevy can sync workouts to Intervals.icu. A session can then exist in both places
 |---|---|
 | **Possible duplicate of "..."** | One of your Dinatos activities, often from Hevy, started within 30 minutes. |
 | **Already imported** | You imported the activity from Intervals.icu before. |
-| Cannot be imported | Strava activities arrive from Intervals.icu as empty stubs. |
+| No import possible | Strava activities arrive from Intervals.icu as empty stubs. |
 
 If a possible duplicate is a different session, you can tick it. The **All** and **None** buttons change the whole selection.
 
@@ -75,6 +75,6 @@ The default value of `newest` is today.
 | Status | Meaning |
 |---|---|
 | `409` | Already imported. The server wrote nothing. To import anyway, add `?force=true`. |
-| `422` | An ID is outside the date range, or the activity cannot be imported. |
+| `422` | An ID is outside the date range, or the server cannot import the activity. |
 | `400` | The API key is not correct. |
 | `502` | The server cannot reach Intervals.icu. |

@@ -15,12 +15,12 @@ in `backend/src/dinatos_backend/models/`.
 
 | Term | Meaning |
 | --- | --- |
-| **User** | A local account. Dinatos is a household app: several people share one server. Exactly one user owns each item, except exercises. |
+| **User** | A local account. Dinatos is a household app: many people share one server. Exactly one user owns each item, except exercises. |
 | **Exercise** | One movement, for example "Romanian deadlift". It is the only global resource. All users share one catalog. |
 | **Routine** | A saved template with a name. It is an ordered list of exercises. Each exercise has planned sets. |
 | **Activity** | A recorded gym session. It has the exercises that the user did, with sets, reps and weights. It comes from a routine or from a workout that the user builds during the session. All stats use activities. |
-| **Planned workout** | A routine or free-form session that is scheduled for a future time. It has a duration and a reminder lead time. It is one calendar entry. |
-| **Superset** | Exercises that the user does back-to-back. Consecutive exercises with the same `superset_group` number form a superset. This applies to routines and activities. When a user starts a workout from a routine, the groups are copied. |
+| **Planned workout** | A routine or free-form session that has a date in the future. It has a duration and a reminder lead time. It is one calendar entry. |
+| **Superset** | Exercises that the user does back-to-back. Consecutive exercises with the same `superset_group` number form a superset. This applies to routines and activities. When a user starts a workout from a routine, the app copies the groups. |
 | **Set** | One row of weight, reps, distance and duration in a routine exercise or activity exercise. It has a `set_type`, for example warm-up. A warm-up never counts toward records. Only a `completed` set counts toward records, history and totals. |
 
 ### Exercises: built-in and custom

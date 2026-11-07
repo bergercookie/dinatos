@@ -13,7 +13,7 @@ This page explains the terms that Dinatos uses. Dinatos is a self-hosted workout
 | **Measurement** | A body entry with a date. It has weight, body composition or tape measurements. It is in the **Body** tab. | Only you |
 | **Instance** | One Dinatos server. The app connects to one instance at a time. | Not applicable |
 
-Each account owns everything except exercises. If an instance has several accounts, no user sees the routines, activities or measurements of another user.
+Each account owns everything except exercises. If an instance has more than one account, no user sees the routines, activities or measurements of another user.
 
 The **Settings** tab holds your account options. In this tab you can log out, change the instance, import and export data, and manage API keys.
 

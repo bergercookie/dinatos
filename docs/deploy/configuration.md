@@ -41,7 +41,7 @@ A list value must be JSON.
 | `DINATOS_CORS_ALLOWED_ORIGINS` | `["*"]` | Browser origins that can call the API. You need it only for a web app on a different origin. See [CORS](security-and-networking.md#cors). |
 | `DINATOS_WEB_DIR` | `web` | Folder of the built web app. The path is relative to the working directory of the app. The Docker image already contains this folder. If the folder does not exist, only the web app is off. The API still works. |
 
-## Env files
+## `.env` files
 
 | File | Used by |
 |---|---|

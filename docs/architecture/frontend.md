@@ -40,7 +40,7 @@ This page uses these terms:
 
 - **Activity**: a logged workout.
 - **Routine**: a saved workout template.
-- **Planned workout**: a routine or workout that is scheduled for a date.
+- **Planned workout**: a routine or workout that has a date.
 - **Live workout**: the screen of a workout in progress. The app has not
   saved it as an activity yet.
 - **Superset**: a group of exercises that the user does back-to-back.
@@ -186,7 +186,7 @@ API link is the `routine_id` that the backend stores on the new activity.
 
 ## Supersets
 
-Exercises with the same `supersetGroup` number are done back-to-back. A group
+Exercises with the same `supersetGroup` number happen back-to-back. A group
 makes sense only as a run of *adjacent* exercises. Every edit goes through
 `models/superset.dart`. The edits are link, unlink, move and remove. The
 file normalizes the list again after each edit:
@@ -210,7 +210,7 @@ model changes from outside. An example is a suggestion that the app fills in.
 
 The app keeps a live workout in `liveActivityProvider`. It writes the workout
 to disk after every change
-(`activities/live/live_session_storage.dart`). If the app is killed, the
+(`activities/live/live_session_storage.dart`). If the system stops the app, the
 workout is not lost. The app does not need the server to log sets.
 
 The app gets some extra data from the server in the background. If a request
@@ -221,11 +221,10 @@ set.
 ### Saving offline
 
 A save is the one step that needs the server. The summary screen
-(`activity_summary_screen.dart`) is built for the case that the save fails.
+(`activity_summary_screen.dart`) handles the case that the save fails.
 
 - **A failed save keeps the session.** The session stays on the screen and on
-  disk. The screen shows a Save again button. A banner on every tab shows a
-  workout that is finished but not saved
+  disk. The screen shows a Save again button. A banner on every tab shows a workout that the user finished but did not save
   (`features/home/live_workout_banner.dart`).
 - **No HTTP status means no response.** For example, the connection dropped or
   the request timed out. The server can have stored the workout. The backend
@@ -256,8 +255,7 @@ saved an untouched planned set, it would record work that did not happen.
 
 - `LiveActivitySession.unfinished` counts what the app would drop.
   `finishedExercises` is the result.
-- Exercises use the same `removeItem` path as the remove button. A superset
-  with one member left is dissolved.
+- Exercises use the same `removeItem` path as the remove button. The app dissolves a superset with one member left.
 - `_confirmFinish` asks the user first when the app would lose something.
   "Keep logging" does not change the session.
 
@@ -294,9 +292,9 @@ Personal records use the same rules everywhere. The code is in
 - The live screen flags only the exercises that have a history. The summary
   screen counts a first-ever set as a record.
 
-### Adding several exercises from a typed list
+### Add many exercises from a typed list
 
-*Add several* on the live screen opens `bulk_add_sheet.dart`. The user types
+*Add many* on the live screen opens `bulk_add_sheet.dart`. The user types
 a list, for example "1 reverse lunges 2 bench press 3 pull ups". The user
 reviews the matches and adds them all. The app adds them without sets, as for
 a single *Add exercise*. The three steps stay on the screen. Each row shows
@@ -390,7 +388,7 @@ science, and the page says so.
   - Each feature scores a bell curve around the typical value of the
     archetype. A value one tolerance away scores about 60%. The body score is
     the weighted mean. Height has half the weight.
-  - If fewer than three features are known, there is no score. The page lists
+  - If the app knows fewer than three features, there is no score. The page lists
     the inputs that would give more.
   - Smart-scale data adds a muscle index (muscle mass over height squared). It
     also adds the lower-body muscle share (leg muscle over arm-plus-leg

@@ -19,7 +19,7 @@ recipe. To see all recipes, run `just --list`. To run a recipe from the
 | `just frontend check`, `just e2e test`, `just screenshots generate` | Flutter SDK |
 
 `just check` does not need a database. The backend tests use in-memory
-sqlite.
+SQLite.
 
 ## Devbox (recommended)
 
@@ -88,8 +88,7 @@ sudo dockerd > /tmp/dockerd.log 2>&1 &
 
 ### Flutter SDK
 
-The `frontend/` directory needs a real Flutter SDK in `PATH`. There is no
-`apt` package for it.
+The `frontend/` directory needs a real Flutter SDK in `PATH`. No `apt` package has it.
 
 ```bash
 curl -o /tmp/flutter.tar.xz \
@@ -114,7 +113,7 @@ headless. Only a build for one platform needs the toolchain of that platform:
 
 ### `.env` files
 
-There are two `.env` files. Different tools read them. Git ignores both.
+Two `.env` files exist. Different tools read them. Git ignores both.
 
 | File | Copy from | Read by | Required |
 |---|---|---|---|

@@ -62,7 +62,7 @@ Important details:
 ### Retried saves
 
 On an unreliable connection, a client cannot know if a request never arrived
-or if the server stored it and the response was lost. So the client sends the
+or if the server stored it and the response never came back. Therefore, the client sends the
 request again.
 
 To prevent a double save, `POST /activities` compares each request with the
@@ -136,7 +136,7 @@ The server does not use a signed JWT, for two reasons:
 - The server cannot revoke a stateless token before it expires. So
   `POST /auth/logout` could not do anything real.
 - The server loads the `User` row for every request. This makes a deleted
-  account stop working at once. So a signed token does not save a database
+  account stop working at once. Therefore, a signed token does not save a database
   read.
 
 Do not add JWT code (`pyjwt`, a setting for a signing key) before you
@@ -146,12 +146,11 @@ Session rules:
 
 - `POST /auth/logout` revokes the session that its token names
   (`AuthSession.revoked_at`). The other sessions of the account stay open.
-- A session that is revoked, expired or unknown gives the same `401` status
+- A revoked, expired or unknown session gives the same `401` status
   and message. The response does not show which case it is.
 - The server checks the expiry in SQL (`expires_at > func.now()`), not in
   Python. This prevents timezone mismatches between the driver and Python.
-- The default lifetime is 30 days (`session_ttl_days`). It is long because
-  sessions can be revoked. Revoking is the real protection: the user logs
+- The default lifetime is 30 days (`session_ttl_days`). It is long because the server can revoke sessions. Revoking is the real protection: the user logs
   out, or an admin deletes the `AuthSession` row of a stolen device. The
   lifetime is only a second barrier. A long lifetime also stops a forced
   login in the middle of a workout.
@@ -177,7 +176,7 @@ password or login session. The main tool is the [MCP server](#mcp-server).
   the name, the created time, the last-used time and the last three
   characters of the key (`suffix`).
 - When a user deletes a key, the key stops working at once.
-- The server updates `last_used_at` at most one time each minute. So the use
+- The server updates `last_used_at` at most one time each minute. Therefore, the use
   of a key is not a write for every request.
 - An account can have 25 keys at most.
 
@@ -216,8 +215,7 @@ enums as their value and timestamps as UTC ISO 8601.
   `tests/services/test_backup_coverage.py` fails until the table is in
   `BACKED_UP_TABLES`, or in `EXCLUDED_TABLES` with a reason.
 - Increase `FORMAT_VERSION` (`schemas/backup.py`) only if an old reader
-  cannot understand the change. For example, a column or table is removed or
-  has a new meaning.
+  cannot understand the change. For example, the change removes a column or table, or gives it a new meaning.
 
 **Validate, then replace.** `parse_backup` checks the whole document before
 it changes the database. It checks these points:
@@ -240,7 +238,7 @@ rejects any row, the server rolls everything back.
 serial sequences behind, so the next normal insert can collide. For each
 autoincrement key, `reset_sequences` runs
 `setval(pg_get_serial_sequence(...), max(id)+1)`. It does this on Postgres
-only, because sqlite takes the next rowid from the table. A unit test checks
+only, because SQLite takes the next rowid from the table. A unit test checks
 the SQL. A test with a stub checks the switch for the dialect. No test runs
 the SQL against a real Postgres.
 
@@ -261,8 +259,7 @@ admin gets a 401 on the next request, like all other users.
 
 ### A user's own data (`/profile/export`, `/profile/import`)
 
-The code is in `services/user_export.py`. This feature is not generic. The
-document (`UserExport`) is shaped by hand and has no ids. It contains:
+The code is in `services/user_export.py`. This feature is not generic. The document (`UserExport`) has a hand-made shape and has no ids. It contains:
 
 - The profile settings.
 - The exercises that the data uses.
@@ -274,7 +271,7 @@ It never contains the password hash, sessions, import records, the calendar
 token or the WorkoutX API key. The API key is a credential that stays on the
 server where the user typed it. If a file contains one, an import ignores it.
 
-**Exercises.** All users share the exercises. So "the custom exercises of the
+**Exercises.** All users share the exercises. Therefore "the custom exercises of the
 user" means the exercises that the routines and activities of the user refer
 to. These exercises travel with their definition. An import matches them by
 exact name:
@@ -297,7 +294,7 @@ harm. "Already there" means:
 - An activity with the same title and start time.
 - A measurement with the same timestamp.
 
-The server compares with the account as it was before the import. So if one
+The server compares with the account as it was before the import. Therefore, if one
 file has two routines with the same name, both arrive. If the server skips
 the routine of an activity, it links the activity to the existing routine.
 
@@ -312,7 +309,7 @@ measurements of the caller. Both modes apply the profile settings.
   A routine or activity of any user, not only the caller, keeps an exercise.
 
 The settings and the user stay. An exercise that another account uses stays,
-because the exercises are shared.
+because all users share the exercises.
 
 **Writes.** The server sets `owner_id` to the caller on every row it writes.
 It changes nothing else. Before the first write, the server validates the
@@ -337,9 +334,8 @@ It applies the file in one transaction.
 iCalendar document (`services/calendar.py`). Google, Apple and Outlook
 calendars can subscribe to it with the URL.
 
-Calendar apps cannot log in. So this is the only data route that does not
-need authentication. The token in the path is the credential. It cannot be
-guessed (`UserProfile.calendar_token`, `secrets.token_urlsafe(32)`).
+Calendar apps cannot log in. Therefore, this is the only data route that does not
+need authentication. The token in the path is the credential. Nobody can guess it (`UserProfile.calendar_token`, `secrets.token_urlsafe(32)`).
 
 - The server stores the token in clear text, unlike an API key. The app
   shows the link again, so the user can copy it again. For this reason, the
@@ -370,15 +366,14 @@ client needs only the server URL and an API key.
   them in the database at the start, so a bad key fails when the client
   connects.
 - **Tools call the REST API in the same process.** They use the same key
-  with an ASGI transport. So the MCP server can do exactly what the app can
-  do for that user. It uses the same validation and ownership rules. There
-  is no second copy of the business logic.
+  with an ASGI transport. Therefore, the MCP server can do exactly what the app can
+  do for that user. It uses the same validation and ownership rules. The business logic exists only once.
 - **Lifecycle.** The lifespan of the app starts and stops the transport
   (`McpGateway.running()`). The server builds a new transport each time, so
   a test can start it for each test.
-- **Switch.** `Settings.mcp_enabled` (`DINATOS_MCP_ENABLED`, default on) is
-  read for each request and in `running()`. If it is off, the transport does
-  not start and `/mcp` returns 404. The routes stay registered. So the
+- **Switch.** The server reads `Settings.mcp_enabled` (`DINATOS_MCP_ENABLED`,
+  default on) for each request and in `running()`. If it is off, the transport
+  does not start and `/mcp` returns 404. The routes stay registered. Therefore, the
   catch-all fallback of the web UI never answers `/mcp` with `index.html`.
 - **Tools.** The tools are thin wrappers for these areas:
   - Exercises, routines and activities.
@@ -456,7 +451,7 @@ not call the network or an LLM.
   4. If this also fails, the muscles stay empty. This is better than a wrong
      value.
 - Only seeded exercises can be neighbors. Exercises of a user and earlier
-  guesses cannot. So the result does not depend on what else the user
+  guesses cannot. Therefore, the result does not depend on what else the user
   imported.
 - The workouts response lists each created exercise in `created_exercises`.
   Each entry has the flags `equipment_guessed` and `muscles_guessed`. The app
@@ -493,9 +488,8 @@ The code is in these files:
 Rules for both steps:
 
 - The import fetches the window again. It does not trust data from the
-  client. So the written data is always the data that Intervals.icu gives.
-  If an id is not in the window, or if it cannot be imported, the server
-  returns `422` and writes nothing.
+  client. Therefore, the written data is always the data that Intervals.icu gives.
+  If an id is not in the window, or if the server cannot import it, the server returns `422` and writes nothing.
 - Both steps are `POST` because the API key is in the body. The server uses
   the key for that request only. It never stores the key: not in the
   profile, a backup or an export. It never sends the key back. A test
@@ -519,7 +513,7 @@ Rules for both steps:
 - If an exercise with that exact name exists, the server uses it. If not, it
   creates a custom exercise. The exercise tracks duration. It also tracks
   distance if any selected activity has a distance.
-- Intervals.icu has no strength data for each exercise. So `WeightTraining`
+- Intervals.icu has no strength data for each exercise. Therefore `WeightTraining`
   is only a timed entry.
 - The server stores timestamps as naive wall-clock time, like the Hevy
   import.
@@ -530,7 +524,7 @@ Rules for both steps:
 ### Duplicate handling: per activity, not per file
 
 A Hevy export has no ids, so a hash of the whole file is the only check. An
-Intervals.icu activity has a stable id. So the server records each import for
+Intervals.icu activity has a stable id. Therefore, the server records each import for
 each activity in `IntervalsImportedActivity`. This record is unique on
 `(owner_id, intervals_id)`. It points to the `Activity` that the import
 created. This also finds overlapping date ranges. A file hash cannot do this.
@@ -540,12 +534,12 @@ created. This also finds overlapping date ranges. A file hash cannot do this.
   ids and the import times.
 - `?force=true` imports them again. It creates a second `Activity` and
   points the existing record to it.
-- Duplicates are scoped to each `owner_id`.
+- The server checks duplicates for each `owner_id` separately.
 - The server writes the selection in one transaction. If two requests race,
   the unique constraint makes the later one fail at commit. The server rolls
   it back and reports the same `409`.
 - A record counts only while its `Activity` exists. The lookup joins to the
-  activity, because sqlite (which the tests use) has no cascade. If a user
+  activity, because SQLite (which the tests use) has no cascade. If a user
   deletes an imported activity, the user can import it again without
   `force`. For the same reason, the server deletes the records together with
   the activities in `replace` mode and in `DELETE /profile/data`.
@@ -568,7 +562,7 @@ because of it. Only the user knows if it is the same session.
   user starts it in Profile -> Import from Intervals.icu.
 - The app list ticks only an activity that is importable, not already
   imported and not a possible duplicate.
-- The app remembers the key and window that it used for the fetch. So later
+- The app remembers the key and window that it used for the fetch. Therefore, later
   edits to the form do not change the import.
 - A `409` (`IntervalsAlreadyImportedException`) opens the same "import again
   anyway?" dialog as the Hevy import.
@@ -592,19 +586,19 @@ Design decisions for WorkoutX:
 - **No key for the whole instance.** The project never holds a shared key.
   The lookups of one user never use, and are never billed to, the account of
   another user.
-- **The key is stored as is and is write-only.** The server must send the key
+- **The server stores the key as is, and the key is write-only.** The server must send the key
   to WorkoutX for every lookup, so a hash is useless. `GET /profile` only
   reports `has_workoutx_api_key`.
 - **The server proxies the GIFs.** The GIF URLs of WorkoutX also need the key.
   An `<img>` or a Flutter `Image.network` cannot send the `X-WorkoutX-Key`
   header. A key must not go in a query string either, because it then leaks
-  to the client and to logs. So the provider rewrites each GIF URL to
+  to the client and to logs. Therefore, the provider rewrites each GIF URL to
   `/exercises/media/workoutx/<id>.gif`. This endpoint needs authentication.
   It fetches the GIF with the key of the caller. It streams the GIF back
   through the normal bearer-token client of the app.
 - **Fallback.** `FallbackTutorialProvider` (`services/tutorials/fallback.py`)
   answers from free-exercise-db if WorkoutX fails or has no match. A failure
-  is a bad key, a quota limit or an outage. So a user who opts in never
+  is a bad key, a quota limit or an outage. Therefore, a user who opts in never
   loses a tutorial. The server logs the failure as a warning.
 
 Providers implement the `TutorialProvider` protocol
@@ -618,7 +612,7 @@ for each different key). Otherwise it picks the bundled dataset.
 (`services/tutorials/cache.py`). The cache lives only as long as the process.
 It is never persisted, on purpose:
 
-- The terms of WorkoutX forbid bulk caching and scraping. So the server
+- The terms of WorkoutX forbid bulk caching and scraping. Therefore, the server
   fetches tutorials one at a time, and only when a user opens one. It never
   syncs the catalog.
 - A persistent cache also brings stale data, reconciliation and questions
@@ -638,8 +632,8 @@ root, because the build also needs `frontend/`.
    `build/web` from `frontend-builder`. The build puts `build/web` at `web/`
    under `/app`, where `Settings.web_dir` expects it.
 
-The container runs as a non-root numeric uid. `docker-entrypoint.sh` runs
-`alembic upgrade head` and then `exec uvicorn ...`. So uvicorn is PID 1 and
+The container runs as a non-root numeric UID. `docker-entrypoint.sh` runs
+`alembic upgrade head` and then `exec uvicorn ...`. Therefore, uvicorn is PID 1 and
 stops cleanly on `SIGTERM`.
 
 - **No pinned Flutter version.** Nothing else in the repository pins one.
@@ -647,7 +641,7 @@ stops cleanly on `SIGTERM`.
   `channel: stable`. A pin here would be a second source of truth. The stage
   asks the `releases_linux.json` feed of Google which archive `stable` is,
   and downloads it.
-- **`--no-editable` is required** on the final `uv sync --locked --no-dev`.
+- **`--no-editable` is mandatory** on the final `uv sync --locked --no-dev`.
   The default editable install points to `/app/src` of the builder. This path
   does not exist in `runtime`, so `import dinatos_backend` fails when the
   container starts. `docker build` still succeeds. Only a run of the image
@@ -670,7 +664,7 @@ is `web`, relative to the working directory. The directory exists in the
 Docker image. It does not exist in other places (`just backend run` and all
 tests), so the behavior there does not change.
 
-- The server mounts it last, after every API router and `/health`. So API
+- The server mounts it last, after every API router and `/health`. Therefore, API
   routes always match first.
 - `_WebApp.get_response` falls back to `index.html` on a 404. This rarely
   matters. Flutter web uses hash routing (`/#/routines/1`), so the browser

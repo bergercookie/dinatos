@@ -1,7 +1,7 @@
 # Contributing
 
 Thank you for your help. This page shows you how to go from a clone to a
-passing build. The pages in "Where things are documented" give more detail.
+passing build. The pages in "Where to find more" give more detail.
 
 ## The project in one minute
 
@@ -11,7 +11,7 @@ passing build. The pages in "Where things are documented" give more detail.
 - `docs/`: the documentation site
 - `e2e/`, `screenshots/`: the browser tests and the README screenshots
 
-## Where things are documented
+## Where to find more
 
 - [Environment setup](https://bergercookie.github.io/dinatos/development/environment-setup.html): install the tools
 - [Running and testing](https://bergercookie.github.io/dinatos/development/workflow.html): run the app and the tests

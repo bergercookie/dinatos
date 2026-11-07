@@ -39,7 +39,7 @@ Use a dump, not a copy of the live directory. A dump restores across Postgres ve
 
 ### Moving from the old `dinatos-postgres-data` volume
 
-Older versions kept the data in a named Docker volume. The files in that volume belong to Postgres 16-alpine (uid 70). Do not reuse them in place.
+Older versions kept the data in a named Docker volume. The files in that volume belong to Postgres 16-alpine (UID 70). Do not reuse them in place.
 
 1. While the old containers still run, make a dump. See [Back up with `pg_dump`](#back-up-with-pg_dump).
 2. Run `docker compose down --volumes`.

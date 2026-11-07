@@ -31,13 +31,12 @@ Notes:
 Pytest-cov measures the backend and `mcp_server`. Both must keep 100% line
 coverage and 100% branch coverage. The Flutter frontend (`just frontend
 coverage`) must keep at least 50% line coverage. The `e2e` job is not
-measured. No external service is involved.
+measured. No external service takes part.
 
 - **PR comment.** The `coverage` job (`.github/scripts/coverage_report.py`)
   adds a comment to your PR. The comment shows the coverage of the backend, the
   MCP server and the frontend. It compares them with the latest run on `main`.
-  The job updates the same comment on each push. On a PR from a fork, the
-  token is read-only, so the comment can be missing. The numbers are still on
+  The job updates the same comment on each push. On a PR from a fork, the token has read-only access, so the comment can be missing. The numbers are still on
   the summary page of each job.
 - **Reports.** The summary page of the run shows a table for each file. The
   `check` job and the `frontend` job upload HTML reports that you can browse
@@ -83,8 +82,7 @@ exclusion.
   outage of a third-party site must not block unrelated PRs. To exclude a host
   that is valid but unreliable, add it to `lychee.toml` with a comment.
 
-The version of `lychee-bin` is pinned in `.pre-commit-config.yaml` and in the
-root `justfile`. When you change the version, change both files.
+`.pre-commit-config.yaml` and the root `justfile` both set the version of `lychee-bin`. When you change the version, change both files.
 
 ## Lint hooks
 
@@ -99,6 +97,11 @@ run:
   `uvx --from shfmt-py shfmt -i 2 -w <file>`.
 - `markdownlint-cli2` lints the Markdown files. The rules are in
   `.markdownlint-cli2.yaml`.
+- `vale` checks the prose of the README, `CONTRIBUTING.md` and `docs/`. It
+  finds passive voice, vague words, filler sentence openers and misspellings. The rules are in `.vale.ini`.
+  If Vale does not know a product or technical term, add the term to
+  `.vale/styles/config/vocabularies/Dinatos/accept.txt`. To run only this
+  check, run `uvx pre-commit run vale --all-files`.
 - `actionlint` lints the GitHub Actions workflows. It checks expressions,
   `needs:` references and action inputs.
 - `check-xml` checks that the Android manifests and resources are well-formed
@@ -113,7 +116,7 @@ the hooks as git pre-commit hooks, run `just hooks`.
 ## Releases
 
 A release is a Git tag with the name `v<version>`, for example `v1.2.3`. When
-you push the tag, `release.yml` starts. There is no manual build step.
+you push the tag, `release.yml` starts. You do not run a build step by hand.
 
 ```bash
 just release dry   # print the next patch tag (v1.2.3 -> v1.2.4) without creating it

@@ -31,8 +31,7 @@ default, also if the repository is public. To let people pull the image without
 a login, make the package public in its settings on GitHub.
 
 Warning: there is no `just` recipe to cut a release. If a job fails after
-other jobs finished, the release is partial. For example, the image is pushed
-and then the `.deb` step fails. There is no automatic rollback. Test changes to
+other jobs finished, the release is partial. For example, the image is on GHCR and then the `.deb` step fails. The workflow cannot roll back by itself. Test changes to
 the packaging on your machine before you push a tag.
 
 ## The Docker image builds its own frontend
@@ -146,8 +145,7 @@ found three problems:
 - **Plugin rpath.** The packaging installs the plugin libraries
   (`flutter_secure_storage`, `url_launcher`) as plain files. CMake does not
   rewrite their rpath. Without a change, the rpath points to the
-  `libflutter_linux_gtk.so` in the *build tree*. This works where the app
-  was built, and shows `not found` on other machines.
+  `libflutter_linux_gtk.so` in the *build tree*. This works on the machine that built the app, and shows `not found` on other machines.
   `frontend/linux/CMakeLists.txt` sets `$ORIGIN` on these libraries, as it
   does for the rest of the bundle.
 - **`libdartjni.so`.** This is the native part of the `jni` package, which

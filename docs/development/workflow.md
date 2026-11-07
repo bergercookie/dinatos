@@ -109,7 +109,7 @@ because they are heavy. CI runs each of them as a separate job. See
 
 ### Backend tests
 
-- The tests run on in-memory sqlite. They do not need Postgres.
+- The tests run on in-memory SQLite. They do not need Postgres.
 - The shared `client` fixture (`backend/tests/conftest.py`) registers a
   throwaway user. It returns an `AsyncClient` that is already logged in. To
   test behavior without a login, use the `anonymous_client` fixture.
@@ -143,7 +143,7 @@ Postgres. `testcontainers` starts this Postgres. The suite checks four things:
   time.
 
 The last check is the most important. It found a `downgrade()` that left a
-Postgres ENUM type behind. This broke the next `upgrade()`. Sqlite cannot
+Postgres ENUM type behind. This broke the next `upgrade()`. SQLite cannot
 show this problem, so the suite needs real Postgres. The suite is outside
 `backend/tests/`. `just check` does not run it. CI runs it as the `migrations`
 job.
@@ -159,7 +159,7 @@ just backend check-migrations   # fails if models and migrations diverge
 The Alembic configuration is in `backend/pyproject.toml`, in `[tool.alembic]`.
 The file `backend/alembic.ini` exists only for the logging sections. Do not
 add an `[alembic]` section to it. If a key is in both files, the value from
-the ini file wins without a warning.
+the `.ini` file wins without a warning.
 
 ### End-to-end tests
 
@@ -195,7 +195,7 @@ when you write browser tests:
 - A click through the accessibility tree reaches the app as a semantic tap,
   not as pointer events. A `Listener` or `onPointerUp` never sees it.
 - Playwright does not click an element that another element covers. A modal
-  tour scrim is an example. To test that a click is blocked, expect a click
+  tour scrim is an example. To test that the scrim blocks a click, expect a click
   with a short timeout to time out. Do not use `force=True`.
 - The build uses `--no-web-resources-cdn`. Without it, Flutter gets CanvasKit
   from the CDN of Google. If the browser has no internet access, the page
@@ -220,7 +220,7 @@ change one of these areas, load the built app:
   `frontend/android/app/src/main/AndroidManifest.xml` installs. Then every
   request fails with "server not reachable". To check the permission on a
   built APK without an emulator, run `just android check-apk`.
-- **Keyring on Linux desktop.** If the keyring is locked or missing,
+- **Keyring on Linux desktop.** If the keyring is missing, or the user did not unlock it,
   `flutter_secure_storage` throws on every call. `TokenStorage` and
   `ServerUrlStorage` (`frontend/lib/core/`) catch this error on purpose. Keep
   the catches.
