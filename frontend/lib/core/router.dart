@@ -31,6 +31,7 @@ import '../features/stats/stats_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/routines/routine_form_screen.dart';
 import '../features/routines/routine_list_screen.dart';
+import '../features/routines/start_routine_screen.dart';
 import 'auth/auth_notifier.dart';
 import 'auth/auth_state.dart';
 
@@ -71,6 +72,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // embed is a platform view filling the whole body, and a bottom nav bar
       // (plus the semantics tree a shell brings) only gets in the way of it.
       GoRoute(path: '/docs', builder: (context, state) => const ApiDocsScreen()),
+      // Where a routine's home-screen shortcut lands. Top level, outside the
+      // shell, so the screen is replaced (not kept alive in the Routines
+      // branch) once the workout opens.
+      GoRoute(
+        path: '/routines/:id/start',
+        builder: (context, state) =>
+            StartRoutineScreen(routineId: int.parse(state.pathParameters['id']!)),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
         branches: [
@@ -182,15 +191,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
                   GoRoute(
-                    path: 'import-hevy',
-                    redirect: (context, state) => '/profile/import-export/hevy',
-                  ),
-                  GoRoute(
-                    path: 'import-intervals',
-                    redirect: (context, state) => '/profile/import-export/intervals',
-                  ),
-                  GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
-                  GoRoute(
                     path: 'import-export',
                     builder: (context, state) => const ImportExportScreen(),
                     routes: [
@@ -205,6 +205,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   // The importers' former paths (before the Import and export
                   // screen existed) still work, e.g. from a bookmarked web URL.
+                  GoRoute(
+                    path: 'import-hevy',
+                    redirect: (context, state) => '/profile/import-export/hevy',
+                  ),
+                  GoRoute(
+                    path: 'import-intervals',
+                    redirect: (context, state) => '/profile/import-export/intervals',
+                  ),
+                  GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
                   GoRoute(path: 'api-keys', builder: (context, state) => const ApiKeysScreen()),
                   GoRoute(
                     path: 'calendar-feed',

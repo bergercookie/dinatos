@@ -13,7 +13,11 @@ import 'live_session.dart';
 /// A workout already under way is never silently clobbered (the "Start
 /// workout" button resumes it instead): the person chooses between carrying
 /// on with it and replacing it with this routine.
-Future<void> startWorkoutFromRoutine(
+///
+/// Returns whether it navigated to the live workout (started, or resumed the
+/// current one); false when the person dismissed the "already in progress"
+/// dialog and nothing happened.
+Future<bool> startWorkoutFromRoutine(
   BuildContext context,
   WidgetRef ref,
   Routine routine, {
@@ -44,10 +48,10 @@ Future<void> startWorkoutFromRoutine(
       ),
     );
     // Dismissed (null): do nothing at all.
-    if (replace == null || !context.mounted) return;
+    if (replace == null || !context.mounted) return false;
     if (!replace) {
       context.go('/activities/live');
-      return;
+      return true;
     }
   }
 
@@ -55,4 +59,5 @@ Future<void> startWorkoutFromRoutine(
       .read(liveActivityProvider.notifier)
       .startFromRoutine(routine, plannedWorkoutId: plannedWorkoutId, title: title);
   context.go('/activities/live');
+  return true;
 }

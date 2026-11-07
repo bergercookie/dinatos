@@ -18,6 +18,7 @@ import '../activities/live/muscle_distribution_card.dart';
 import '../onboarding/onboarding_overlay.dart';
 import '../exercises/exercise_picker.dart';
 import '../exercises/exercises_providers.dart';
+import 'routine_shortcuts.dart';
 import 'routines_providers.dart';
 import 'routines_repository.dart';
 
@@ -118,6 +119,25 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
     }
   }
 
+  /// Asks Android to pin a home-screen shortcut that starts a workout from this
+  /// routine. Android shows its own confirmation, so a success here only means
+  /// "the request was made".
+  Future<void> _addToHomeScreen(Routine routine) async {
+    final messenger = ScaffoldMessenger.of(context);
+    String message;
+    try {
+      final asked = await ref
+          .read(routineShortcutServiceProvider)
+          .pin(routineId: routine.id!, name: routine.name);
+      message = asked
+          ? 'Confirm in the Android prompt to add "${routine.name}" to your home screen.'
+          : 'Your launcher cannot add home-screen shortcuts.';
+    } on ShortcutException catch (error) {
+      message = 'Could not add the shortcut: ${error.message}';
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = _isEditing ? 'Edit routine' : 'New routine';
@@ -128,10 +148,19 @@ class _RoutineFormScreenState extends ConsumerState<RoutineFormScreen> {
       );
     }
     final routineAsync = ref.watch(routineProvider(widget.routineId!));
+    final savedRoutine = routineAsync.valueOrNull;
+    final canPin = ref.watch(routineShortcutServiceProvider).isSupported;
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: [
+          // Android only: other platforms have no home-screen shortcuts.
+          if (canPin && savedRoutine?.id != null)
+            IconButton(
+              tooltip: 'Add to home screen',
+              icon: const Icon(Icons.add_to_home_screen),
+              onPressed: _submitting ? null : () => _addToHomeScreen(savedRoutine!),
+            ),
           IconButton(
             tooltip: 'Delete routine',
             icon: const Icon(Icons.delete_outline),

@@ -368,6 +368,46 @@ these points:
 - The Start activity sheet reads the plans that Home already loaded
   (`valueOrNull`). It does not wait for the network.
 
+## Routine shortcuts (Android)
+
+The user can pin a routine to the Android home screen. A tap on the shortcut
+starts a workout from it. The Dart code is in `features/routines/routine_shortcuts.dart`. The
+Kotlin side, in `MainActivity.kt`, is a thin bridge. All decisions are in Dart,
+where tests can reach them.
+
+- **One channel, three names.** The channel `dev.bergercookie.dinatos/shortcuts`
+  has `pinShortcut` (Dart to Android), `initialRoutineId` (Dart to Android) and
+  `routineLaunched` (Android to Dart). The shortcut fires an intent with the
+  action `dev.bergercookie.dinatos.action.START_ROUTINE` and the extra
+  `routine_id`. Both sides repeat these strings. `shortcut_contract_test.dart`
+  reads `MainActivity.kt` and fails if one side changes alone.
+- **The shortcut id is `routine-<id>`.** `requestPinShortcut` with an id that
+  is already pinned updates it. A second request does not add a copy.
+- **A launch is a pending value, not a navigation.** `MainActivity` hands over
+  the routine id: once for a cold start (`initialRoutineId`) and through
+  `routineLaunched` when the app is already running (`launchMode="singleTop"`
+  calls `onNewIntent`). `routineShortcutLaunchProvider` (the app root watches
+  it) stores it in `pendingRoutineLaunchProvider`. It opens
+  `/routines/<id>/start` only when the user is `AuthAuthenticated`. A launch
+  while signed out waits for the login. The provider clears the value first, so
+  a later login change does not start the workout again.
+- **A restored activity does not start a workout.** Android re-delivers the
+  original intent when it recreates the activity (for example from the list of
+  recent apps). `MainActivity` ignores the launch intent when `savedInstanceState`
+  is not null, and it removes the extra after the first read.
+- **`StartRoutineScreen` reuses the play-button flow.** It loads the routine
+  and calls `startWorkoutFromRoutine`, which asks before it discards a workout
+  in progress. A deleted routine (404) shows a message and no retry. The route
+  is top level, outside the shell, so the screen goes away when the workout
+  opens.
+- **Only Android offers it.** `routineShortcutServiceProvider` returns a no-op
+  service on web, desktop and iOS. The routine editor hides its "Add to home
+  screen" button when `isSupported` is false. `flutter test` runs
+  with the Android platform by default, so tests override the service.
+- Nobody can compile the Kotlin in a plain `flutter test` run. The contract
+  test checks the strings only. The pin prompt and a real tap need a device or
+  emulator (`just android run`).
+
 ## "Which athlete do you resemble?"
 
 The code in `features/personas/` compares the user with hand-picked archetypes.

@@ -28,6 +28,22 @@ To make a superset, open the **⋮** menu on an exercise. Choose **Superset with
 
 To start a workout from a routine, tap the **play** button of the routine. If a workout is already running, choose to resume it or discard it.
 
+### Add a routine to your home screen (Android)
+
+In the Android app, you can put a shortcut to a routine on your home screen. When you tap the shortcut, Dinatos opens and starts a workout from that routine at once.
+
+1. Open **Routines** and open the routine.
+2. Tap **Add to home screen** at the top of the screen.
+3. Confirm in the prompt that Android shows.
+
+Note: Android launchers differ. If your launcher cannot add shortcuts, the app tells you.
+
+Adding the same routine again updates its shortcut. It does not make a copy. The shortcut uses the name that the routine had when you added it. To change the label, add the shortcut again.
+
+If you are not signed in, the app asks you to sign in first and then starts the workout. If a workout is already running, the app asks you to resume it or discard it, as for the **play** button. If you deleted the routine, the app tells you that it no longer exists. Remove the old shortcut from your home screen yourself.
+
+This option is not in the web app or the Linux app. They have no home-screen shortcuts.
+
 ## Log an activity
 
 Press **Start activity**. Then choose one of these options:
