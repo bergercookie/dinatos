@@ -3,6 +3,13 @@
 # ruff, mypy and tach all run from the backend's own locked virtualenv rather
 # than a pinned mirror repo, so there is exactly one version of each tool in
 # the project and a hook can never disagree with `uv run`.
+# Pinned, so pre-commit never asks nodeenv for "latest". When Node published
+# 27.0.0-alpha, nodeenv before 1.12 failed to parse that version and every
+# Node hook (markdownlint-cli2) failed to install. A pin also makes the hook's
+# environment the same on every machine. Raise it to a newer LTS on purpose.
+default_language_version:
+  node: 24.22.0
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
