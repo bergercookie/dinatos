@@ -37,17 +37,6 @@ All data is in `./data/postgres`, or in `$DINATOS_DATA_DIR/postgres`. The owner 
 
 Use a dump, not a copy of the live directory. A dump restores across Postgres versions. If you copy the directory, stop the containers first.
 
-### Moving from the old `dinatos-postgres-data` volume
-
-Older versions kept the data in a named Docker volume. The files in that volume belong to Postgres 16-alpine (UID 70). Do not reuse them in place.
-
-1. While the old containers still run, make a dump. See [Back up with `pg_dump`](#back-up-with-pg_dump).
-2. Run `docker compose down --volumes`.
-3. Run `git pull`.
-4. Set `DINATOS_UID` and `DINATOS_GID` in `.env`.
-5. Run `docker compose up -d --wait postgres`.
-6. Restore the dump. See [Restore with `psql`](#restore-with-psql).
-
 ## Back up with `pg_dump`
 
 ```bash

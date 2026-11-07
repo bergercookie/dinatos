@@ -1,4 +1,4 @@
-# Exporting and importing your data
+# Exporting importing and clearing your data
 
 You can save your own data to a file and load it into any Dinatos account. You can also delete all the data of your account. Use these functions to move between instances or to keep a personal backup.
 
