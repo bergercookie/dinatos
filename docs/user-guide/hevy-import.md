@@ -1,34 +1,34 @@
 # Importing from Hevy
 
-One-time import of your workouts and measurements from [Hevy](https://www.hevyapp.com/). It is not a sync: new Hevy workouts need a new import.
+You can import your workouts and measurements from [Hevy](https://www.hevyapp.com/) one time. This is not a sync. To get new Hevy workouts, you must import again.
 
 ## Steps
 
-1. In Hevy, open **Settings -> Export**. You get two CSV files: workouts and measurements.
+1. In Hevy, open **Settings -> Export**. Hevy gives you two CSV files: one for workouts and one for measurements.
 2. In Dinatos, open **Settings -> Import from Hevy**.
-3. Upload each CSV in turn.
-4. When the import finishes, review the list of new exercises (see below).
+3. Upload each CSV file, one after the other.
+4. When the import ends, look at the list of new exercises. See [Exercises](#exercises).
 
 ## Duplicates
 
-Dinatos recognises a file by its content, not its name. Hevy names every export the same.
+Dinatos recognizes a file by its content, not by its name. Hevy gives the same name to every export.
 
-- Uploading the identical file again shows a dialog with the earlier import's date. Confirm to import it anyway, which creates duplicate activities.
-- A different file, even one with a single new workout, imports normally.
-- To bring over later workouts, export from Hevy again and import the new file.
+- If you upload the identical file again, a dialog shows the date of the earlier import. If you confirm, Dinatos imports the file again and makes duplicate activities.
+- If the file is different, Dinatos imports it normally. This is true even if the file has only one new workout.
+- To bring in later workouts, export from Hevy again. Then import the new file.
 
 ## Exercises
 
-Hevy exports carry no equipment or muscle data.
+Hevy exports have no data about equipment or muscles.
 
-- Exercises matching a built-in one are reused.
-- Others are created as your own custom exercises. Dinatos guesses equipment and muscles from similar built-in exercises. Some guesses will be wrong. Tap an exercise in the post-import list to fix it.
+- If an exercise matches a built-in exercise, Dinatos uses the built-in exercise.
+- For all other exercises, Dinatos makes custom exercises for you. Dinatos guesses the equipment and muscles from similar built-in exercises. Some guesses are wrong. To correct an exercise, tap it in the list after the import.
 
-Also use Intervals.icu? See [Importing from Intervals.icu](intervals-import.md). It can skip activities already imported from Hevy.
+Do you also use Intervals.icu? See [Importing from Intervals.icu](intervals-import.md). That import can skip activities that you already imported from Hevy.
 
-## Scripting it
+## Use the command line
 
-Use this for a fresh instance if you prefer the command line. You need a login token from `POST /auth/login` (see [Running and testing](../development/workflow.md)).
+You can import with the command line, for example on a new instance. You need a login token from `POST /auth/login`. See [Running and testing](../development/workflow.md).
 
 ```bash
 curl -F file=@workout_data.csv http://127.0.0.1:8000/imports/hevy/workouts \
@@ -37,4 +37,4 @@ curl -F file=@measurement_data.csv http://127.0.0.1:8000/imports/hevy/measuremen
     -H "Authorization: Bearer $token"
 ```
 
-A repeated file returns `409 Conflict`. Add `?force=true` to the URL to import it anyway.
+If you send a file again, the server returns `409 Conflict`. To import the file anyway, add `?force=true` to the URL.

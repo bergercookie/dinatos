@@ -1,20 +1,20 @@
 # Concepts
 
-The terms Dinatos uses. Dinatos is a self-hosted workout tracker: it runs on a server (an "instance") that someone, maybe you, operates.
+This page explains the terms that Dinatos uses. Dinatos is a self-hosted workout tracker. It runs on a server, which this guide calls an "instance". A person, maybe you, operates the instance.
 
 | Term | Meaning | Who sees it |
 |---|---|---|
-| **Exercise** | One movement, such as "Romanian deadlift". Most have a tutorial: picture, instructions, target muscles, equipment. | Everyone on the instance |
-| **Built-in exercise** | Ships with Dinatos. Cannot be renamed, edited or deleted. | Everyone |
-| **Custom exercise** | One you add. You can edit or delete it. | Everyone |
-| **Routine** | A reusable plan: exercises with target sets, reps and weight ("Leg day"). | Only you |
-| **Activity** | A workout you actually did: exercises with the sets, reps and weight you performed. | Only you |
-| **Planned workout** | A routine, or a free-form session, scheduled for a future date. It becomes an activity only when you do it. | Only you |
-| **Measurement** | A dated body entry (weight, body composition, tape measurements). Lives in the **Body** tab. | Only you |
-| **Instance** | One Dinatos server. The app connects to one at a time. | n/a |
+| **Exercise** | One movement, for example "Romanian deadlift". Most exercises have a tutorial with a picture, instructions, target muscles and equipment. | Everyone on the instance |
+| **Built-in exercise** | An exercise that comes with Dinatos. You cannot rename, edit or delete it. | Everyone on the instance |
+| **Custom exercise** | An exercise that a user adds. The user who added it can edit or delete it. | Everyone on the instance |
+| **Routine** | A reusable plan. It has exercises with target sets, reps and weight, for example "Leg day". | Only you |
+| **Activity** | A workout that you did. It has exercises with the sets, reps and weight that you did. | Only you |
+| **Planned workout** | A routine, or a free-form session, for a future date. It becomes an activity only when you do it. | Only you |
+| **Measurement** | A body entry with a date. It has weight, body composition or tape measurements. It is in the **Body** tab. | Only you |
+| **Instance** | One Dinatos server. The app connects to one instance at a time. | Not applicable |
 
-Everything except exercises belongs to one account. On an instance with several accounts, nobody sees anyone else's routines, activities or measurements.
+Each account owns everything except exercises. If an instance has several accounts, no user sees the routines, activities or measurements of another user.
 
-The **Settings** tab holds your account options. It is where you log out, change the server, import and export data, and manage API keys.
+The **Settings** tab holds your account options. In this tab you can log out, change the instance, import and export data, and manage API keys.
 
-See [Using the app](using-the-app.md) for how to use each of these.
+For instructions on each term, read [Using the app](using-the-app.md).

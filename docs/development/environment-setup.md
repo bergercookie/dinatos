@@ -1,28 +1,31 @@
 # Environment setup
 
-How to install the tools you need to build and test Dinatos. Use Devbox
-for one-command setup, or install tools by hand. For the shortest path
-(Python, `uv`, `just`), see [Contributing](index.md).
+This page shows how to install the tools you need to build and test Dinatos.
+You can use Devbox to install everything with one command. You can also
+install the tools by hand. For the shortest path (Python, `uv` and `just`),
+see [Contributing](index.md).
 
-Every task in this repo is a [`just`](https://github.com/casey/just) recipe.
-`just --list` shows them all; `just <module> <recipe>` runs one from a
-subdirectory's own `justfile` (e.g. `just backend test`).
+Every task in this repository is a [`just`](https://github.com/casey/just)
+recipe. To see all recipes, run `just --list`. To run a recipe from the
+`justfile` of a subdirectory, use `just <module> <recipe>`. For example, run
+`just backend test`.
 
 ## What needs what
 
 | You want to run | You need |
 |---|---|
-| `just install`, `just check` | Python 3.12, `uv`, `just` 1.31+ |
+| `just install`, `just check` | Python 3.12, `uv`, `just` 1.31 or newer |
 | `just backend test-migrations`, `just e2e test`, `just dev`, `just docker up` | Docker |
 | `just frontend check`, `just e2e test`, `just screenshots generate` | Flutter SDK |
 
-`just check` needs no database: the backend tests use in-memory sqlite.
+`just check` does not need a database. The backend tests use in-memory
+sqlite.
 
 ## Devbox (recommended)
 
 [Devbox](https://www.jetify.com/devbox) installs Python 3.12, `uv`, `just`,
-Flutter, CMake and Git into an isolated shell. It does not touch your system
-packages.
+Flutter, CMake and Git into an isolated shell. It does not change the
+packages of your system.
 
 ```bash
 ./tools/install-devbox.sh   # installs Devbox if missing, then `devbox install`
@@ -31,29 +34,31 @@ just install
 just check
 ```
 
-- `devbox.json` pins `python@3.12`. The other tools float at `@latest`. If a
-  recipe fails only inside `devbox shell`, run `devbox update` first.
-- Devbox does not provide a Docker daemon. It uses your host's, so Docker
-  must be running on the host.
-- A "Modules are currently unstable" error means you are not in the shell, or
-  your `just` is too old. Check with `just --version`.
+- `devbox.json` pins `python@3.12`. The other tools use `@latest`. If a
+  recipe fails only inside `devbox shell`, run `devbox update`.
+- Devbox does not provide a Docker daemon. It uses the daemon of your host.
+  Make sure Docker runs on the host.
+- If you see the error "Modules are currently unstable", you are not in the
+  Devbox shell, or your `just` is too old. To check, run `just --version`.
 
 ## Manual setup
 
 ### `just` 1.31 or newer
 
-The root `justfile` loads each package's `justfile` with `mod`, which was
-unstable before `just` 1.31. Ubuntu's `apt install just` ships 1.21 and fails
-with "Modules are currently unstable". Do not work around it with `--unstable`
-or `JUST_UNSTABLE=1`. Install a current build:
+The root `justfile` loads the `justfile` of each package with `mod`. Before
+`just` 1.31, `mod` was unstable. The `just` package from Ubuntu's `apt` is
+version 1.21. It fails with the error "Modules are currently unstable".
+
+Do not use `--unstable` or `JUST_UNSTABLE=1` as a workaround. Install a
+current build:
 
 ```bash
 cargo install just --locked
 ```
 
-Or use the [install script](https://github.com/casey/just#installation). If
-the script is blocked (403) by a sandbox proxy, download a release tarball
-from GitHub directly (1.43.0 works):
+You can also use the [install script](https://github.com/casey/just#installation).
+If a sandbox proxy blocks the script (error 403), download a release tarball
+from GitHub. Version 1.43.0 works:
 
 ```bash
 V=1.43.0
@@ -63,6 +68,9 @@ curl -sSfL "https://github.com/casey/just/releases/download/$V/just-$V-x86_64-un
 
 ### Python and `uv`
 
+Install Python 3.12 and [`uv`](https://docs.astral.sh/uv/). Then run these
+recipes:
+
 ```bash
 just install   # backend and MCP server virtualenvs (uv sync)
 just check     # lint, tests, docs build
@@ -70,8 +78,9 @@ just check     # lint, tests, docs build
 
 ### Docker
 
-Needed wherever the table above says so. If `docker ps` cannot connect to the
-daemon, start it instead of assuming Docker is missing:
+The table in "What needs what" shows which recipes need Docker. If
+`docker ps` cannot connect to the daemon, start the daemon. Do not assume
+that Docker is missing.
 
 ```bash
 sudo dockerd > /tmp/dockerd.log 2>&1 &
@@ -79,7 +88,8 @@ sudo dockerd > /tmp/dockerd.log 2>&1 &
 
 ### Flutter SDK
 
-`frontend/` needs a real Flutter SDK on `PATH`. There is no apt package.
+The `frontend/` directory needs a real Flutter SDK in `PATH`. There is no
+`apt` package for it.
 
 ```bash
 curl -o /tmp/flutter.tar.xz \
@@ -90,13 +100,13 @@ git config --global --add safe.directory /opt/flutter   # else "dubious ownershi
 flutter config --no-analytics && dart --disable-analytics
 ```
 
-Find the current `<version>` in
+To find the current `<version>`, see
 [releases_linux.json](https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json).
-Running as root prints a harmless "trying to run flutter as root" banner.
+If you run Flutter as root, it prints the banner "trying to run flutter as
+root". The banner is harmless.
 
-`just frontend check` needs neither Chrome nor the Android SDK; tests run
-headless. Only building for a specific platform needs that platform's
-toolchain:
+`just frontend check` does not need Chrome or the Android SDK. The tests run
+headless. Only a build for one platform needs the toolchain of that platform:
 
 - Linux desktop (`flutter build linux`): `clang cmake ninja-build pkg-config
   libgtk-3-dev libsecret-1-dev`.
@@ -104,11 +114,11 @@ toolchain:
 
 ### `.env` files
 
-Two files, read by different things. Both are git-ignored.
+There are two `.env` files. Different tools read them. Git ignores both.
 
 | File | Copy from | Read by | Required |
 |---|---|---|---|
-| `.env` (repo root) | `.env.example` | `docker compose`, `just dev` | `POSTGRES_PASSWORD` (containers refuse to start without it) |
-| `backend/.env` | `backend/.env.example` | `just backend run` | Nothing; every setting has a default |
+| `.env` (repository root) | `.env.example` | `docker compose`, `just dev` | `POSTGRES_PASSWORD` (the containers do not start without it) |
+| `backend/.env` | `backend/.env.example` | `just backend run` | Nothing. Every setting has a default. |
 
 Next: [Running and testing](workflow.md).

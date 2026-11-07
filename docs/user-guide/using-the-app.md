@@ -1,114 +1,119 @@
 # Using the app
 
-How to browse exercises, build routines, log and plan workouts, and track progress and body measurements. New terms are explained in [Concepts](concepts.md).
+This page shows how to browse exercises, build routines, log and plan workouts, and track progress and body measurements. [Concepts](concepts.md) explains the terms.
 
-The bottom bar (a side bar on wide screens) has five tabs: **Exercises**, **Routines**, **Home**, **Body**, **Settings**.
+The bottom bar has five tabs: **Exercises**, **Routines**, **Home**, **Body** and **Settings**. On a wide screen, the bar is at the side.
 
 ## Exercises
 
-1. Open the **Exercises** tab and tap an exercise to see its tutorial, where available.
-2. Use the **All / Built-in / Custom** chips next to the search box to filter. The same chips appear in the exercise picker.
-3. Add a missing exercise with the add button. It becomes available to everyone on the instance.
+1. Open the **Exercises** tab.
+2. Tap an exercise to see its tutorial, if it has one.
+3. To filter the list, use the **All**, **Built-in** and **Custom** chips next to the search box. The exercise picker has the same chips.
+4. To add a missing exercise, use the add button. Everyone on the instance can then use it.
 
-Built-in exercises cannot be changed. Add a custom one instead. You can edit or delete your own.
+You cannot change a built-in exercise. Add a custom exercise instead. You can edit or delete your own custom exercises.
 
 ## Build a routine
 
 1. Open **Routines** and add a routine.
-2. Name it, add exercises, and set target sets, reps and weight for each.
-3. Save.
+2. Enter a name.
+3. Add exercises. For each exercise, set the target sets, reps and weight.
+4. Save the routine.
 
-Saving replaces the whole routine. To change one set, edit the routine and save again.
+When you save, the app replaces the whole routine. To change one set, edit the routine and save it again.
 
-**Supersets:** open the **⋮** menu on an exercise and choose **Superset with next exercise**. Repeat to chain more. Superset exercises are outlined and labelled A, B, and so on. The same menu moves an exercise or removes it from its superset.
+To make a superset, open the **⋮** menu on an exercise. Choose **Superset with next exercise**. Repeat this step to add more exercises to the superset. The app outlines the exercises of a superset and labels them A, B and so on. The same menu moves an exercise or removes it from its superset.
 
-**Start a workout from a routine:** tap its **play** button. If a workout is already running, choose to resume it or discard it.
+To start a workout from a routine, tap the **play** button of the routine. If a workout is already running, choose to resume it or discard it.
 
 ## Log an activity
 
-Press **Start activity** and choose one:
+Press **Start activity**. Then choose one of these options:
 
-- **From a routine:** copies its exercises and targets. This is a one-time copy. Editing the routine later does not change logged activities.
-- **From scratch:** build the workout as you go.
-- **Planned workout:** appears on the day you scheduled one. See [Plan workouts](#plan-workouts).
+- **From a routine:** The app copies the exercises and targets of the routine. This copy is a one-time copy. If you edit the routine later, the logged activities do not change.
+- **From scratch:** You build the workout as you go.
+- **Planned workout:** The option appears on the day that you scheduled the workout. See [Plan workouts](#plan-workouts).
 
 ### During a workout
 
-- **Last time:** each exercise shows what you did before and a suggestion. The suggestion adds weight if every set hit its reps, otherwise it aims for your best set's reps. Press **Use** to fill it into empty sets.
-- **Tick a set** when done. Only ticked sets count toward totals, records, statistics and suggestions.
-- **Set type:** tap the letter beside the set number to cycle **W**armup, **N**ormal, **D**rop set, **F**ailure.
-- **Trophy:** a ticked set that beats your all-time best weight for that exercise. Warm-ups never count.
-- **Set menu (⋮):** opens the plate calculator (which plates go on each side; the bar defaults to 20 kg and can be changed) or removes the set.
-- **Exercise menu (⋮):** add a note or open its progress page.
-- **Exercise name:** tap it to open that exercise's page: your records, a progress chart and recent sessions. The play button in its top bar opens the exercise's instructions and video tutorial.
-- **Collapse:** tap the arrow beside an exercise name to shrink it to one line. Tap again to expand.
+- **Last time:** Each exercise shows what you did before, and a suggestion. If every set reached its reps, the suggestion adds weight. Otherwise, it aims for the reps of your best set. Press **Use** to put the suggestion in the empty sets.
+- **Tick a set** when you finish it. Only ticked sets count for totals, records, statistics and suggestions.
+- **Set type:** Tap the letter next to the set number to change the type. The types are **W** (warm-up), **N** (normal), **D** (drop set) and **F** (failure).
+- **Trophy:** A ticked set gets a trophy if it has more weight than your best weight for that exercise. A body-weight set (no weight) gets a trophy if it has more reps than your best reps. Warm-up sets never get a trophy.
+- **Set menu (⋮):** Open the plate calculator or remove the set. The plate calculator shows which plates to put on each side of the bar. The default bar weight is 20 kg. You can change it.
+- **Exercise menu (⋮):** Add a note or open the progress page of the exercise.
+- **Exercise name:** Tap the name to open the page of the exercise. The page shows your records, a progress chart and your recent sessions. The play button in the top bar opens the instructions and the video tutorial.
+- **Collapse:** Tap the arrow next to an exercise name to show the exercise on one line. Tap the arrow again to expand it.
 
-Press **Finish workout** to save. Unticked sets, and exercises with no ticked set, are removed. If anything would be removed, the app tells you and asks you to confirm. **Keep logging** takes you back.
+To save the workout, press **Finish workout**. The app removes unticked sets and exercises that have no ticked set. If the app must remove anything, it tells you and asks you to confirm. To go back to the workout, press **Keep logging**.
 
-On the summary, tick **Also save as a routine** to turn the workout into a routine, named after its title. Each ticked set becomes a set in the routine, with its weight, reps, distance and duration as suggestions. The routine is made right after the workout is saved. If that step fails, the workout is still saved and a **Retry saving as routine** button appears.
+On the summary, you can tick **Also save as a routine**. The app then makes a routine with the same title as the workout. Each ticked set becomes a set in the routine. The weight, reps, distance and duration of the set become suggestions. The app makes the routine right after it saves the workout. If this step fails, the app still keeps the workout. A **Retry saving as routine** button then appears.
 
 ### Without a connection
 
-Your workout is kept on the device as you go. If **Save workout** cannot reach the server, it says so and keeps the workout. A banner on every tab returns you to it. Retry when online. The title is locked after a failed attempt, so a retry cannot save the workout twice.
+The app keeps your workout on the device while you log it. If **Save workout** cannot reach the server, the app tells you and keeps the workout. A banner on every tab takes you back to the workout. Try again when you have a connection. After a failed attempt, the title is locked. This prevents a double save when you try again.
 
 ## Plan workouts
 
-1. On **Home**, tap **Schedule** in the *Upcoming* card, or tap a day on the calendar and choose **Schedule workout**.
-2. Pick a routine (or none for a free-form session), day, time, duration and reminder. Add notes if you like.
-3. Save.
+1. On **Home**, tap **Schedule** in the *Upcoming* card. Or tap a day on the calendar and choose **Schedule workout**.
+2. Choose a routine. For a free-form session, choose no routine.
+3. Set the day, time, duration and reminder. You can also add notes.
+4. Save the planned workout.
 
-Days with a pending workout show a dot. Page forward to see future months.
+A dot shows each day that has a pending workout. To see future months, page forward.
 
-- **Reminders (Android):** a notification arrives 30 minutes before by default. Tap it to start the workout. Allow notifications when asked. Reminders can arrive a few minutes late while the phone is idle.
-- **On the day:** **Start activity** offers **Planned workout**. If several are planned, it asks which.
-- **Done:** saving a workout started from a plan marks the plan done. A plan does not count toward stats or streaks until you do the workout.
-- An AI assistant connected through [MCP](mcp-server.md) can manage planned workouts too.
+- **Reminders (Android):** By default, a notification arrives 30 minutes before the workout. Tap the notification to start the workout. Allow notifications when the app asks. While the phone is idle, a reminder can arrive a few minutes late.
+- **On the day:** **Start activity** offers **Planned workout**. If you planned several workouts, the app asks which one to start.
+- **Done:** When you save a workout that you started from a plan, the app marks the plan as done. A plan does not count for statistics or streaks until you do the workout.
+- An AI assistant that connects through [MCP](mcp-server.md) can also manage planned workouts.
 
 ### Show your calendar in another app
 
 1. Open **Settings -> Calendar feed** and create the link.
-2. Subscribe to it by URL in Google Calendar ("From URL"), Apple Calendar ("New Calendar Subscription") or Outlook.
+2. In your calendar app, subscribe to the link by URL. In Google Calendar, use "From URL". In Apple Calendar, use "New Calendar Subscription". Outlook also supports this.
 
-Your planned workouts appear as events with reminders. Calendar apps re-check about hourly. Google can take several hours.
+Your planned workouts appear as events with reminders. Calendar apps check for changes about once each hour. Google Calendar can take several hours.
 
-Anyone with the link can see your planned workouts. Do not share it. If it leaks, choose **Create a new link** (the old one stops working) or **Turn the feed off**.
+Warning: Anyone who has the link can see your planned workouts. Do not share the link. If the link leaks, choose **Create a new link**. The old link then stops working. You can also choose **Turn the feed off**.
 
 ## Progress
 
-Tap the chart icon next to an exercise (in **Exercises**, or **View progress** in a workout menu). It shows, over time:
+Tap the chart icon next to an exercise. The icon is in **Exercises**. In a workout menu, the option is **View progress**. The page shows these items over time:
 
-- estimated one-rep max
-- heaviest set
-- volume per session
-- most reps per session
-- a suggestion for next time
-- a note if your best is several sessions old, suggesting a lighter week, a different rep range, or more rest
+- the estimated one-rep maximum
+- the heaviest set
+- the volume of each session
+- the most reps in a session
+- a suggestion for the next session
+- a note if your best result is several sessions old
+
+The note suggests a lighter week, a different rep range, or more rest.
 
 ## Body measurements
 
-The **Body** tab stores dated measurements, separate from workouts. Every field is optional, so an entry holds only what you measured that day.
+The **Body** tab stores measurements with a date. They are separate from workouts. All fields are optional. An entry holds only what you measured that day.
 
 | Section | Fields |
 |---|---|
-| Body composition | Weight, body fat %, muscle mass, bone mass, water %, BMI, visceral fat, DCI (daily calorie intake, kcal), metabolic age |
-| Segmental analysis | Fat % and muscle mass (kg) for each arm, each leg and the trunk |
+| Body composition | Weight, body fat %, muscle mass, bone mass, water %, BMI, visceral fat, DCI (daily calorie intake, in kcal), metabolic age |
+| Segmental analysis | Fat % and muscle mass (in kg) for each arm, each leg and the trunk |
 | Tape measurements | Neck, shoulders, chest, biceps, forearms, abdomen, waist, hips, thighs, calves |
 
-Values are stored as typed. Nothing is calculated or cross-checked.
+The app stores the values as you type them. It does not calculate or check them.
 
 ## Settings
 
 | Option | What it does |
 |---|---|
-| Server URL | Change which instance the app uses. |
-| Allow self-signed certificates | Skip certificate checks for this server. Android and Linux only. |
-| Preferences, Appearance | Units, height, and Light, Dark or System theme. |
-| WorkoutX API key | Optional. Your own [WorkoutX](https://workoutxapp.com) key for animated tutorials. Without it, built-in exercise images are used. |
+| Server URL | Changes the instance that the app uses. |
+| Allow self-signed certificates | Turns off certificate checks for this server. Only in the Android and Linux apps. |
+| Preferences, Appearance | Sets units, height, and the Light, Dark or System theme. |
+| WorkoutX API key | Optional. Your own [WorkoutX](https://workoutxapp.com) key for animated tutorials. Without a key, the app shows built-in exercise images. |
 | Import from Hevy / Intervals.icu | See [Hevy import](hevy-import.md) and [Intervals.icu import](intervals-import.md). |
 | Export / Import my data | See [Exporting and importing your data](data-export.md). |
-| Calendar feed | See [above](#show-your-calendar-in-another-app). |
+| Calendar feed | See [Show your calendar in another app](#show-your-calendar-in-another-app). |
 | API keys | Keys for [MCP](mcp-server.md) and other tools. |
-| API documentation, API reference | The server's REST API reference, for scripting. Opens in a browser tab. |
-| Take the tour again | Replays the first-run tour. |
-| About | Software version, commit, and update check. |
-| Administration | Administrators only: add users, back up or restore the server. |
+| API documentation, API reference | The REST API reference of the server, for scripts. It opens in a browser tab. |
+| Take the tour again | Shows the first-run tour again. |
+| About | Shows the software version and commit, and checks for updates. |
+| Administration | Only for administrators. Adds users, and backs up or restores the server. |

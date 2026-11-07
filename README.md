@@ -1,16 +1,18 @@
 # Dinatos
 
-A self-hosted workout tracker. Log exercises, build routines, record
-workouts, and see your progress. Inspired by Hevy, built to run on your own
-server.
+Dinatos is a self-hosted workout tracker. You log exercises, build routines,
+record workouts, and see your progress. It is inspired by Hevy. It runs on
+your own server.
 
-- Log all your activities: cardio, strength and bodyweight exercises
-- Save frequently used activities as routines and reuse.
-- Select from a catalog exercises, or add your own.
+- Log all your activities: cardio, strength and bodyweight exercises.
+- Save frequently used activities as routines, and use them again.
+- Choose exercises from a catalog, or add your own.
 - Track bodyweight measurements and personal records.
-- Use from Web, Android and Linux desktop apps (garmin app coming soon)
-- Import runs from [intervals.icu](https://intervals.icu/) and workouts from [Hevy](https://hevy.com).
-- Connect with AI agent using embedded MCP server
+- Use the web app, the Android app or the Linux desktop app. A Garmin app is
+  planned.
+- Import runs from [intervals.icu](https://intervals.icu/) and workouts from
+  [Hevy](https://hevy.com).
+- Connect an AI agent to the built-in MCP server.
 
 ## Screenshots
 
@@ -68,31 +70,34 @@ cp .env.example .env      # set POSTGRES_PASSWORD; the file explains the rest
 docker compose up -d      # Postgres + the app
 ```
 
-Open <http://127.0.0.1:8000>. The web UI is served by the same container, so
-there is nothing else to build.
+Open <http://127.0.0.1:8000>. The same container serves the web UI, so you do
+not need to build anything else.
 
-More: [configuration, upgrades, backups and native clients](https://bergercookie.github.io/dinatos/deploy/index.html).
+For more, see [configuration, upgrades, backups and native clients](https://bergercookie.github.io/dinatos/deploy/index.html).
 
 ## Use it
 
-[User guide](https://bergercookie.github.io/dinatos/user-guide/index.html):
-logging workouts, measurements, importing history.
+The [user guide](https://bergercookie.github.io/dinatos/user-guide/index.html)
+explains how to log workouts, add measurements and import your history.
 
 ## Contribute
 
-Contributions are welcome. Start with [CONTRIBUTING.md](https://github.com/bergercookie/dinatos/blob/main/CONTRIBUTING.md): it
-gets you from clone to passing tests in a few commands.
+We welcome contributions. Start with
+[CONTRIBUTING.md](https://github.com/bergercookie/dinatos/blob/main/CONTRIBUTING.md).
+It shows you how to go from a clone to passing tests in a few commands.
 
-Day-to-day workflow, CI and releases: the
+For the daily workflow, CI and releases, read the
 [development guide](https://bergercookie.github.io/dinatos/development/index.html).
-How it is built: [architecture docs](https://bergercookie.github.io/dinatos/architecture/index.html).
+To learn how the code is built, read the
+[architecture docs](https://bergercookie.github.io/dinatos/architecture/index.html).
 
 ## Releases
 
 Each release publishes a Docker image (`ghcr.io/bergercookie/dinatos`), a
-Linux `.deb` and `.AppImage`, and an Android APK. See the
+Linux `.deb` package, a Linux `.AppImage` file and an Android APK. See the
 [releases page](https://github.com/bergercookie/dinatos/releases).
 
 ## Security
 
-Report vulnerabilities privately: see [SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
+To report a vulnerability, do not use a public issue. Read
+[SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).

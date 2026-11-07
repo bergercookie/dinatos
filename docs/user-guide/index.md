@@ -1,8 +1,8 @@
 # Using Dinatos
 
-How to use the Dinatos workout tracker: log workouts, track your body, import history, connect an AI assistant. Start with [Concepts](concepts.md).
+This guide shows how to use the Dinatos workout tracker. You can log workouts, track your body, import your history, and connect an AI assistant. Start with [Concepts](concepts.md).
 
-Running the server yourself? See [Running your own instance](../deploy/index.md).
+If you run the server yourself, read [Running your own instance](../deploy/index.md).
 
 ```{toctree}
 :maxdepth: 2

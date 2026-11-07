@@ -1,21 +1,24 @@
 # Architecture
 
-How Dinatos is built and why, for people changing the code. If you only want
-to run it, see [Running your own instance](../deploy/index.md); to use it, see
-[Using Dinatos](../user-guide/index.md).
+This section explains how Dinatos is built and why. It is for people who
+change the code.
 
-Dinatos is a self-hosted workout tracker: a FastAPI backend with a Postgres
-database, and a Flutter app (web and Android) that talks to it over REST.
+- To run Dinatos, see [Running your own instance](../deploy/index.md).
+- To use Dinatos, see [Using Dinatos](../user-guide/index.md).
 
-Suggested reading order:
+Dinatos is a self-hosted workout tracker. It has a FastAPI backend with a
+Postgres database. It also has a Flutter app for web and Android. The app
+talks to the backend through a REST API.
 
-1. [Domain model](domain-model.md): the terms and repository layout.
-2. [Backend](backend.md): API, auth, backup, imports.
+Read the pages in this order:
+
+1. [Domain model](domain-model.md): the terms and the repository layout.
+2. [Backend](backend.md): the API, authentication, backup and imports.
 3. [Frontend](frontend.md): the Flutter app.
-4. [Distribution](distribution.md): how releases are packaged.
+4. [Distribution](distribution.md): how a release is packaged.
 
-Operational gotchas for building and testing live in `AGENTS.md` and
-`CONTRIBUTING.md` at the repository root.
+`AGENTS.md` and `CONTRIBUTING.md` are in the root of the repository. They
+list the problems that can occur when you build and test.
 
 ```{toctree}
 :maxdepth: 2

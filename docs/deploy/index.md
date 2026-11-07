@@ -1,8 +1,14 @@
 # Running your own instance
 
-How to self-host Dinatos with Docker: install, configure, connect clients, upgrade, back up, and expose it safely. Assumes you know Docker basics.
+This section shows how to run Dinatos on your own server with Docker Compose. It covers install, configuration, clients, upgrades, backups and network security. You must know the basics of Docker.
 
-Using an instance someone else runs? See [Using Dinatos](../user-guide/index.md). Changing the code? See [Contributing](../development/index.md).
+Words used in this section:
+
+- **Instance**: one running Dinatos installation.
+- **App container**: the container that serves the API and the web app together.
+- **Client**: the web app or a native app that connects to an instance.
+
+If you use an instance that another person runs, see [Using Dinatos](../user-guide/index.md). To change the code, see [Contributing](../development/index.md).
 
 ```{toctree}
 :maxdepth: 2

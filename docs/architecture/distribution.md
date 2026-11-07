@@ -1,63 +1,72 @@
 # Distribution
 
-How a Dinatos release is built and published: the Docker image, the Linux
-packages and the Android APK. For contributors touching packaging, the
-Dockerfile or `release.yml`. Workflow-level details (CI jobs, nightlies, the
-release checklist) are in [CI and releases](../development/ci-and-releases.md).
+This page explains how Dinatos builds and publishes a release. A release has
+the Docker image, the Linux packages and the Android APK. It is for
+contributors who change the packaging, the Dockerfile or `release.yml`. For the
+details of the workflow (CI jobs, nightlies and the release checklist), see
+[CI and releases](../development/ci-and-releases.md).
 
 ## What a release produces
 
-Pushing a tag matching `v*` (e.g. `v1.2.3`) runs `.github/workflows/release.yml`.
-Its jobs run in parallel:
+A push of a tag that matches `v*` (for example `v1.2.3`) runs
+`.github/workflows/release.yml`. The jobs of the workflow run in parallel.
 
 | Artifact | Built by | Notes |
 | --- | --- | --- |
-| Docker image (backend plus built web app) | root `Dockerfile` | Pushed to `ghcr.io/<owner>/dinatos`, tagged with the version and `latest`. `linux/amd64` only; the workflow comments say what `arm64` would need. |
-| Linux `.deb` | `packaging/linux/build-deb.sh` | From the same `flutter build linux --release` bundle as the AppImage. |
-| Linux `.AppImage` (portable) | `packaging/linux/build-appimage.sh` | Same bundle, so the two cannot drift. |
-| Android APK | `just packaging build-apk` | Signed with the release key, see below. |
+| Docker image (backend plus built web app) | root `Dockerfile` | Pushed to `ghcr.io/<owner>/dinatos`, with the tags of the version and `latest`. Only `linux/amd64`. The comments in the workflow say what `arm64` needs. |
+| Linux `.deb` | `packaging/linux/build-deb.sh` | Built from the same `flutter build linux --release` bundle as the AppImage. |
+| Linux `.AppImage` (portable) | `packaging/linux/build-appimage.sh` | Built from the same bundle, so the two packages cannot differ. |
+| Android APK | `just packaging build-apk` | Signed with the release key. See [Android APK signing](#android-apk-signing). |
 
-A `version` job strips the leading `v` from the tag once, so every artifact and
-the GitHub Release share one version string (`dpkg-deb` rejects a leading `v`).
-A final `release` job gathers everything into one GitHub Release.
+The `version` job removes the leading `v` from the tag one time. Because of
+this, every artifact and the GitHub Release use one version string. `dpkg-deb`
+rejects a leading `v`. The last job, `release`, puts all artifacts into one
+GitHub Release.
 
-The same workflow is also called by `nightly.yml` for prereleases (Docker tag
-`nightly`, no `latest`).
+The workflow `nightly.yml` also calls this workflow. It makes prereleases. The
+Docker tag is `nightly`, and there is no `latest` tag.
 
-**First push to GHCR needs a manual step.** The package defaults to private
-whatever the repo's visibility. Make it public in the package's settings on
-GitHub if people should pull it without logging in.
+Note: the first push to GHCR needs a manual step. The package is private by
+default, also if the repository is public. To let people pull the image without
+a login, make the package public in its settings on GitHub.
 
-There is no `just` recipe for "cut a release", and a failure partway leaves a
-partial release (e.g. the image pushed, then the `.deb` step fails) with no
-automatic rollback. Test packaging changes locally before tagging.
+Warning: there is no `just` recipe to cut a release. If a job fails after
+other jobs finished, the release is partial. For example, the image is pushed
+and then the `.deb` step fails. There is no automatic rollback. Test changes to
+the packaging on your machine before you push a tag.
 
 ## The Docker image builds its own frontend
 
-The root `Dockerfile` has three stages. The build context is the repo root.
+The root `Dockerfile` has three stages. The build context is the root of the
+repository.
 
-1. `frontend-builder`: downloads Flutter's current stable SDK and runs
+1. `frontend-builder`: downloads the current stable Flutter SDK and runs
    `flutter build web --release`.
 2. `builder`: installs the backend with `uv`.
-3. `runtime`: copies the backend's `.venv/` and the web build (`build/web`) to
-   `web/`, where `Settings.web_dir` expects it. See `_mount_web_ui` in
-   `backend/src/dinatos_backend/main.py`, and [Container image](backend.md#container-image).
+3. `runtime`: copies the `.venv/` of the backend and the web build
+   (`build/web`) to `web/`. `Settings.web_dir` expects the web build there.
+   See `_mount_web_ui` in `backend/src/dinatos_backend/main.py` and
+   [Container image](backend.md#container-image).
 
-Because the web app is served by the backend, both share one origin and no CORS
-setup is needed.
+The backend serves the web app. Both use one origin, so the image does not
+need a CORS setup.
 
 ## Android APK signing
 
 `frontend/android/app/build.gradle.kts` reads the signing key from
-`frontend/android/key.properties`. Android refuses to install an APK over an
-existing one if the signing key differs, and debug keystores are generated per
-machine, so debug-signed builds could never update an earlier install.
+`frontend/android/key.properties`. Android does not install an APK over an
+existing APK if the signing key is different. Each machine generates its own
+debug keystore. For this reason, a debug-signed build can never update an
+earlier install.
 
-- **CI:** the workflow writes the keystore from the repository secrets
+- **In CI:** the workflow writes the keystore from the repository secrets
   `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`
-  and optionally `ANDROID_KEY_PASSWORD`. It fails if they are missing.
-- **Local builds** without `key.properties` fall back to the debug key.
-- **Create the key once**, and never lose or rotate it:
+  and, as an option, `ANDROID_KEY_PASSWORD`. The workflow fails if the
+  required secrets are missing.
+- **In local builds:** if `key.properties` does not exist, the build uses the
+  debug key.
+- **To create the key:** do this one time. Never lose the key and never rotate
+  it.
 
   ```bash
   keytool -genkeypair -v -keystore release.jks -alias dinatos \
@@ -65,15 +74,16 @@ machine, so debug-signed builds could never update an earlier install.
   ```
 
 The release manifest (`android/app/src/main/AndroidManifest.xml`) must declare
-`android.permission.INTERNET`. Flutter only adds it to debug and profile
-manifests. A release APK without it installs fine and then fails every request
-as "server not reachable". `just android check-apk` asserts it on a built APK.
+`android.permission.INTERNET`. Flutter adds this permission only to the debug
+and profile manifests. A release APK without it installs correctly. Then every
+request fails with "server not reachable". The command
+`just android check-apk` checks the permission on a built APK.
 
 ## Building locally
 
-Run from the repository root. Needs the Flutter SDK, the Android SDK for the
-APK, and the Linux build dependencies below. See
-[Environment setup](../development/environment-setup.md).
+Run the commands from the root of the repository. You need the Flutter SDK,
+the Android SDK (for the APK) and the Linux build dependencies in the next
+sections. See [Environment setup](../development/environment-setup.md).
 
 ```bash
 just packaging build-apk <version> [build-number]
@@ -83,65 +93,76 @@ just packaging build-linux-artifacts <version>   # both Linux formats, one share
 ```
 
 - The release workflow calls these same recipes.
-- APK output: `frontend/build/app/outputs/flutter-apk/`.
-- Linux packages go to `dist/`, or to a directory given as the second argument.
+- The APK is in `frontend/build/app/outputs/flutter-apk/`.
+- The Linux packages go to `dist/`. You can give a different directory as the
+  second argument.
 
 ### Docker-based Linux builds
 
-`build-deb-docker`, `build-appimage-docker` and `build-linux-artifacts-docker`
-take the same arguments but build inside `ubuntu:22.04`
-(`packaging/linux/Dockerfile.build`). They need only Docker, and build from a
-copy of the checkout so stale `frontend/build/` state is never reused.
+The recipes `build-deb-docker`, `build-appimage-docker` and
+`build-linux-artifacts-docker` take the same arguments. They build inside
+`ubuntu:22.04` (`packaging/linux/Dockerfile.build`). They need only Docker.
+They build from a copy of the checkout, so they never reuse old
+`frontend/build/` state.
 
-Prefer them from a Nix/devbox shell. A binary built there embeds `/nix/store`
-library paths and interpreter, so it fails on other machines or cannot find the
-host's GL drivers. The non-Docker recipes therefore refuse to run in a devbox
-shell. `DINATOS_ALLOW_DEVBOX_BUILD=1` overrides that for a local-only test.
+Use these recipes in a Nix or devbox shell. A binary that you build in such a
+shell contains the `/nix/store` paths of the libraries and the interpreter. On
+other machines, it fails, or it cannot find the GL drivers of the host. For
+this reason, the recipes that do not use Docker refuse to run in a devbox
+shell. To override this for a test on your machine only, set
+`DINATOS_ALLOW_DEVBOX_BUILD=1`.
 
 ## Linux desktop target
 
 ### Build dependencies
 
-`flutter build linux` fails at CMake configure without:
+`flutter build linux` fails at the CMake configure step if these packages are
+missing:
 
 - `libgtk-3-dev`: the windowing toolkit.
 - `libsecret-1-dev`: used by `flutter_secure_storage`.
 - `clang cmake ninja-build pkg-config`: the rest of the toolchain.
 
-`flutter analyze` and `flutter test` do not need any of this. The
-`linux-packages` job installs it with `apt-get`.
+`flutter analyze` and `flutter test` do not need these packages. The
+`linux-packages` job installs them with `apt-get`.
 
 ### Build on the oldest supported Ubuntu
 
-`linux-packages` runs on `ubuntu-22.04`, deliberately not `ubuntu-latest`. The
-bundle links against the build machine's glibc, so a newer build image yields a
-package that fails on older systems with `GLIBC_2.38 not found`. Raise the build
-image only together with the minimum supported Ubuntu.
+The `linux-packages` job runs on `ubuntu-22.04`. It does not use
+`ubuntu-latest`, on purpose. The bundle links against the glibc of the build
+machine. A newer build image makes a package that fails on older systems with
+`GLIBC_2.38 not found`. Raise the build image only together with the minimum
+supported Ubuntu.
 
 ### Smoke test
 
-The `linux-smoke` job gates the release. It installs the `.deb` in pristine
-`ubuntu:22.04` and `ubuntu:24.04` containers and starts it under Xvfb
-(`packaging/linux/smoke-test-deb.sh`; also runnable locally with Docker). It
-also runs `ldd` on every bundled library in isolation, with no exemptions:
-every library must resolve on a clean machine. This has caught three problems:
+The `linux-smoke` job must pass before the release. It installs the `.deb` in
+clean `ubuntu:22.04` and `ubuntu:24.04` containers. It starts the app under
+Xvfb (`packaging/linux/smoke-test-deb.sh`). You can also run this script
+locally with Docker. The job also runs `ldd` on each bundled library alone,
+with no exemptions. Every library must resolve on a clean machine. The job
+found three problems:
 
-- **Plugin rpath.** Plugin libraries (`flutter_secure_storage`, `url_launcher`)
-  are installed as plain files, so CMake never rewrites their rpath. Left
-  alone it points at the *build tree's* `libflutter_linux_gtk.so`: fine where
-  built, `not found` elsewhere. `frontend/linux/CMakeLists.txt` sets `$ORIGIN`
-  on them, as for the rest of the bundle.
-- **`libdartjni.so`.** The `jni` package's native half (pulled in by
-  `path_provider_android`) links `libjvm.so`, which only a JDK has. Nothing on
-  desktop uses JNI, so `CMakeLists.txt` leaves the library out of the bundle.
-- **GL libraries.** The engine reaches `libgles2` and `libegl1` through
-  libepoxy's `dlopen`, which link-time checks cannot see. The `.deb` declares
-  them as dependencies (`packaging/linux/build-deb.sh`). Without them the app
-  aborts with `Couldn't open libGLESv2.so.2`.
+- **Plugin rpath.** The packaging installs the plugin libraries
+  (`flutter_secure_storage`, `url_launcher`) as plain files. CMake does not
+  rewrite their rpath. Without a change, the rpath points to the
+  `libflutter_linux_gtk.so` in the *build tree*. This works where the app
+  was built, and shows `not found` on other machines.
+  `frontend/linux/CMakeLists.txt` sets `$ORIGIN` on these libraries, as it
+  does for the rest of the bundle.
+- **`libdartjni.so`.** This is the native part of the `jni` package, which
+  `path_provider_android` pulls in. It links `libjvm.so`, and only a JDK has
+  that library. Nothing on desktop uses JNI, so `CMakeLists.txt` leaves the
+  library out of the bundle.
+- **GL libraries.** The engine reaches `libgles2` and `libegl1` through the
+  `dlopen` of libepoxy. Link-time checks cannot see this. The `.deb` declares
+  both as dependencies (`packaging/linux/build-deb.sh`). Without them, the app
+  stops with `Couldn't open libGLESv2.so.2`.
 
 ### `flutter create` is not additive
 
-`flutter create --platforms=linux .` on an existing project rewrites
-`frontend/.metadata`'s migration list to contain only `linux`, dropping the
-`android` and `web` entries. It also touches `analysis_options.yaml`. After
-running it for any platform, diff both files and restore what was lost.
+The command `flutter create --platforms=linux .` changes an existing project.
+It rewrites the migration list in `frontend/.metadata` so that it has only
+`linux`. It removes the `android` and `web` entries. It also changes
+`analysis_options.yaml`. After you run it for any platform, compare both files
+with the old versions. Restore what the command removed.
