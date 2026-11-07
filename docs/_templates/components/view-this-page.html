@@ -1,0 +1,12 @@
+{#- Replaces Furo's "View this page" button with a link to the project on
+    GitHub. conf.py enables only this slot (top_of_page_buttons = ["view"]),
+    so the link sits in the page header next to the theme toggle, with
+    Furo's own styling. The URL and icon path come from html_context in conf.py. -#}
+<div class="view-this-page">
+  <a class="muted-link" href="{{ repository_url }}" title="Dinatos on GitHub">
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path fill="currentColor" stroke="none" fill-rule="evenodd" d="{{ github_icon_path }}"></path>
+    </svg>
+    <span class="visually-hidden">Dinatos on GitHub</span>
+  </a>
+</div>
