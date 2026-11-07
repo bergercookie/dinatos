@@ -13,6 +13,7 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-toml
+      - id: check-xml
       - id: check-merge-conflict
       # Shell scripts: a shebang means it must be executable and vice versa.
       - id: check-executables-have-shebangs
@@ -56,6 +57,15 @@ repos:
     rev: v0.23.3
     hooks:
       - id: markdownlint-cli2
+
+  # GitHub Actions workflows: actionlint type-checks expressions, `needs:`
+  # references, action inputs and runs shellcheck over `run:` scripts -- none
+  # of which check-yaml can see. Prebuilt binary via a PyPI wheel mirror, like
+  # hadolint/shellcheck above.
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
 
   - repo: local
     hooks:
@@ -107,3 +117,11 @@ repos:
         language: python
         additional_dependencies: ["lychee-bin==0.24.2"]
         files: \.md$
+      # The Linux .desktop entry packaging/linux/ ships in the .deb/AppImage.
+      # desktop-file-validate comes from the `desktop-file-utils` system
+      # package (apt install desktop-file-utils); CI installs it in ci.yml.
+      - id: desktop-file-validate
+        name: desktop entry (validate)
+        entry: desktop-file-validate
+        language: system
+        files: \.desktop$
