@@ -1,6 +1,6 @@
 # Using Dinatos from an AI assistant (MCP)
 
-Connect an MCP client (a tool that lets an AI assistant use other services, such as Claude) to Dinatos. The assistant can then manage exercises, routines, activities and planned workouts, and read your persona statistics. Nothing to install: the MCP server is built in at `/mcp`.
+Connect an MCP client (a tool that lets an AI assistant use other services, such as Claude) to Dinatos. The assistant can then manage exercises, routines, activities and planned workouts, and read your persona statistics. Nothing to install: the MCP server is built in at `/mcp`. It is on by default; whoever runs your instance can turn it off with `DINATOS_MCP_ENABLED=false`, in which case `/mcp` answers 404 and these steps will not work.
 
 ## 1. Create an API key
 

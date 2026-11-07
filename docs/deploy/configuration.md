@@ -4,7 +4,7 @@ Every backend setting, as an environment variable. All have defaults. Only the d
 
 ## Setting variables with Docker Compose
 
-`docker-compose.yml` passes only these through from `.env` to the app container: `POSTGRES_*`, `DINATOS_ALLOW_REGISTRATION`, `DINATOS_ADMIN_EMAIL`, `DINATOS_ADMIN_PASSWORD`. To set any other variable below, add it under `services.backend.environment` in `docker-compose.yml`, then run `docker compose up -d`. Example:
+`docker-compose.yml` passes only these through from `.env` to the app container: `POSTGRES_*`, `DINATOS_ALLOW_REGISTRATION`, `DINATOS_MCP_ENABLED`, `DINATOS_ADMIN_EMAIL`, `DINATOS_ADMIN_PASSWORD`. To set any other variable below, add it under `services.backend.environment` in `docker-compose.yml`, then run `docker compose up -d`. Example:
 
 ```yaml
     environment:
@@ -21,6 +21,7 @@ List values take JSON.
 | `DINATOS_DATABASE_URL` | `postgresql+asyncpg://dinatos:dinatos@localhost:5432/dinatos` | Postgres connection. Compose builds it from `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`. |
 | `DINATOS_SESSION_TTL_DAYS` | `30` | Days a login lasts. Logging out revokes a session at once, so there is little reason to shorten it. |
 | `DINATOS_ALLOW_REGISTRATION` | `true` | `false` hides Register and rejects self-registration. Administrators add users in **Settings -> Administration**. Registration stays open while no accounts exist, so the first admin can be created. |
+| `DINATOS_MCP_ENABLED` | `true` | `false` turns off the built-in [MCP server](../user-guide/mcp-server.md): `/mcp` answers 404 and nothing is started. API keys still work for everything else. Takes effect on restart. |
 | `DINATOS_ADMIN_EMAIL`, `DINATOS_ADMIN_PASSWORD` | unset | If both are set, creates this admin on startup if missing. Never changes an existing account. |
 | `DINATOS_SEED_DEFAULT_EXERCISES` | `true` | On first start with an empty exercise list, adds a standard catalog of built-in exercises. |
 | `DINATOS_SEED_DEFAULT_ROUTINES` | `true` | Gives each new account starter routines (Push, Pull, Legs, Upper body, Lower body, Full body). Each is the account's own copy. Needs the exercise catalog. |

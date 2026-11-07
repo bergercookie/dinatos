@@ -27,6 +27,7 @@ from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from dinatos_backend.config import get_settings
 from dinatos_backend.schemas.activity import ActivityExerciseCreate
 from dinatos_backend.schemas.routine import RoutineExerciseCreate
 from dinatos_backend.services.api_keys import looks_like_api_key
@@ -310,7 +311,8 @@ class McpGateway:
     is calling for the tools, and hands the request to the MCP transport.
 
     `running()` must be active (the app's lifespan does this) for requests to be
-    served; a fresh transport is built each time it starts, so tests and
+    served. With `Settings.mcp_enabled` off, `running()` starts nothing and every
+    request gets a 404; a fresh transport is built each time it starts, so tests and
     restarts never reuse a spent one.
     """
 
@@ -320,6 +322,9 @@ class McpGateway:
 
     @asynccontextmanager
     async def running(self) -> AsyncIterator[None]:
+        if not get_settings().mcp_enabled:
+            yield
+            return
         manager = StreamableHTTPSessionManager(
             app=self._server._mcp_server,
             json_response=True,
@@ -339,6 +344,11 @@ class McpGateway:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover - lifespan etc. never reach a route
+            return
+        if not get_settings().mcp_enabled:
+            # 404, not 401/403: as far as a client can tell, there is no MCP here.
+            response = JSONResponse({"detail": "the MCP server is disabled"}, status_code=404)
+            await response(scope, receive, send)
             return
         authorization = Headers(scope=scope).get("authorization", "")
         scheme, _, token = authorization.partition(" ")

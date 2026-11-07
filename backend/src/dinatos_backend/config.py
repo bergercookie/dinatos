@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     # catalog, so it's a no-op when `seed_default_exercises` is off.
     seed_default_routines: bool = True
 
+    # Whether the built-in MCP server answers at `/mcp` (see `api/mcp.py`).
+    # On by default; `DINATOS_MCP_ENABLED=false` makes `/mcp` reply 404 and
+    # never starts the MCP transport at all. API keys keep working for
+    # everything else -- they just have nothing to connect an MCP client to.
+    mcp_enabled: bool = True
+
     # Where to look for a built Flutter web app (an `index.html` plus its
     # assets) to serve alongside the API -- see `main.py`. Relative to the
     # process's working directory, which is why the Docker image's runtime

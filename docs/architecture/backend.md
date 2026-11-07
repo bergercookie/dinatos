@@ -285,6 +285,10 @@ only the server URL and an API key.
 - **Lifecycle:** the app's lifespan starts and stops the transport
   (`McpGateway.running()`). A fresh one is built each time so tests can start
   it per test.
+- **Switch:** `Settings.mcp_enabled` (`DINATOS_MCP_ENABLED`, default on) is
+  read per request and in `running()`: off, the transport never starts and
+  `/mcp` answers 404. The routes stay registered, so the web UI's catch-all
+  fallback never answers `/mcp` with `index.html`.
 - **Tools:** thin wrappers over exercises, routines and activities; planned
   workouts (`list_planned_workouts`, `schedule_workout`,
   `update_planned_workout`, a `PATCH` where only passed arguments change, and

@@ -35,7 +35,7 @@ Proxy requirements:
 - Pass the `Authorization` header through.
 - Do not buffer or cache `/mcp` responses. No sticky sessions are needed.
 
-To keep MCP internal, block `/mcp` at the proxy. Nothing else depends on it.
+To keep MCP internal, block `/mcp` at the proxy, or turn it off in the app with `DINATOS_MCP_ENABLED=false` (see [Configuration](configuration.md)): `/mcp` then answers 404. Nothing else depends on it.
 
 ## Self-signed certificates
 
