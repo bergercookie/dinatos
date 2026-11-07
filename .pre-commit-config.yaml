@@ -138,3 +138,14 @@ repos:
         files: ^(README|CONTRIBUTING)\.md$|^docs/.*\.md$
         exclude: ^docs/_build/
         require_serial: true  # the wheel downloads its binary on first run
+      # Link to the Sphinx site, not to a file view on GitHub: the docs site is
+      # the primary way to read these pages, and GitHub's Markdown view is a
+      # bonus (README, CONTRIBUTING.md and SECURITY.md use absolute site URLs, so
+      # both render). Issues, releases and advisories are GitHub features and are
+      # fine. AGENTS.md and SECURITY.md are published as pages in docs/.
+      - id: no-github-file-links
+        name: docs link to the site, not GitHub file views
+        entry: 'github\.com/bergercookie/dinatos/(blob|tree)/'
+        language: pygrep
+        files: \.md$
+        exclude: ^docs/_build/

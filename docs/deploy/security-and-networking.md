@@ -61,4 +61,4 @@ A certificate from a certificate authority, for example Let's Encrypt, removes t
 - Anyone can register, until an administrator turns registration off in **Settings -> Administration**, or you set `DINATOS_ALLOW_REGISTRATION=false`. The variable overrides the administrator.
 - The first account is the administrator.
 
-To report a vulnerability, follow the [security policy](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
+To report a vulnerability, follow the [security policy](security-policy.md).

@@ -18,7 +18,7 @@ passing build. The pages in "Where to find more" give more detail.
 - [CI and checks](https://bergercookie.github.io/dinatos/development/ci.html): what runs on your PR
 - [Releases and packaging](https://bergercookie.github.io/dinatos/development/releases.html): how releases ship and how to build the packages
 - [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code has this shape
-- [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, but useful for anyone)
+- [For coding agents](https://bergercookie.github.io/dinatos/development/agents.html): environment pitfalls (written for coding agents, but useful for anyone)
 
 ## Set up
 
@@ -69,4 +69,4 @@ To report a bug or suggest an idea, open an
 open an issue first. Then we can agree on the approach.
 
 Security problems: do not open an issue. Read
-[SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
+[security policy](https://bergercookie.github.io/dinatos/deploy/security-policy.html).

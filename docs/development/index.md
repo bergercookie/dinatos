@@ -9,5 +9,6 @@ environment-setup
 workflow
 ci
 releases
+agents
 ../architecture/index
 ```

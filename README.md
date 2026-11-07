@@ -55,8 +55,8 @@ explains how to log workouts, add measurements and import your history.
 
 ## Contribute
 
-We welcome contributions. Start with
-[CONTRIBUTING.md](https://github.com/bergercookie/dinatos/blob/main/CONTRIBUTING.md).
+We welcome contributions. Start with the
+[contributing guide](https://bergercookie.github.io/dinatos/development/index.html).
 It shows you how to go from a clone to passing tests in a few commands.
 
 For the daily workflow, CI and releases, read the
@@ -73,4 +73,4 @@ Linux `.deb` package, a Linux `.AppImage` file and an Android APK. See the
 ## Security
 
 To report a vulnerability, do not use a public issue. Read
-[SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
+[security policy](https://bergercookie.github.io/dinatos/deploy/security-policy.html).

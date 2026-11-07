@@ -139,6 +139,9 @@ run:
   `uvx --from shfmt-py shfmt -i 2 -w <file>`.
 - `markdownlint-cli2` lints the Markdown files. The rules are in
   `.markdownlint-cli2.yaml`.
+- `no-github-file-links` rejects a Markdown link to a file view of this
+  repository on GitHub (a `blob` or `tree` URL). Link to the matching page of
+  the docs site instead. Links to issues, releases and advisories are fine.
 - `vale` checks the prose of the README, `CONTRIBUTING.md` and `docs/`. It
   finds passive voice, vague words, filler sentence openers and misspellings. The rules are in `.vale.ini`.
   If Vale does not know a product or technical term, add the term to

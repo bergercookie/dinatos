@@ -18,4 +18,5 @@ configuration
 clients
 upgrades-and-backups
 security-and-networking
+security-policy
 ```

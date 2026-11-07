@@ -36,4 +36,4 @@ Please allow time for a fix before public disclosure.
 | API keys | `dnk_` keys for the MCP endpoint. Shown once, stored as a hash, revocable individually. They cannot manage keys or administer the server. |
 | Cookies and CORS | Auth uses an `Authorization` header, not cookies, so CORS allows any origin by default (without credentials). Restrict it with `DINATOS_CORS_ALLOWED_ORIGINS`. |
 
-For operators: see [Security and networking](https://github.com/bergercookie/dinatos/blob/main/docs/deploy/security-and-networking.md).
+For operators: see [Security and networking](https://bergercookie.github.io/dinatos/deploy/security-and-networking.html).
