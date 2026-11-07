@@ -53,28 +53,3 @@ If no exercise matches the sport, Dinatos makes a custom exercise. If one exists
 Intervals.icu records no sets for strength sessions. These sessions arrive as one timed "Weight Training" entry. Log strength sessions in Hevy. Do not import them from Intervals.icu.
 
 Dinatos counts imported cardio as **endurance** training on the Personas page. One set-equivalent is about 3 minutes. If the activity has no time, Dinatos uses the distance. Dinatos classifies a timed strength entry in the same way.
-
-## Use the command line
-
-You can do both steps with plain endpoints. The key goes in the request body. It does not appear in a URL or an access log. You need a login token. See [Running and testing](../development/workflow.md).
-
-```bash
-# 1. List activities (writes nothing)
-curl -X POST http://127.0.0.1:8000/imports/intervals/preview \
-    -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
-    -d '{"api_key": "'"$INTERVALS_KEY"'", "athlete_id": "0", "oldest": "2026-01-01"}'
-
-# 2. Import the chosen ones
-curl -X POST http://127.0.0.1:8000/imports/intervals/activities \
-    -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
-    -d '{"api_key": "'"$INTERVALS_KEY"'", "oldest": "2026-01-01", "activity_ids": ["i123", "i124"]}'
-```
-
-The default value of `newest` is today.
-
-| Status | Meaning |
-|---|---|
-| `409` | Already imported. The server wrote nothing. To import anyway, add `?force=true`. |
-| `422` | An ID is outside the date range, or the server cannot import the activity. |
-| `400` | The API key is not correct. |
-| `502` | The server cannot reach Intervals.icu. |

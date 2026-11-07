@@ -25,16 +25,3 @@ Hevy exports have no data about equipment or muscles.
 - For all other exercises, Dinatos makes custom exercises for you. Dinatos guesses the equipment and muscles from similar built-in exercises. Some guesses are wrong. To correct an exercise, tap it in the list after the import.
 
 Do you also use Intervals.icu? See [Importing from Intervals.icu](intervals-import.md). That import can skip activities that you already imported from Hevy.
-
-## Use the command line
-
-You can import with the command line, for example on a new instance. You need a login token from `POST /auth/login`. See [Running and testing](../development/workflow.md).
-
-```bash
-curl -F file=@workout_data.csv http://127.0.0.1:8000/imports/hevy/workouts \
-    -H "Authorization: Bearer $token"
-curl -F file=@measurement_data.csv http://127.0.0.1:8000/imports/hevy/measurements \
-    -H "Authorization: Bearer $token"
-```
-
-If you send a file again, the server returns `409 Conflict`. To import the file anyway, add `?force=true` to the URL.

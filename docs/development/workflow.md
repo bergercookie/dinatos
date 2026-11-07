@@ -93,6 +93,42 @@ curl http://127.0.0.1:8000/exercises -H "Authorization: Bearer $token"
 Every endpoint except `/health` and `/auth/*` needs the bearer token. For more
 information, see [Authentication](../architecture/backend.md#authentication).
 
+### Importing from the command line
+
+The importers are plain endpoints, so you can call them without the app. This
+helps on a new instance, in a script, or when you debug an import. You need the
+`$token` from the previous section.
+
+Hevy takes the two CSV exports as a multipart upload:
+
+```bash
+curl -F file=@workout_data.csv http://127.0.0.1:8000/imports/hevy/workouts \
+    -H "Authorization: Bearer $token"
+curl -F file=@measurement_data.csv http://127.0.0.1:8000/imports/hevy/measurements \
+    -H "Authorization: Bearer $token"
+```
+
+Intervals.icu has two steps. The API key goes in the request body, so it does
+not appear in a URL or an access log:
+
+```bash
+# 1. List activities (writes nothing)
+curl -X POST http://127.0.0.1:8000/imports/intervals/preview \
+    -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+    -d '{"api_key": "'"$INTERVALS_KEY"'", "athlete_id": "0", "oldest": "2026-01-01"}'
+
+# 2. Import the chosen ones
+curl -X POST http://127.0.0.1:8000/imports/intervals/activities \
+    -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+    -d '{"api_key": "'"$INTERVALS_KEY"'", "oldest": "2026-01-01", "activity_ids": ["i123", "i124"]}'
+```
+
+`newest` defaults to today. If you send the same file or activity again, the
+server returns `409`. To import it anyway, add `?force=true` to the URL. For the
+other status codes (`422`, `400`, `502`) and the reasons for them, see
+[Hevy import](../architecture/backend.md#hevy-import) and
+[Intervals.icu import](../architecture/backend.md#intervalsicu-import).
+
 ## Testing
 
 | Command | What it tests | Needs |
