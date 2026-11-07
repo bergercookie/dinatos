@@ -410,17 +410,20 @@ class _ActivitySummaryScreenState extends ConsumerState<ActivitySummaryScreen> {
             ],
             const SizedBox(height: AppSpacing.xl),
             if (savedActivityId == null) ...[
-              CheckboxListTile(
-                key: const ValueKey('save-as-routine'),
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: const Text('Also save as a routine'),
-                subtitle: const Text('Reuse this workout later, with these sets as suggestions.'),
-                value: _saveAsRoutine,
-                onChanged: _submitting
-                    ? null
-                    : (value) => setState(() => _saveAsRoutine = value ?? false),
-              ),
+              // Offered only for a workout built from scratch: one started from a
+              // saved routine already has its routine.
+              if (session.routineId == null)
+                CheckboxListTile(
+                  key: const ValueKey('save-as-routine'),
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text('Also save as a routine'),
+                  subtitle: const Text('Reuse this workout later, with these sets as suggestions.'),
+                  value: _saveAsRoutine,
+                  onChanged: _submitting
+                      ? null
+                      : (value) => setState(() => _saveAsRoutine = value ?? false),
+                ),
               const SizedBox(height: AppSpacing.sm),
               FilledButton(
                 onPressed: _submitting ? null : () => _save(session),

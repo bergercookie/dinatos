@@ -85,6 +85,15 @@ final _finished = LiveActivitySession(
   ],
 );
 
+/// The same workout, started from saved routine 7.
+final _fromRoutine = LiveActivitySession(
+  startedAt: _finished.startedAt,
+  endedAt: _finished.endedAt,
+  routineId: 7,
+  routineName: 'Push day',
+  exercises: _finished.exercises,
+);
+
 /// A [MockDio] for the summary screen: an empty catalog, and by default a
 /// server that cannot be reached for anything else. Tests override from there.
 MockDio _dio() {
@@ -185,6 +194,44 @@ void main() {
 
     expect(find.text('Workout saved'), findsOneWidget);
     verifyNever(() => dio.post<Map<String, dynamic>>('/routines', data: any(named: 'data')));
+  });
+
+  testWidgets('a workout started from a saved routine is not offered as a new routine', (
+    tester,
+  ) async {
+    final dio = _dio();
+    when(() => dio.post<Map<String, dynamic>>('/activities', data: any(named: 'data')))
+        .thenAnswer((invocation) async {
+          final body = invocation.namedArguments[#data] as Map<String, dynamic>;
+          return _ok('/activities', _savedActivity(body), status: 201);
+        });
+    await _pump(
+      tester,
+      dio: dio,
+      storage: _MemoryStorage(),
+      restored: PersistedLiveSession(session: _fromRoutine),
+    );
+
+    expect(find.byKey(const ValueKey('save-as-routine')), findsNothing);
+    expect(find.text('Also save as a routine'), findsNothing);
+
+    await tester.tap(find.text('Save workout'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Workout saved'), findsOneWidget);
+    verifyNever(() => dio.post<Map<String, dynamic>>('/routines', data: any(named: 'data')));
+  });
+
+  testWidgets('a workout built from scratch is offered as a new routine', (tester) async {
+    await _pump(
+      tester,
+      dio: _dio(),
+      storage: _MemoryStorage(),
+      restored: PersistedLiveSession(session: _finished),
+    );
+
+    expect(_finished.routineId, isNull);
+    expect(find.byKey(const ValueKey('save-as-routine')), findsOneWidget);
   });
 
   testWidgets('a routine that fails to save does not undo the saved workout, and can be retried', (

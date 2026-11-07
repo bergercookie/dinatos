@@ -66,7 +66,7 @@ Press **Start activity**. Then choose one of these options:
 
 To save the workout, press **Finish workout**. The app removes unticked sets and exercises that have no ticked set. If the app must remove anything, it tells you and asks you to confirm. To go back to the workout, press **Keep logging**.
 
-On the summary, you can tick **Also save as a routine**. The app then makes a routine with the same title as the workout. Each ticked set becomes a set in the routine. The weight, reps, distance and duration of the set become suggestions. The app makes the routine right after it saves the workout. If this step fails, the app still keeps the workout. A **Retry saving as routine** button then appears.
+If you did not start the workout from a saved routine, the summary shows **Also save as a routine**. Tick it to keep the workout for later. The app then makes a routine with the same title as the workout. Each ticked set becomes a set in the routine. The weight, reps, distance and duration of the set become suggestions. The app makes the routine right after it saves the workout. If this step fails, the app still keeps the workout. A **Retry saving as routine** button then appears.
 
 ### Without a connection
 
