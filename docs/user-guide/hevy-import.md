@@ -1,6 +1,6 @@
 # Importing from Hevy
 
-You can import your workouts and measurements from [Hevy](https://www.hevyapp.com/). This is not a sync. To get new Hevy workouts, you must import again.
+You can import your workouts and measurements from [Hevy](https://www.hevyapp.com/). Note that this is a one-off operation and not a sync. To get new Hevy workouts, you must import again.
 
 ## Steps
 
@@ -11,7 +11,7 @@ You can import your workouts and measurements from [Hevy](https://www.hevyapp.co
 
 ## Duplicates
 
-Dinatos recognizes a file by its content, not by its name. Hevy gives the same name to every export.
+Dinatos recognizes a file by its content, not by its name.
 
 - If you upload the identical file again, a dialog shows the date of the earlier import. If you confirm, Dinatos imports the file again and makes duplicate activities.
 - If the file is different, Dinatos imports it normally. This is true even if the file has only one new workout.

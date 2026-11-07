@@ -32,9 +32,3 @@ When you sign in for the first time, a short tour starts. The tour dims the scre
 - **Skip step** and **Skip tour** are always available.
 - The app offers the tour once for each account.
 - To see the tour again, open **Settings -> Take the tour again**.
-
-## Stay signed in
-
-A login lasts 30 days. After 30 days, or after you log out, the app shows the login screen.
-
-To log out, use the icon in the app bar. This ends that login on the server. Your other devices stay signed in.

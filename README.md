@@ -11,7 +11,7 @@ your own server.
 - Use the web app, the Android app or the Linux desktop app. The project plans a Garmin app.
 - Import runs from [intervals.icu](https://intervals.icu/) and workouts from
   [Hevy](https://hevy.com).
-- Connect an AI agent to the built-in MCP server.
+- Connect an AI assistant to the built-in MCP server.
 
 ## Screenshots
 
