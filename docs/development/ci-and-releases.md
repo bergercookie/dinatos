@@ -89,9 +89,14 @@ root `justfile`. Bump both together.
   a shebang must be executable. Fix formatting with
   `uvx --from shfmt-py shfmt -i 2 -w <file>`.
 - `markdownlint-cli2` lints Markdown; rules are in `.markdownlint-cli2.yaml`.
+- `actionlint` lints the GitHub Actions workflows (expressions, `needs:`,
+  action inputs).
+- `check-xml` checks the Android manifests and resources are well-formed XML.
+- `desktop-file-validate` validates `packaging/linux/dinatos.desktop`.
 
-All are pre-commit hooks installed as wheels or via `uvx`, so nothing needs
-installing system-wide. `just hooks` installs them as git pre-commit hooks.
+All are pre-commit hooks installed as wheels or via `uvx`, except
+`desktop-file-validate`, which needs the `desktop-file-utils` system package
+(`apt install desktop-file-utils`; CI installs it). `just hooks` installs them as git pre-commit hooks.
 
 ## Releases
 

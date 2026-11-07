@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
+
 project = "Dinatos"
 copyright = "2026, Nikos Koukis"
 author = "Nikos Koukis"
@@ -20,3 +25,21 @@ source_suffix = {".md": "markdown"}
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
+
+
+def _copy_screenshots(app: Sphinx, exception: Exception | None) -> None:
+    """index.md includes README.md, whose raw-HTML <img src="screenshots/...">
+    tags Sphinx does not track as assets: copy the PNGs next to the page."""
+    if exception is None and app.builder.format == "html":
+        import shutil
+        from pathlib import Path
+
+        src = Path(__file__).resolve().parent.parent / "screenshots"
+        dest = Path(app.outdir) / "screenshots"
+        dest.mkdir(exist_ok=True)
+        for png in src.glob("*.png"):
+            shutil.copy2(png, dest / png.name)
+
+
+def setup(app: Sphinx) -> None:
+    app.connect("build-finished", _copy_screenshots)

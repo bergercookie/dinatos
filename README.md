@@ -4,10 +4,13 @@ A self-hosted workout tracker. Log exercises, build routines, record
 workouts, and see your progress. Inspired by Hevy, built to run on your own
 server.
 
-- Multi-user accounts, exercises, routines, live workout logging
-- Stats: frequency, time, muscle split, best lifts
-- Import your history from Hevy (CSV) and Intervals.icu
-- Web, Android and Linux desktop apps, one backend
+- Log all your activities: cardio, strength and bodyweight exercises
+- Save frequently used activities as routines and reuse.
+- Select from a catalog exercises, or add your own.
+- Track bodyweight measurements and personal records.
+- Use from Web, Android and Linux desktop apps (garmin app coming soon)
+- Import runs from [intervals.icu](https://intervals.icu/) and workouts from [Hevy](https://hevy.com).
+- Connect with AI agent using embedded MCP server
 
 ## Screenshots
 
@@ -77,22 +80,19 @@ logging workouts, measurements, importing history.
 
 ## Contribute
 
-Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md): it
+Contributions are welcome. Start with [CONTRIBUTING.md](https://github.com/bergercookie/dinatos/blob/main/CONTRIBUTING.md): it
 gets you from clone to passing tests in a few commands.
 
+Day-to-day workflow, CI and releases: the
+[development guide](https://bergercookie.github.io/dinatos/development/index.html).
 How it is built: [architecture docs](https://bergercookie.github.io/dinatos/architecture/index.html).
 
 ## Releases
 
 Each release publishes a Docker image (`ghcr.io/bergercookie/dinatos`), a
 Linux `.deb` and `.AppImage`, and an Android APK. See the
-[releases page](https://github.com/bergercookie/dinatos/releases). The native
-apps ask for your server's URL on first launch.
+[releases page](https://github.com/bergercookie/dinatos/releases).
 
 ## Security
 
-Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
-
-## License
-
-[MIT](LICENSE)
+Report vulnerabilities privately: see [SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).

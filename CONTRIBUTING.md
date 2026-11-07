@@ -12,6 +12,12 @@ go deeper.
 - `docs/`: the documentation site
 - `e2e/`, `screenshots/`: browser tests and README screenshots
 
+## Where things are documented
+
+- [Development docs](https://bergercookie.github.io/dinatos/development/index.html): workflow, CI, releases
+- [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code is shaped this way
+- [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, useful for anyone)
+
 ## Set up
 
 Every task is a [`just`](https://github.com/casey/just) recipe. Run `just --list`
@@ -57,9 +63,3 @@ Open an [issue](https://github.com/bergercookie/dinatos/issues). For a
 larger change, open one first so we can agree on the approach.
 
 Security problems: do not open an issue, see [SECURITY.md](https://github.com/bergercookie/dinatos/blob/main/SECURITY.md).
-
-## Where things are documented
-
-- [Development docs](https://bergercookie.github.io/dinatos/development/index.html): workflow, CI, releases
-- [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code is shaped this way
-- [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, useful for anyone)
