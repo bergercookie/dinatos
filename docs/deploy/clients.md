@@ -15,7 +15,7 @@ Each tagged release publishes an Android APK, a Linux `.deb` package and a Linux
 
 To change the address later, use **Settings**.
 
-Dinatos has no build for macOS, Windows or iOS.
+Dinatos has no build for macOS, Windows or iOS. We can add one if people need it. To ask for a platform, [open a feature request](https://github.com/bergercookie/dinatos/issues/new?template=feature_request.md).
 
 ## Hosting the web app on its own origin
 
