@@ -407,7 +407,9 @@ client needs only the server URL and an API key.
 point `dinatos-mcp`. It is for clients that can only start a local program.
 
 - It defines no tools, so it cannot be different from the server.
-- Only `DINATOS_MCP_BASE_URL` and `DINATOS_MCP_API_KEY` configure it. It has
+- Only `DINATOS_MCP_BASE_URL` and `DINATOS_MCP_API_KEY` configure it. Both
+  are required, and neither has a default. If one is missing, the first
+  request fails with a `DinatosConfigError` that names the variable. It has
   no password or session option.
 - It is its own `uv` project. It imports `dinatos_backend` only in its
   tests. The tests run it against the real app in the same process.

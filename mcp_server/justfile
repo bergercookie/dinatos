@@ -41,6 +41,6 @@ check: lint check-lockfile test
 
 # Run the stdio proxy -- point an LLM harness's MCP client config at this (see
 # docs/user-guide/mcp-server.md); needs DINATOS_MCP_API_KEY (Settings > API keys
-# in the app) and DINATOS_MCP_BASE_URL set to your Dinatos server.
+# in the app) and DINATOS_MCP_BASE_URL (your Dinatos server), both required.
 run:
     uv run dinatos-mcp

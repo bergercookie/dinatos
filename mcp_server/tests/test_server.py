@@ -64,6 +64,15 @@ async def test_no_api_key_is_a_clear_error(
         await remote.list_tools()
 
 
+async def test_no_server_address_is_a_clear_error(
+    remote: RemoteTools, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("DINATOS_MCP_BASE_URL")
+    get_settings.cache_clear()
+    with pytest.raises(DinatosConfigError, match="DINATOS_MCP_BASE_URL"):
+        await remote.list_tools()
+
+
 async def test_a_wrong_api_key_is_refused(
     remote: RemoteTools, monkeypatch: pytest.MonkeyPatch
 ) -> None:

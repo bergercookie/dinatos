@@ -22,7 +22,7 @@ from dinatos_mcp.config import get_settings
 
 
 class DinatosConfigError(RuntimeError):
-    """No API key configured."""
+    """The server address or the API key is not configured."""
 
 
 class DinatosAuthError(RuntimeError):
@@ -40,6 +40,11 @@ class RemoteTools:
     @asynccontextmanager
     async def _session(self) -> AsyncIterator[ClientSession]:
         settings = get_settings()
+        if not settings.base_url:
+            raise DinatosConfigError(
+                "no Dinatos server address configured -- set DINATOS_MCP_BASE_URL to the "
+                "address you open in a browser, for example https://dinatos.example.com"
+            )
         if not settings.api_key:
             raise DinatosConfigError(
                 "no Dinatos API key configured -- create one in the app (Settings > API keys) "

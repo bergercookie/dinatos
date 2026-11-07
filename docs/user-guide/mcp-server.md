@@ -52,7 +52,7 @@ Some clients can only start a command. Claude Desktop, with its config file, is 
 
 | Variable | Meaning | Default |
 |---|---|---|
-| `DINATOS_MCP_BASE_URL` | The address that you open in a browser | `http://127.0.0.1:8000` |
+| `DINATOS_MCP_BASE_URL` | The address that you open in a browser, for example `https://dinatos.example.com` | None (required) |
 | `DINATOS_MCP_API_KEY` | Your API key | None (required) |
 
 ## Tools
