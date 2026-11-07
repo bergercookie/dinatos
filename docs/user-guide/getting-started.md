@@ -23,7 +23,7 @@ Use one of these methods:
 - Ask the operator for an email and password.
 - Tap **Register** on the login screen.
 
-The first account on a new instance becomes the administrator. If the operator turned off registration, the app hides the **Register** link. In this case, an administrator must create your account.
+The first account on a new instance becomes the administrator. If an administrator or the operator turned off registration, the app hides the **Register** link. In this case, an administrator must create your account.
 
 ## 3. Take the first-run tour
 

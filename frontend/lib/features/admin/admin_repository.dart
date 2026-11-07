@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_exception.dart';
 import '../../core/dio_provider.dart';
 import '../../core/file_io.dart';
+import '../../models/admin_settings.dart';
 import '../../models/data_transfer_result.dart';
 import '../../models/user.dart';
 
@@ -40,6 +41,30 @@ class AdminRepository {
         data: {'email': email, 'password': password, 'is_admin': isAdmin},
       );
       return User.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  Future<AdminSettings> getSettings() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/admin/settings');
+      return AdminSettings.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw ApiException.fromDioException(error);
+    }
+  }
+
+  /// Turns self-registration on or off (`PATCH /admin/settings`). The server
+  /// answers 409 while `DINATOS_ALLOW_REGISTRATION` is set; that surfaces as an
+  /// [ApiException] carrying the server's explanation.
+  Future<AdminSettings> setAllowRegistration({required bool allowed}) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        '/admin/settings',
+        data: {'allow_registration': allowed},
+      );
+      return AdminSettings.fromJson(response.data!);
     } on DioException catch (error) {
       throw ApiException.fromDioException(error);
     }

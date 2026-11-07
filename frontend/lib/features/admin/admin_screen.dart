@@ -73,10 +73,96 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
+              const _RegistrationCard(),
+              const SizedBox(height: AppSpacing.xl),
               const _BackupCard(),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Whether people can register themselves from the login screen.
+///
+/// When the operator set `DINATOS_ALLOW_REGISTRATION` on the server, that
+/// value wins: the switch shows it but is disabled, with the reason and the
+/// way out (clear the variable, restart), because the server would refuse the
+/// change anyway.
+class _RegistrationCard extends ConsumerStatefulWidget {
+  const _RegistrationCard();
+
+  @override
+  ConsumerState<_RegistrationCard> createState() => _RegistrationCardState();
+}
+
+class _RegistrationCardState extends ConsumerState<_RegistrationCard> {
+  bool _busy = false;
+
+  Future<void> _set(bool allowed) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(adminRepositoryProvider).setAllowRegistration(allowed: allowed);
+      ref.invalidate(adminSettingsProvider);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      // A 409 means the server has the variable set after all: re-read.
+      ref.invalidate(adminSettingsProvider);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(adminSettingsProvider);
+    return Card(
+      child: settings.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => ListTile(
+          leading: const Icon(Icons.error_outline),
+          title: const Text('Could not load the registration setting'),
+          subtitle: Text(error is ApiException ? error.message : '$error'),
+          trailing: TextButton(
+            onPressed: () => ref.invalidate(adminSettingsProvider),
+            child: const Text('Retry'),
+          ),
+        ),
+        data: (data) {
+          final locked = data.allowRegistrationLocked;
+          return Column(
+            children: [
+              SwitchListTile(
+                secondary: const Icon(Icons.how_to_reg_outlined),
+                title: const Text('Allow registration'),
+                subtitle: Text(
+                  data.allowRegistration
+                      ? 'Anyone who can reach this server can create an account.'
+                      : 'Only an admin can add accounts (Add user).',
+                ),
+                value: data.allowRegistration,
+                // `null` disables the switch.
+                onChanged: locked || _busy ? null : _set,
+              ),
+              if (locked)
+                ListTile(
+                  leading: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.error),
+                  title: const Text('Locked by the server settings'),
+                  subtitle: Text(
+                    'The environment variable DINATOS_ALLOW_REGISTRATION is set to '
+                    '${data.allowRegistration}, and it overrides this option. '
+                    'To change it here, clear the variable and restart the server.',
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

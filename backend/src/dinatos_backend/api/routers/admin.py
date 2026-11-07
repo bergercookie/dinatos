@@ -13,7 +13,12 @@ from dinatos_backend.api.deps import get_current_session, require_admin
 from dinatos_backend.db import get_db
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
-from dinatos_backend.schemas.auth import AdminUserCreate, UserRead
+from dinatos_backend.schemas.auth import (
+    AdminSettings,
+    AdminSettingsUpdate,
+    AdminUserCreate,
+    UserRead,
+)
 from dinatos_backend.schemas.backup import BackupRestoreResult, FullBackup
 from dinatos_backend.services.auth import EmailAlreadyRegisteredError, create_user
 from dinatos_backend.services.backup import (
@@ -21,6 +26,12 @@ from dinatos_backend.services.backup import (
     export_backup,
     parse_backup,
     restore_backup,
+)
+from dinatos_backend.services.instance_settings import (
+    REGISTRATION_ENV_VAR,
+    RegistrationLockedError,
+    get_registration_setting,
+    set_allow_registration,
 )
 
 # A backup holds the whole server; far more than any real instance's, but a
@@ -42,6 +53,34 @@ async def create_account(payload: AdminUserCreate, db: AsyncSession = Depends(ge
         return await create_user(db, payload.email, payload.password, is_admin=payload.is_admin)
     except EmailAlreadyRegisteredError as error:
         raise HTTPException(status.HTTP_409_CONFLICT, "email already registered") from error
+
+
+@router.get("/settings", response_model=AdminSettings)
+async def read_settings(db: AsyncSession = Depends(get_db)) -> AdminSettings:
+    registration = await get_registration_setting(db)
+    return AdminSettings(
+        allow_registration=registration.allowed, allow_registration_locked=registration.locked
+    )
+
+
+@router.patch("/settings", response_model=AdminSettings)
+async def update_settings(
+    payload: AdminSettingsUpdate, db: AsyncSession = Depends(get_db)
+) -> AdminSettings:
+    """Changes the options that are given. `allow_registration` is refused
+    with 409 while `DINATOS_ALLOW_REGISTRATION` is set: the variable wins, and
+    must be cleared (then the server restarted) before the app can change it.
+    """
+    if payload.allow_registration is not None:
+        try:
+            await set_allow_registration(db, payload.allow_registration)
+        except RegistrationLockedError as error:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"{REGISTRATION_ENV_VAR} is set, so registration cannot be changed here. "
+                f"Clear {REGISTRATION_ENV_VAR} and restart the server first.",
+            ) from error
+    return await read_settings(db)
 
 
 @router.get("/backup", response_model=FullBackup)

@@ -113,9 +113,24 @@ Known problems:
 ## Authentication
 
 The server supports many accounts. Anyone can call `POST /auth/register`,
-unless `DINATOS_ALLOW_REGISTRATION=false`. The first account on a new
-instance becomes the admin. This account can always register, so you can set
-up an instance that has registration off.
+unless registration is off. The first account on a new instance becomes the
+admin. This account can always register, so you can set up an instance that
+has registration off.
+
+Who decides whether registration is off:
+
+- If `DINATOS_ALLOW_REGISTRATION` is set (to `true` or `false`), the variable
+  wins. The server reads "set" from `Settings.model_fields_set`, because the
+  default `true` cannot tell "unset" from "set to true". An empty value counts
+  as unset (`env_ignore_empty`), so Compose can pass it through unset.
+- If the variable is unset, an admin chooses with `GET` and `PATCH
+  /admin/settings`. The choice lives in the `instance_settings` table (one
+  row, `NULL` until chosen, then included in the backup). Until an admin
+  chooses, registration is on.
+- `PATCH /admin/settings` returns `409` while the variable is set.
+  `GET /admin/settings` then reports `allow_registration_locked: true`, and the
+  app shows the switch disabled. The server also logs a warning at startup
+  (`services/instance_settings.py`).
 
 An admin can create accounts with `POST /admin/users`, also when the flag is
 off. The `require_admin` dependency protects `/admin/*`.

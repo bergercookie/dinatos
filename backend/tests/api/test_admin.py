@@ -11,7 +11,7 @@ _PASSWORD = "hunter22"
 @pytest.fixture
 def registration_disabled(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setattr(
-        "dinatos_backend.services.auth.get_settings",
+        "dinatos_backend.services.instance_settings.get_settings",
         lambda: Settings(allow_registration=False),
     )
     yield

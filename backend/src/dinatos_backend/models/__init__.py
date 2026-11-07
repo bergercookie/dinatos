@@ -9,6 +9,7 @@ from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.base import Base, TimestampMixin
 from dinatos_backend.models.exercise import Equipment, Exercise, ExerciseMuscle, MuscleGroup
 from dinatos_backend.models.hevy_import import HevyImportKind, HevyImportRecord
+from dinatos_backend.models.instance_settings import InstanceSettings
 from dinatos_backend.models.intervals_import import IntervalsImportedActivity
 from dinatos_backend.models.measurement import BodyMeasurement
 from dinatos_backend.models.planned_workout import PlannedWorkout
@@ -29,6 +30,7 @@ __all__ = [
     "ExerciseMuscle",
     "HevyImportKind",
     "HevyImportRecord",
+    "InstanceSettings",
     "IntervalsImportedActivity",
     "MuscleGroup",
     "PlannedWorkout",

@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dinatos_backend.config import get_settings
 from dinatos_backend.models.auth_session import AuthSession
 from dinatos_backend.models.user import User
+from dinatos_backend.services.instance_settings import get_registration_setting
 from dinatos_backend.services.starter_routines import seed_starter_routines
 
 _hasher = PasswordHasher()
@@ -53,11 +54,12 @@ async def _has_any_user(db: AsyncSession) -> bool:
 
 async def is_registration_open(db: AsyncSession) -> bool:
     """Whether `POST /auth/register` should currently be accepted: the
-    `allow_registration` setting, except that an instance with no accounts
+    registration setting (`DINATOS_ALLOW_REGISTRATION`, else the admin's choice,
+    see `services.instance_settings`), except that an instance with no accounts
     yet is always open -- nobody could create the first (admin) one
     otherwise, short of `admin_email`/`admin_password` being configured.
     """
-    return get_settings().allow_registration or not await _has_any_user(db)
+    return (await get_registration_setting(db)).allowed or not await _has_any_user(db)
 
 
 async def create_user(

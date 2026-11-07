@@ -32,3 +32,16 @@ class AuthConfig(BaseModel):
 
 class AdminUserCreate(UserCreate):
     is_admin: bool = False
+
+
+class AdminSettings(BaseModel):
+    """Server-wide options an admin can change (`GET`/`PATCH /admin/settings`)."""
+
+    allow_registration: bool
+    # True when `DINATOS_ALLOW_REGISTRATION` is set: `allow_registration` shows
+    # its value and cannot be changed here until the variable is cleared.
+    allow_registration_locked: bool
+
+
+class AdminSettingsUpdate(BaseModel):
+    allow_registration: bool | None = None

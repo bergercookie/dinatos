@@ -41,7 +41,7 @@ The app container listens on localhost only. To make it reachable from other mac
 | `DINATOS_UID`, `DINATOS_GID` | No | Owner of the Postgres data directory. Both default to `1000`. Set them to the output of `id -u` and `id -g`. |
 | `DINATOS_DATA_DIR` | No | Folder on the host for the data. The default is `./data`. |
 | `DINATOS_ADMIN_EMAIL`, `DINATOS_ADMIN_PASSWORD` | No | Set both to make this administrator account on the first start. Dinatos never changes the password of an existing account. |
-| `DINATOS_ALLOW_REGISTRATION` | No | `false` stops self-registration. The default is `true`. |
+| `DINATOS_ALLOW_REGISTRATION` | No | `false` stops self-registration. Leave it unset to let an administrator decide in **Settings -> Administration**. If you set it, the app locks that switch. |
 
 If you do not set the administrator variables, the first account that registers becomes the administrator. Administrators add users in **Settings -> Administration**.
 

@@ -4,7 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="DINATOS_", env_file=".env")
+    # `env_ignore_empty`: docker-compose passes an unset variable through as an
+    # empty string; that must count as "not set", not fail to parse as a bool.
+    model_config = SettingsConfigDict(env_prefix="DINATOS_", env_file=".env", env_ignore_empty=True)
 
     database_url: str = "postgresql+asyncpg://dinatos:dinatos@localhost:5432/dinatos"
 
@@ -45,6 +47,11 @@ class Settings(BaseSettings):
     # Never locks out the very first account: with no users yet there is no
     # admin to create one, so registration stays open until it exists --
     # see `services.auth.is_registration_open`.
+    #
+    # When the variable is set at all (true or false), it wins and the admin
+    # screen's switch is locked; when it is unset, an admin controls it from
+    # the app (`services.instance_settings`). Whether it was set is read from
+    # `model_fields_set`, so the default here is only the "nobody chose" value.
     allow_registration: bool = True
 
     # Seeds a standard catalog of common exercises into a brand new

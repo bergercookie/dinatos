@@ -72,6 +72,86 @@ void main() {
     );
   });
 
+  group('settings', () {
+    test('getSettings parses the registration switch and its lock', () async {
+      final dio = buildMockDio();
+      when(() => dio.get<Map<String, dynamic>>('/admin/settings')).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/admin/settings'),
+          statusCode: 200,
+          data: {'allow_registration': false, 'allow_registration_locked': true},
+        ),
+      );
+
+      final settings = await AdminRepository(dio).getSettings();
+
+      expect(settings.allowRegistration, isFalse);
+      expect(settings.allowRegistrationLocked, isTrue);
+    });
+
+    test('setAllowRegistration patches the option and returns the new state', () async {
+      final dio = buildMockDio();
+      when(() => dio.patch<Map<String, dynamic>>('/admin/settings', data: any(named: 'data')))
+          .thenAnswer(
+            (_) async => Response(
+              requestOptions: RequestOptions(path: '/admin/settings'),
+              statusCode: 200,
+              data: {'allow_registration': false, 'allow_registration_locked': false},
+            ),
+          );
+
+      final settings = await AdminRepository(dio).setAllowRegistration(allowed: false);
+
+      expect(settings.allowRegistration, isFalse);
+      verify(
+        () =>
+            dio.patch<Map<String, dynamic>>('/admin/settings', data: {'allow_registration': false}),
+      ).called(1);
+    });
+
+    test('setAllowRegistration surfaces the 409 explanation while the variable is set', () {
+      final dio = buildMockDio();
+      when(() => dio.patch<Map<String, dynamic>>('/admin/settings', data: any(named: 'data')))
+          .thenThrow(
+            DioException(
+              requestOptions: RequestOptions(path: '/admin/settings'),
+              response: Response(
+                requestOptions: RequestOptions(path: '/admin/settings'),
+                statusCode: 409,
+                data: {
+                  'detail': 'DINATOS_ALLOW_REGISTRATION is set, so registration cannot be changed',
+                },
+              ),
+            ),
+          );
+
+      expect(
+        AdminRepository(dio).setAllowRegistration(allowed: true),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.isConflict, 'isConflict', isTrue)
+              .having((e) => e.message, 'message', contains('DINATOS_ALLOW_REGISTRATION')),
+        ),
+      );
+    });
+
+    test('getSettings turns a failure into an ApiException', () {
+      final dio = buildMockDio();
+      when(() => dio.get<Map<String, dynamic>>('/admin/settings')).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/admin/settings'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/admin/settings'),
+            statusCode: 403,
+            data: {'detail': 'admin only'},
+          ),
+        ),
+      );
+
+      expect(AdminRepository(dio).getSettings(), throwsA(isA<ApiException>()));
+    });
+  });
+
   group('backup', () {
     test('downloadBackup returns the bytes under the server-suggested filename', () async {
       final dio = buildMockDio();

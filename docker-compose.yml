@@ -63,7 +63,10 @@ services:
         condition: service_healthy
     environment:
       DINATOS_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dinatos}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dinatos}
-      DINATOS_ALLOW_REGISTRATION: ${DINATOS_ALLOW_REGISTRATION:-true}
+      # Empty when unset: the app treats "empty" as "not set", so an admin can
+      # then switch registration on and off in Settings -> Administration. Any
+      # value here (true or false) overrides that switch and locks it.
+      DINATOS_ALLOW_REGISTRATION: ${DINATOS_ALLOW_REGISTRATION:-}
       DINATOS_MCP_ENABLED: ${DINATOS_MCP_ENABLED:-true}
       DINATOS_ADMIN_EMAIL: ${DINATOS_ADMIN_EMAIL:-}
       DINATOS_ADMIN_PASSWORD: ${DINATOS_ADMIN_PASSWORD:-}
