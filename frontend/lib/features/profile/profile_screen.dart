@@ -9,13 +9,11 @@ import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_state.dart';
 import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
-import '../../core/file_io.dart';
 import '../../core/insecure_tls_provider.dart';
 import '../../core/server_url_provider.dart';
 import '../../core/theme_mode_provider.dart';
 import '../../core/widgets/error_banner.dart';
 import '../../core/widgets/responsive_body.dart';
-import '../../models/data_transfer_result.dart';
 import '../../models/profile.dart';
 import '../activities/activities_providers.dart';
 import '../exercises/exercises_providers.dart';
@@ -140,65 +138,6 @@ class _WorkoutxKeyDialogState extends State<_WorkoutxKeyDialog> {
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: const Text('Save'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Pops the chosen [UserImportMode], or null if cancelled. Replace is the
-/// destructive one and says exactly what it deletes.
-class _ImportModeDialog extends StatefulWidget {
-  const _ImportModeDialog({required this.fileName});
-
-  final String fileName;
-
-  @override
-  State<_ImportModeDialog> createState() => _ImportModeDialogState();
-}
-
-class _ImportModeDialogState extends State<_ImportModeDialog> {
-  UserImportMode _mode = UserImportMode.merge;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Import my data'),
-      content: SingleChildScrollView(
-        child: RadioGroup<UserImportMode>(
-          groupValue: _mode,
-          onChanged: (value) => setState(() => _mode = value ?? _mode),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('From "${widget.fileName}".'),
-              const SizedBox(height: AppSpacing.md),
-              const RadioListTile<UserImportMode>(
-                value: UserImportMode.merge,
-                title: Text('Merge'),
-                subtitle: Text(
-                  'Keep what you have and add what is missing. Routines with the same name, '
-                  'and activities or measurements at the same time, are skipped.',
-                ),
-              ),
-              const RadioListTile<UserImportMode>(
-                value: UserImportMode.replace,
-                title: Text('Replace my data'),
-                subtitle: Text(
-                  'First deletes ALL your routines, activities and measurements, then imports '
-                  'the file.',
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, _mode),
-          child: Text(_mode == UserImportMode.replace ? 'Replace and import' : 'Import'),
         ),
       ],
     );
@@ -356,38 +295,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     }
   }
 
-  Future<void> _exportData() async {
-    try {
-      final file = await ref.read(profileRepositoryProvider).exportMyData();
-      final saved = await ref.read(fileSaverProvider)(file);
-      if (saved) _showMessage('Your data was saved as ${file.name}.');
-    } on ApiException catch (error) {
-      _showMessage('Export failed: ${error.message}');
-    }
-  }
-
-  Future<void> _importData() async {
-    final file = await ref.read(jsonFilePickerProvider)();
-    if (file == null || !mounted) return;
-    final mode = await showDialog<UserImportMode>(
-      context: context,
-      builder: (context) => _ImportModeDialog(fileName: file.name),
-    );
-    if (mode == null) return;
-    try {
-      final result = await ref.read(profileRepositoryProvider).importMyData(file, mode);
-      ref.invalidate(profileProvider);
-      ref.invalidate(routineListProvider);
-      ref.invalidate(activityListProvider);
-      ref.invalidate(measurementListProvider);
-      ref.invalidate(exerciseListProvider);
-      ref.invalidate(exercisePagingProvider);
-      _showMessage(result.summary());
-    } on ApiException catch (error) {
-      _showMessage('Import failed, nothing was changed: ${error.message}');
-    }
-  }
-
   Future<void> _clearData() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -481,32 +388,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.file_upload_outlined),
-                  title: const Text('Import from Hevy'),
-                  subtitle: const Text('Upload your Hevy workout/measurement CSV exports'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.go('/profile/import-hevy'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.sync_alt_outlined),
-                  title: const Text('Import from Intervals.icu'),
-                  subtitle: const Text('Choose which Intervals.icu activities to bring over'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.go('/profile/import-intervals'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.download_outlined),
-                  title: const Text('Export my data'),
+                  leading: const Icon(Icons.import_export_outlined),
+                  title: const Text('Import and export'),
                   subtitle: const Text(
-                    'Save your settings, routines, activities and measurements as a file',
+                    'Bring in your Hevy or Intervals.icu history, or save and load your data',
                   ),
-                  onTap: _exportData,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.upload_file_outlined),
-                  title: const Text('Import my data'),
-                  subtitle: const Text('Load a file you exported from Dinatos'),
-                  onTap: _importData,
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/profile/import-export'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.explore_outlined),
@@ -515,23 +403,40 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => ref.read(onboardingProvider.notifier).restart(),
                 ),
-                // Both open the backend's own pages in a new browser tab --
-                // the server URL is whatever this install is pointed at.
-                ListTile(
+                // One tile, two sub-options. Both open the backend's own pages
+                // in a new browser tab -- the server URL is whatever this
+                // install is pointed at. The transparent dividers keep the
+                // expanded tile from drawing lines inside the card.
+                ExpansionTile(
                   leading: const Icon(Icons.api_outlined),
                   title: const Text('API documentation'),
-                  subtitle: const Text('Browse and try out the REST API (Swagger UI)'),
-                  trailing: const Icon(Icons.open_in_new_rounded),
-                  onTap: () =>
-                      openExternalLink(context, ref, apiDocsUrl(ref.read(serverUrlProvider))),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.article_outlined),
-                  title: const Text('API reference'),
-                  subtitle: const Text('Read-only view of the same API (ReDoc)'),
-                  trailing: const Icon(Icons.open_in_new_rounded),
-                  onTap: () =>
-                      openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
+                  subtitle: const Text('Browse the REST API in your browser'),
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(
+                        left: AppSpacing.xxl * 2,
+                        right: AppSpacing.lg,
+                      ),
+                      title: const Text('Swagger UI'),
+                      subtitle: const Text('Browse and try out the API'),
+                      trailing: const Icon(Icons.open_in_new_rounded),
+                      onTap: () =>
+                          openExternalLink(context, ref, apiDocsUrl(ref.read(serverUrlProvider))),
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(
+                        left: AppSpacing.xxl * 2,
+                        right: AppSpacing.lg,
+                      ),
+                      title: const Text('ReDoc'),
+                      subtitle: const Text('Read-only view of the same API'),
+                      trailing: const Icon(Icons.open_in_new_rounded),
+                      onTap: () =>
+                          openExternalLink(context, ref, apiRedocUrl(ref.read(serverUrlProvider))),
+                    ),
+                  ],
                 ),
                 ListTile(
                   leading: const Icon(Icons.event_note_outlined),

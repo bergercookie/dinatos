@@ -153,14 +153,19 @@ void main() {
     container.read(routerProvider).go('/profile');
     await tester.pumpAndSettle();
 
-    // The profile list is longer than the test viewport.
+    // The profile list is longer than the test viewport. "API documentation"
+    // is one expandable tile; its two sub-options do the opening.
     await tester.ensureVisible(find.text('API documentation'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('API documentation'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('API reference'));
+    await tester.ensureVisible(find.text('Swagger UI'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('API reference'));
+    await tester.tap(find.text('Swagger UI'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('ReDoc'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ReDoc'));
     await tester.pumpAndSettle();
 
     // Both are handed to the launcher as the backend's own pages, and the app

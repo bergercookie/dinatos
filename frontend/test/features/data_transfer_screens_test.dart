@@ -10,7 +10,7 @@ import 'package:dinatos_frontend/features/admin/admin_repository.dart';
 import 'package:dinatos_frontend/features/admin/admin_screen.dart';
 import 'package:dinatos_frontend/features/profile/profile_providers.dart';
 import 'package:dinatos_frontend/features/profile/profile_repository.dart';
-import 'package:dinatos_frontend/features/profile/profile_screen.dart';
+import 'package:dinatos_frontend/features/profile/import_export_screen.dart';
 import 'package:dinatos_frontend/models/data_transfer_result.dart';
 import 'package:dinatos_frontend/models/profile.dart';
 import 'package:dinatos_frontend/models/user.dart';
@@ -183,14 +183,12 @@ void main() {
     });
   });
 
-  group('settings: export / import my data', () {
+  group('import and export screen: my data', () {
     late MockProfileRepository repository;
     late List<FileContent> saved;
     FileContent? picked;
 
     Future<void> pump(WidgetTester tester) async {
-      // Tall enough that the whole Data card (Hevy, Intervals.icu, export,
-      // import...) is on screen without scrolling.
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -211,7 +209,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(home: ProfileScreen()),
+          child: const MaterialApp(home: ImportExportScreen()),
         ),
       );
       await tester.pumpAndSettle();

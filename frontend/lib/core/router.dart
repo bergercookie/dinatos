@@ -25,6 +25,7 @@ import '../features/measurements/measurement_list_screen.dart';
 import '../features/imports/hevy_import_screen.dart';
 import '../features/imports/intervals_import_screen.dart';
 import '../features/profile/about_screen.dart';
+import '../features/profile/import_export_screen.dart';
 import '../features/personas/persona_screen.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -182,13 +183,28 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'import-hevy',
-                    builder: (context, state) => const HevyImportScreen(),
+                    redirect: (context, state) => '/profile/import-export/hevy',
                   ),
                   GoRoute(
                     path: 'import-intervals',
-                    builder: (context, state) => const IntervalsImportScreen(),
+                    redirect: (context, state) => '/profile/import-export/intervals',
                   ),
                   GoRoute(path: 'about', builder: (context, state) => const AboutScreen()),
+                  GoRoute(
+                    path: 'import-export',
+                    builder: (context, state) => const ImportExportScreen(),
+                    routes: [
+                      // Children, so their back button returns to the
+                      // Import and export screen, not to Settings.
+                      GoRoute(path: 'hevy', builder: (context, state) => const HevyImportScreen()),
+                      GoRoute(
+                        path: 'intervals',
+                        builder: (context, state) => const IntervalsImportScreen(),
+                      ),
+                    ],
+                  ),
+                  // The importers' former paths (before the Import and export
+                  // screen existed) still work, e.g. from a bookmarked web URL.
                   GoRoute(path: 'api-keys', builder: (context, state) => const ApiKeysScreen()),
                   GoRoute(
                     path: 'calendar-feed',

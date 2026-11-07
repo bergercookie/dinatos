@@ -1,11 +1,11 @@
 # Importing from Hevy
 
-You can import your workouts and measurements from [Hevy](https://www.hevyapp.com/) one time. This is not a sync. To get new Hevy workouts, you must import again.
+You can import your workouts and measurements from [Hevy](https://www.hevyapp.com/). This is not a sync. To get new Hevy workouts, you must import again.
 
 ## Steps
 
 1. In Hevy, open **Settings -> Export**. Hevy gives you two CSV files: one for workouts and one for measurements.
-2. In Dinatos, open **Settings -> Import from Hevy**.
+2. In Dinatos, open **Settings -> Import and export -> Import from Hevy**.
 3. Upload each CSV file, one after the other.
 4. When the import ends, look at the list of new exercises. See [Exercises](#exercises).
 

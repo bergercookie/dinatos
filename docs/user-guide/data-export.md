@@ -4,14 +4,14 @@ You can save your own data to a file and load it into any Dinatos account. You c
 
 ## Export
 
-1. Open **Settings -> Export my data**.
+1. Open **Settings -> Import and export -> Export my data**.
 2. Save the JSON file.
 
 The file holds your settings (height and units), routines, activities, body measurements, planned workouts, and the exercises that they use. The file never contains your password, your WorkoutX API key, or the data of other users.
 
 ## Import
 
-1. Open **Settings -> Import my data**.
+1. Open **Settings -> Import and export -> Import my data**.
 2. Choose a file that you exported from Dinatos.
 3. Choose a mode.
 4. Confirm.

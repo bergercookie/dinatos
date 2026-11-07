@@ -5,7 +5,7 @@ You can import chosen activities from [Intervals.icu](https://intervals.icu) one
 ## Steps
 
 1. In Intervals.icu, open **Settings -> Developer Settings**. Create or copy your **API key**.
-2. In Dinatos, open **Settings -> Import from Intervals.icu**.
+2. In Dinatos, open **Settings -> Import and export -> Import from Intervals.icu**.
 3. Paste the API key.
 4. Leave **Athlete ID** at `0`. This value means the owner of the key. To use an account that you have access to, enter the ID of that account, for example `i12345`.
 5. Choose the **From** date. The range ends today.
