@@ -12,6 +12,13 @@ docs:
     uv run --project ../backend --group docs sphinx-build -W --keep-going -b html . _build/html
     @echo "Open docs/_build/html/index.html"
 
-# Rebuild and serve on http://127.0.0.1:8000 while you edit.
-docs-serve: docs
-    python3 -m http.server 8000 --directory _build/html
+# Serve on http://127.0.0.1:8000 and rebuild + reload the browser on every edit.
+# index.md and development/index.md include ../README.md and ../CONTRIBUTING.md,
+# which are outside this folder, so they (and the screenshots the README shows)
+# are watched explicitly. Warnings do not stop it here; `just docs docs` is the
+# strict build CI runs.
+docs-serve:
+    uv run --project ../backend --group docs sphinx-autobuild . _build/html \
+        --host 127.0.0.1 --port 8000 \
+        --watch ../README.md --watch ../CONTRIBUTING.md --watch ../screenshots \
+        --ignore '**/_build/**'

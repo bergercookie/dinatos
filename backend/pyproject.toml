@@ -32,6 +32,8 @@ docs = [
     "furo>=2024.8",
     "myst-parser>=4.0",
     "sphinx>=8.1",
+    # `just docs docs-serve`: rebuilds and reloads the browser on every edit.
+    "sphinx-autobuild>=2024.10",
 ]
 # A fresh, throwaway Postgres for anything that needs one without touching
 # a developer's own -- shared by the migrations test suite (`dev`, below)

@@ -60,8 +60,12 @@ GitHub Pages.
 
 ```bash
 just docs docs         # build; warnings are errors (-W --keep-going)
-just docs docs-serve   # build, then serve on http://127.0.0.1:8000
+just docs docs-serve   # serve on http://127.0.0.1:8000; rebuild and reload on every edit
 ```
+
+`docs-serve` also watches `README.md`, `CONTRIBUTING.md` and `screenshots/`.
+These files are outside `docs/`, but the index pages include them. It does not
+fail on warnings, so run `just docs docs` before you push.
 
 A broken cross-link or toctree entry fails the build locally and in CI. `just
 check` includes the build.
