@@ -1,0 +1,73 @@
+name: Trivy
+
+# Vulnerability, secret and config scans. New CVEs appear without any commit,
+# so this also runs weekly. The image scan before a release lives in
+# release.yml (it must run before the push); here the weekly job re-scans the
+# image that is already published. Shared settings: trivy.yaml.
+on:
+  pull_request:
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # Dependencies (uv.lock, pubspec.lock) and committed secrets.
+      - name: Scan dependencies and secrets
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          trivy-config: trivy.yaml
+          exit-code: '1'
+      # Dockerfile and other IaC files.
+      - name: Scan configuration
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          scan-type: config
+          scan-ref: .
+          trivy-config: trivy.yaml
+          exit-code: '1'
+
+  published-image:
+    # Only on the schedule or by hand: a PR does not change the published image.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report HIGH and CRITICAL findings
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          image-ref: ghcr.io/${{ github.repository_owner }}/dinatos:latest
+          scanners: vuln
+          trivy-config: trivy.yaml
+          exit-code: '0'
+      - name: Fail on CRITICAL findings
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          image-ref: ghcr.io/${{ github.repository_owner }}/dinatos:latest
+          scanners: vuln
+          severity: CRITICAL
+          trivy-config: trivy.yaml
+          exit-code: '1'

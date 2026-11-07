@@ -84,6 +84,43 @@ exclusion.
 
 `.pre-commit-config.yaml` and the root `justfile` both set the version of `lychee-bin`. When you change the version, change both files.
 
+## Security scanning
+
+[Trivy](https://trivy.dev) looks for known vulnerabilities, committed secrets
+and unsafe configuration. New CVEs appear without any commit, so the scans run
+in three places. The file `trivy.yaml` holds the settings that all of them
+share. Only fixable HIGH and CRITICAL findings count, because no PR can act on
+a CVE that has no fix.
+
+| Scan | When | What it checks | Effect of a finding |
+|---|---|---|---|
+| Dependencies and secrets | Every PR, and weekly | `uv.lock`, `pubspec.lock`, the working tree | The job fails |
+| Configuration | Every PR, and weekly | The `Dockerfile` and other infrastructure files | The job fails |
+| Image, before the push | Every release and nightly | The built Docker image | A fixable CRITICAL finding stops the release |
+| Published image | Weekly | `ghcr.io/<owner>/dinatos:latest` | A CRITICAL finding fails the job |
+
+The `trivy.yml` workflow runs the first two scans and the weekly image scan.
+The `docker` job in `release.yml` builds the image, scans it, and pushes it
+only if the scan passes. The scan is before the push on purpose, because you
+cannot take a pushed image back.
+
+To run the dependency, secret and configuration scans on your computer, run
+`just trivy`. This needs Docker and network access. It is not part of
+`just check`, because it downloads the Trivy database.
+
+If a finding blocks you and the fix is not possible, add the finding to
+`.trivyignore.yaml`. Give each entry a reason (`statement`) and an expiry date
+(`expired_at`). The finding then returns for review.
+
+Notes:
+
+- Trivy reads `pubspec.lock`, but its advisory data for Dart is thinner than
+  for Python. Treat the Flutter result as a best effort.
+- The configuration scan covers the `Dockerfile` best. It overlaps with
+  `hadolint` and `actionlint`, which stay as they are.
+- The workflows print the results in the job log. They do not upload them to
+  the GitHub code-scanning tab.
+
 ## Lint hooks
 
 `just check` runs `just lint`. This recipe runs every pre-commit hook over the
@@ -125,10 +162,10 @@ just release       # create and push that tag at HEAD
 
 The workflow builds these items in parallel:
 
-- **Docker image** (the backend and the built web app). The workflow pushes it
-  to `ghcr.io/<owner>/dinatos` with the tags `<version>` and `latest`. It is
-  for `linux/amd64` only. The `Dockerfile` builds the Flutter web app in an
-  earlier stage.
+- **Docker image** (the backend and the built web app). The workflow scans it
+  with Trivy, then pushes it to `ghcr.io/<owner>/dinatos` with the tags
+  `<version>` and `latest`. It is for `linux/amd64` only. The `Dockerfile`
+  builds the Flutter web app in an earlier stage.
 - **Linux desktop client** as a `.deb` package and an `.AppImage` file. Both
   come from one `flutter build linux --release` bundle.
 - **Android APK**, signed with the debug key. A real release keystore does not
@@ -146,6 +183,9 @@ Before you push a tag, read these cautions:
   on GHCR. For example, the `.deb` step can fail after the workflow pushed the
   Docker image. Before you tag, test changes to `packaging/linux/` or the
   `Dockerfile` on your computer.
+- **Scan failure.** If Trivy finds a fixable CRITICAL vulnerability, the
+  `docker` job stops before the push. The other jobs continue. See
+  [Security scanning](#security-scanning) for how to fix or accept the finding.
 
 ### Building the artifacts locally
 

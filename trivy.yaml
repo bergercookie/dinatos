@@ -1,0 +1,17 @@
+# Shared Trivy settings: CI (.github/workflows/trivy.yml, release.yml) and
+# `just trivy` read this file. See docs/development/ci-and-releases.md.
+#
+# Only fixable HIGH and CRITICAL findings count: Debian images carry many CVEs
+# that have no fix yet, and no PR can act on those.
+severity:
+  - HIGH
+  - CRITICAL
+ignore-unfixed: true
+ignorefile: .trivyignore.yaml
+scan:
+  skip-dirs:
+    - "**/node_modules"
+    - "**/.venv"
+    - "**/.dart_tool"
+    - "**/build"
+    - docs/_build

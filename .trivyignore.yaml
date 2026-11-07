@@ -1,0 +1,18 @@
+# Accepted Trivy findings. Add an entry only with a reason and an expiry date,
+# so the finding comes back for review. Example:
+#
+# vulnerabilities:
+#   - id: CVE-2025-12345
+#     statement: Not reachable: we never call the affected function.
+#     expired_at: 2026-12-31
+vulnerabilities: []
+
+misconfigurations:
+  - id: DS-0002
+    paths:
+      - packaging/linux/Dockerfile.build
+    statement: >-
+      Build-only container for the .deb (just packaging build-deb-docker). It
+      never runs the app. It runs as root so docker-build.sh can chown the
+      output files to the host user.
+    expired_at: 2027-05-07

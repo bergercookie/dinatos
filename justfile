@@ -42,6 +42,10 @@ lint:
 check-links:
     uvx --from lychee-bin==0.24.2 lychee --config lychee.toml .
 
+# Scan dependencies, secrets and config with Trivy (needs Docker and network; not part of `check` -- see docs/development/ci-and-releases.md).
+trivy:
+    docker run --rm -v "$PWD":/src -w /src aquasec/trivy:0.76.2 fs --config trivy.yaml --scanners vuln,secret,misconfig --exit-code 1 .
+
 # Install the git pre-commit hooks.
 hooks:
     uvx pre-commit install

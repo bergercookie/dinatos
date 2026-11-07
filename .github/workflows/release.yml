@@ -63,10 +63,49 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      # Build first, scan, and only then push: a pushed image cannot be rolled
+      # back (see docs/development/ci-and-releases.md). The second build step
+      # reuses the first one's layers from the GitHub Actions cache, so the long
+      # Flutter stage does not run twice.
+      - id: meta
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dinatos" >> "$GITHUB_OUTPUT"
+      - name: Build the image (not pushed yet)
+        uses: docker/build-push-action@v6
         with:
           # Repo root, not backend/: the Dockerfile's frontend-builder stage
           # needs frontend/ too -- see the Dockerfile's own top comment.
+          context: .
+          load: true
+          push: false
+          platforms: linux/amd64
+          build-args: |
+            APP_VERSION=${{ needs.version.outputs.version }}
+            GIT_COMMIT=${{ github.sha }}
+          tags: dinatos:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # HIGH and CRITICAL are listed for the log; only a fixable CRITICAL stops
+      # the release. A finding that cannot be fixed goes in .trivyignore.yaml.
+      - name: Report HIGH and CRITICAL findings
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          image-ref: dinatos:scan
+          scanners: vuln
+          trivy-config: trivy.yaml
+          exit-code: '0'
+      - name: Fail on CRITICAL findings
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          version: v0.76.2
+          image-ref: dinatos:scan
+          scanners: vuln
+          severity: CRITICAL
+          trivy-config: trivy.yaml
+          exit-code: '1'
+      - name: Push the image
+        uses: docker/build-push-action@v6
+        with:
           context: .
           push: true
           # amd64 only (see the project's release notes) -- add
@@ -78,8 +117,9 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
           # `latest` only moves on a stable release; nightlies move `nightly`.
           tags: |
-            ghcr.io/${{ github.repository_owner }}/dinatos:${{ needs.version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/dinatos:${{ inputs.prerelease && 'nightly' || 'latest' }}
+            ${{ steps.meta.outputs.image }}:${{ needs.version.outputs.version }}
+            ${{ steps.meta.outputs.image }}:${{ inputs.prerelease && 'nightly' || 'latest' }}
+          cache-from: type=gha
 
   android-apk:
     needs: version
