@@ -1,31 +1,22 @@
 # Environment setup
 
-This page shows how to install the tools you need to build and test Dinatos.
-You can use Devbox to install everything with one command. You can also
-install the tools by hand. For the shortest path (Python, `uv` and `just`),
-see [Contributing](index.md).
+> [!TIP]
+> Always install [`devbox`](https://www.jetify.com/devbox) and
+> [`just`](https://just.systems/man/en/) first. We use `devbox` to install all
+> the project dependencies and set up a shell that's suitable for development
+> and we use `just` as the source of truth and the main point of interaction
+> with everything in this repository.
 
 Every task in this repository is a [`just`](https://github.com/casey/just)
 recipe. To see all recipes, run `just --list`. To run a recipe from the
 `justfile` of a subdirectory, use `just <module> <recipe>`. For example, run
 `just backend test`.
 
-## What needs what
-
-| You want to run | You need |
-|---|---|
-| `just install`, `just check` | Python 3.12, `uv`, `just` 1.31 or newer |
-| `just backend test-migrations`, `just e2e test`, `just dev`, `just docker up` | Docker |
-| `just frontend check`, `just e2e test`, `just screenshots generate` | Flutter SDK |
-
-`just check` does not need a database. The backend tests use in-memory
-SQLite.
-
 ## Devbox (recommended)
 
-[Devbox](https://www.jetify.com/devbox) installs Python 3.12, `uv`, `just`,
-Flutter, CMake and Git into an isolated shell. It does not change the
-packages of your system.
+[Devbox](https://www.jetify.com/devbox) installs the tools in an isolated
+shell. It does not change the packages of your system. `devbox.json` lists
+them: Python 3.12, `uv`, `just`, Flutter (with Dart), CMake and Git.
 
 ```bash
 ./tools/install-devbox.sh   # installs Devbox if missing, then `devbox install`
@@ -36,18 +27,41 @@ just check
 
 - `devbox.json` pins `python@3.12`. The other tools use `@latest`. If a
   recipe fails only inside `devbox shell`, run `devbox update`.
-- Devbox does not provide a Docker daemon. It uses the daemon of your host.
-  Make sure Docker runs on the host.
 - If you see the error "Modules are currently unstable", you are not in the
   Devbox shell, or your `just` is too old. To check, run `just --version`.
 
+## What Devbox does not install
+
+Install these items yourself, and only when you need them. `just check` needs
+none of them: the backend tests use in-memory SQLite, and the Flutter tests run
+headless, without Chrome or the Android SDK.
+
+| Item | Needed for | How to get it |
+|---|---|---|
+| Docker (the daemon) | `just dev`, `just docker up`, `just backend test-migrations`, `just e2e test`, `just screenshots generate`, `just trivy` | Install Docker on your host. Devbox uses the daemon of the host. If `docker ps` cannot connect, start the daemon. Do not assume that Docker is missing. |
+| Chromium for Playwright | `just e2e test`, `just screenshots generate` | Run `just e2e install` (or `just screenshots install`). It downloads the browser. |
+| Android SDK and a JDK (17 or newer) | `just packaging build-apk`, `just android ...` | Run `./tools/install-android-sdk.sh` for the SDK. Install a JDK with your package manager. The emulator (`just android emulator`) also needs KVM (`/dev/kvm`). |
+| Linux desktop build libraries | `flutter build linux`, `just packaging build-deb` and `build-appimage` | Install `clang ninja-build pkg-config libgtk-3-dev libsecret-1-dev` with `apt`. Or use the `*-docker` recipes, which need only Docker. See [Releases and packaging](releases.md#linux-desktop-target). |
+| `desktop-file-utils` | The `desktop-file-validate` pre-commit hook (`just lint`) | Install it with `apt install desktop-file-utils`. |
+
+To start the Docker daemon by hand:
+
+```bash
+sudo dockerd > /tmp/dockerd.log 2>&1 &
+```
+
 ## Manual setup
+
+Use this section only if you do not use Devbox.
 
 ### `just` 1.31 or newer
 
 The root `justfile` loads the `justfile` of each package with `mod`. Before
-`just` 1.31, `mod` was unstable. The `just` package from Ubuntu's `apt` is
-version 1.21. It fails with the error "Modules are currently unstable".
+`just` 1.31, `mod` was unstable.
+
+> [!WARNING]
+> The `just` package from Ubuntu's `apt` is version 1.21. It fails with the
+> error "Modules are currently unstable".
 
 Do not use `--unstable` or `JUST_UNSTABLE=1` as a workaround. Install a
 current build:
@@ -66,50 +80,16 @@ curl -sSfL "https://github.com/casey/just/releases/download/$V/just-$V-x86_64-un
     | tar -xzf - -C /usr/local/bin just
 ```
 
-### Python and `uv`
+### Python, `uv` and Flutter
 
-Install Python 3.12 and [`uv`](https://docs.astral.sh/uv/). Then run these
-recipes:
+Install Python 3.12, [`uv`](https://docs.astral.sh/uv/) and the
+[Flutter SDK](https://docs.flutter.dev/get-started/install/linux). No `apt`
+package has the Flutter SDK. Then run these recipes:
 
 ```bash
 just install   # backend and MCP server virtualenvs (uv sync)
 just check     # lint, tests, docs build
 ```
-
-### Docker
-
-The table in "What needs what" shows which recipes need Docker. If
-`docker ps` cannot connect to the daemon, start the daemon. Do not assume
-that Docker is missing.
-
-```bash
-sudo dockerd > /tmp/dockerd.log 2>&1 &
-```
-
-### Flutter SDK
-
-The `frontend/` directory needs a real Flutter SDK in `PATH`. No `apt` package has it.
-
-```bash
-curl -o /tmp/flutter.tar.xz \
-    https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_<version>-stable.tar.xz
-tar -xf /tmp/flutter.tar.xz -C /opt   # -> /opt/flutter/bin/flutter
-export PATH="/opt/flutter/bin:$PATH"
-git config --global --add safe.directory /opt/flutter   # else "dubious ownership"
-flutter config --no-analytics && dart --disable-analytics
-```
-
-To find the current `<version>`, see
-[releases_linux.json](https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json).
-If you run Flutter as root, it prints the banner "trying to run flutter as
-root". The banner is harmless.
-
-`just frontend check` does not need Chrome or the Android SDK. The tests run
-headless. Only a build for one platform needs the toolchain of that platform:
-
-- Linux desktop (`flutter build linux`): `clang cmake ninja-build pkg-config
-  libgtk-3-dev libsecret-1-dev`.
-- Android: the Android SDK. See [Releases and packaging](releases.md#linux-desktop-target).
 
 ### `.env` files
 

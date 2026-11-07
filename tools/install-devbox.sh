@@ -2,7 +2,9 @@
 # Install devbox for Dinatos development.
 #
 # Devbox provides a reproducible development environment with the tools needed
-# by Dinatos: Python, uv, just, Docker, Flutter, CMake, and Git.
+# by Dinatos: Python, uv, just, Flutter, CMake, and Git. It does not install
+# Docker, the Android SDK or the Linux desktop build libraries: see
+# docs/development/environment-setup.md ("What Devbox does not install").
 #
 # Usage:
 #   ./tools/install-devbox.sh
