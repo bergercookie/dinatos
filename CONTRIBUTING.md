@@ -1,8 +1,7 @@
 # Contributing
 
-Thanks for helping. This page gets you from clone to a passing build; the
-[development docs](https://bergercookie.github.io/dinatos/development/index.html)
-go deeper.
+Thanks for helping. This page gets you from clone to a passing build. The
+pages listed under "Where things are documented" go deeper.
 
 ## The project in one minute
 
@@ -14,7 +13,9 @@ go deeper.
 
 ## Where things are documented
 
-- [Development docs](https://bergercookie.github.io/dinatos/development/index.html): workflow, CI, releases
+- [Environment setup](https://bergercookie.github.io/dinatos/development/environment-setup.html): install the tools
+- [Running and testing](https://bergercookie.github.io/dinatos/development/workflow.html): run the app and the tests
+- [CI and releases](https://bergercookie.github.io/dinatos/development/ci-and-releases.html): what runs on your PR, how releases ship
 - [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code is shaped this way
 - [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, useful for anyone)
 

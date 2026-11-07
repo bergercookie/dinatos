@@ -2,7 +2,7 @@
 
 How to install the tools you need to build and test Dinatos. Use Devbox
 for one-command setup, or install tools by hand. For the shortest path
-(Python, `uv`, `just`), see [Contributing](contributing.md).
+(Python, `uv`, `just`), see [Contributing](index.md).
 
 Every task in this repo is a [`just`](https://github.com/casey/just) recipe.
 `just --list` shows them all; `just <module> <recipe>` runs one from a
