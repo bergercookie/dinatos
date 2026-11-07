@@ -544,6 +544,7 @@ docs = [
     { name = "furo", specifier = ">=2024.8" },
     { name = "myst-parser", specifier = ">=4.0" },
     { name = "sphinx", specifier = ">=8.1" },
+    { name = "sphinx-autobuild", specifier = ">=2024.10" },
 ]
 e2e = [
     { name = "playwright", specifier = ">=1.48" },
