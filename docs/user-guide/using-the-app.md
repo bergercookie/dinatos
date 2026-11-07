@@ -4,6 +4,8 @@ This page shows how to browse exercises, build routines, log and plan workouts, 
 
 The bottom bar has five tabs: **Exercises**, **Routines**, **Home**, **Body** and **Settings**. On a wide screen, the bar is at the side.
 
+Your routines, activities and measurements are private to your account. No other user of the instance sees them. All users share the exercises.
+
 ## Exercises
 
 1. Open the **Exercises** tab.

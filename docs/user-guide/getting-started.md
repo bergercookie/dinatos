@@ -4,7 +4,7 @@ This page shows how to connect the app to a Dinatos instance, get an account, an
 
 ## 1. Connect the app to your instance
 
-Dinatos has no central server. The app must know which instance to use. Ask the operator of the instance for the address, for example `https://dinatos.example.com`.
+Dinatos has no central server. The app must know which instance to use, for example `https://dinatos.example.com`.
 
 1. Open the app.
 2. On the login screen, enter the address in **Server URL**.
