@@ -26,5 +26,5 @@ just run       # web dev server on port 8081 with hot reload; needs a running ba
   against a live backend.
 - [Clients](../docs/deploy/clients.md): pointing a build at someone's
   self-hosted server, rather than developing against one.
-- [Distribution](../docs/architecture/distribution.md): building APK and Linux
-  packages.
+- [Releases and packaging](../docs/development/releases.md): building APK and
+  Linux packages.

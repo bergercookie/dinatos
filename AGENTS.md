@@ -335,7 +335,7 @@ Postgres for exactly this reason.
 ## The Linux desktop target needs its own apt packages, not just the Flutter SDK
 
 `flutter build linux` (added for `packaging/linux/`'s `.deb`/AppImage, see
-`docs/architecture/distribution.md`) fails at the CMake
+`docs/development/releases.md`) fails at the CMake
 configure step without `libgtk-3-dev` (the renderer's windowing toolkit)
 and `libsecret-1-dev` (what `flutter_secure_storage` links against on
 Linux) already installed -- `clang cmake ninja-build pkg-config` cover the

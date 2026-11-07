@@ -7,5 +7,7 @@
 
 environment-setup
 workflow
-ci-and-releases
+ci
+releases
+../architecture/index
 ```

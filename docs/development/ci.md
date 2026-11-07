@@ -1,8 +1,9 @@
-# CI and releases
+# CI and checks
 
-This page explains what GitHub Actions runs on your pull request. It also
-explains how releases, nightly builds, the docs site and link checks work. The
-workflows are in `.github/workflows/`.
+This page explains what GitHub Actions runs on your pull request: the tests,
+the linters, the docs build, link checks and security scans. The workflows are
+in `.github/workflows/`. For releases and nightly builds, see
+[Releases and packaging](releases.md).
 
 ## CI on every PR
 
@@ -153,84 +154,3 @@ Pre-commit installs all hooks as wheels or through `uvx`, with one exception.
 `desktop-file-validate` needs the system package `desktop-file-utils`. To
 install it, run `apt install desktop-file-utils`. CI installs it. To install
 the hooks as git pre-commit hooks, run `just hooks`.
-
-## Releases
-
-A release is a Git tag with the name `v<version>`, for example `v1.2.3`. When
-you push the tag, `release.yml` starts. You do not run a build step by hand.
-
-```bash
-just release dry   # print the next patch tag (v1.2.3 -> v1.2.4) without creating it
-just release       # create and push that tag at HEAD
-```
-
-The workflow builds these items in parallel:
-
-- **Docker image** (the backend and the built web app). The workflow scans it
-  with Trivy, then pushes it to `ghcr.io/<owner>/dinatos` with the tags
-  `<version>` and `latest`. It is for `linux/amd64` only. The `Dockerfile`
-  builds the Flutter web app in an earlier stage.
-- **Linux desktop client** as a `.deb` package and an `.AppImage` file. Both
-  come from one `flutter build linux --release` bundle.
-- **Android APK**, signed with the debug key. A real release keystore does not
-  exist yet.
-
-A `version` job removes the leading `v` once. For this reason, every artifact
-and the GitHub Release have the same version. A last `release` job puts all
-artifacts into one GitHub Release.
-
-Before you push a tag, read these cautions:
-
-- **First push to GHCR.** The package is private by default, even if the
-  repository is public. Make the package public once, in its GitHub settings.
-- **No rollback.** Warning: if a later step fails, the partial release stays
-  on GHCR. For example, the `.deb` step can fail after the workflow pushed the
-  Docker image. Before you tag, test changes to `packaging/linux/` or the
-  `Dockerfile` on your computer.
-- **Scan failure.** If Trivy finds a fixable CRITICAL vulnerability, the
-  `docker` job stops before the push. The other jobs continue. See
-  [Security scanning](#security-scanning) for how to fix or accept the finding.
-
-### Building the artifacts locally
-
-The workflow calls the same recipes:
-
-```bash
-just packaging build-apk <version> [build-number]
-just packaging build-deb <version>
-just packaging build-appimage <version>
-just packaging build-linux-artifacts <version>   # .deb and AppImage, one shared build
-just docker build                                # the Docker image
-```
-
-The APK goes to `frontend/build/app/outputs/flutter-apk/`. The Linux packages
-go to `dist/`, or to the directory that you give as the second argument. The
-Linux build needs the `apt` packages listed in
-[Environment setup](environment-setup.md#flutter-sdk).
-
-## Nightly releases
-
-`nightly.yml` runs every day at 02:17 UTC, or when you start it manually. The
-`force` input makes it release even if there are no new commits.
-
-If `main` has no commits since the last nightly release, the workflow does
-nothing. Otherwise it calls `release.yml` to publish a GitHub **prerelease**.
-The prerelease has the same image, packages and APK. It does not need a `v*`
-tag.
-
-| Item | Value |
-|---|---|
-| Tag | `nightly-YYYYMMDD`. A second release on the same day gets `.2`, then `.3`, and so on. |
-| Version | The newest `v*` tag (or the `pyproject.toml` version if there is none) with the minor number increased by 1, then `-nightly.YYYYMMDD`. Example: `1.3.3-nightly.20261014` |
-| Python package version | `<base>.devYYYYMMDD[N]`. The nightly version is not valid PEP 440. |
-| Docker tags | The version and a moving `nightly` tag. Only stable releases move `latest`. |
-| Retention | The 14 newest nightly releases and their tags. The workflow does not remove old images from GHCR. |
-
-A `v*` tag does not fit a nightly release for two reasons. It starts
-`release.yml` as a stable release. It also sorts among the real versions.
-A tag that a workflow pushes with `GITHUB_TOKEN` cannot start another
-workflow. For this reason, the nightly workflow calls `release.yml` directly
-(`workflow_call`).
-
-The Docker build writes the version into `pyproject.toml` of the backend. The
-API, its OpenAPI document and the backups report this version.

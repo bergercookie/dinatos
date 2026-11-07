@@ -141,7 +141,7 @@ other status codes (`422`, `400`, `502`) and the reasons for them, see
 
 `just check` does not run the frontend suites or the Docker-based suites,
 because they are heavy. CI runs each of them as a separate job. See
-[CI and releases](ci-and-releases.md).
+[CI and checks](ci.md).
 
 ### Backend tests
 
@@ -285,4 +285,4 @@ change one of these areas, load the built app:
   SHA-256 is correct for session tokens and for CSV content hashes, because
   these values have high entropy.
 
-Next: [CI and releases](ci-and-releases.md).
+Next: [CI and checks](ci.md), then [Releases and packaging](releases.md).

@@ -7,7 +7,7 @@ plugins {
 }
 
 // Release signing config, written by CI from repository secrets (see
-// docs/architecture/distribution.md). Absent for a plain local checkout.
+// docs/development/releases.md). Absent for a plain local checkout.
 val keyProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }

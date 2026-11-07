@@ -109,7 +109,7 @@ headless. Only a build for one platform needs the toolchain of that platform:
 
 - Linux desktop (`flutter build linux`): `clang cmake ninja-build pkg-config
   libgtk-3-dev libsecret-1-dev`.
-- Android: the Android SDK. See [CI and releases](ci-and-releases.md).
+- Android: the Android SDK. See [Releases and packaging](releases.md#linux-desktop-target).
 
 ### `.env` files
 

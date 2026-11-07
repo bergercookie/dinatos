@@ -64,7 +64,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       # Build first, scan, and only then push: a pushed image cannot be rolled
-      # back (see docs/development/ci-and-releases.md). The second build step
+      # back (see docs/development/releases.md). The second build step
       # reuses the first one's layers from the GitHub Actions cache, so the long
       # Flutter stage does not run twice.
       - id: meta

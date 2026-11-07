@@ -7,7 +7,7 @@ name: Nightly
 # competes with real versions for "latest", and sorts by date on its own.
 # The packaged version is `<base>-nightly.YYYYMMDD`, where <base> is the
 # newest stable `v*` tag (or backend/pyproject.toml's version before the
-# first one) with its minor bumped (1.2.3 -> 1.3.3) -- see `docs/development/ci-and-releases.md`.
+# first one) with its minor bumped (1.2.3 -> 1.3.3) -- see `docs/development/releases.md`.
 on:
   schedule:
     - cron: '17 2 * * *'

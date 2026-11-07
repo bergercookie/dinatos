@@ -1,6 +1,6 @@
 # Link checker config (https://lychee.cli.rs). Used by `just check-links`, the
 # `links` workflow and the offline pre-commit hook; see
-# docs/development/ci-and-releases.md.
+# docs/development/ci.md.
 
 # Build output / vendored trees (also skipped via .gitignore, listed for safety).
 exclude_path = [

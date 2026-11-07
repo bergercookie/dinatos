@@ -15,7 +15,8 @@ passing build. The pages in "Where to find more" give more detail.
 
 - [Environment setup](https://bergercookie.github.io/dinatos/development/environment-setup.html): install the tools
 - [Running and testing](https://bergercookie.github.io/dinatos/development/workflow.html): run the app and the tests
-- [CI and releases](https://bergercookie.github.io/dinatos/development/ci-and-releases.html): what runs on your PR, and how releases ship
+- [CI and checks](https://bergercookie.github.io/dinatos/development/ci.html): what runs on your PR
+- [Releases and packaging](https://bergercookie.github.io/dinatos/development/releases.html): how releases ship and how to build the packages
 - [Architecture](https://bergercookie.github.io/dinatos/architecture/index.html): why the code has this shape
 - [AGENTS.md](https://github.com/bergercookie/dinatos/blob/main/AGENTS.md): environment pitfalls (written for coding agents, but useful for anyone)
 

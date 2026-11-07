@@ -1,5 +1,5 @@
 # Shared Trivy settings: CI (.github/workflows/trivy.yml, release.yml) and
-# `just trivy` read this file. See docs/development/ci-and-releases.md.
+# `just trivy` read this file. See docs/development/ci.md.
 #
 # Only fixable HIGH and CRITICAL findings count: Debian images carry many CVEs
 # that have no fix yet, and no PR can act on those.

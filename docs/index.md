@@ -23,5 +23,4 @@ deploy/index
 :hidden:
 
 development/index
-architecture/index
 ```

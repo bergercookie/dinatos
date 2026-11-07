@@ -4,7 +4,7 @@ This page explains how the Flutter app in `frontend/` works and why. It is for
 contributors who change the app. You do not need to know the code first.
 
 - To run the app, see [Running and testing](../development/workflow.md).
-- To ship the app, see [Distribution](distribution.md).
+- To ship the app, see [Releases and packaging](../development/releases.md).
 
 ## Overview
 
@@ -171,7 +171,7 @@ More facts:
 - The steps are data in `onboarding_steps.dart`. To add or reorder a step,
   edit that list. Then add an `OnboardingTarget` where the step points.
 - `e2e/` drives the tour in a real browser. See
-  [CI and releases](../development/ci-and-releases.md).
+  [CI and checks](../development/ci.md).
 
 ## Routines and activities share an editor shape
 

@@ -15,16 +15,17 @@ Read the pages in this order:
 1. [Domain model](domain-model.md): the terms and the repository layout.
 2. [Backend](backend.md): the API, authentication, backup and imports.
 3. [Frontend](frontend.md): the Flutter app.
-4. [Distribution](distribution.md): how the project packages a release.
+4. [Releases and packaging](../development/releases.md): how the project
+   packages and publishes a release.
 
 `AGENTS.md` and `CONTRIBUTING.md` are in the root of the repository. They
 list the problems that can occur when you build and test.
 
 ```{toctree}
 :maxdepth: 2
+:hidden:
 
 domain-model
 backend
 frontend
-distribution
 ```
