@@ -134,5 +134,5 @@ The app stores the values as you type them. It does not calculate or check them.
 | API keys | Keys for [MCP](mcp-server.md) and other tools. |
 | API documentation | The REST API of the server, for scripts. Press the tile to see two choices: **Swagger UI**, where you can try the API, and **ReDoc**, a read-only view. Each opens in a browser tab. |
 | Take the tour again | Shows the first-run tour again. |
-| About | Shows the software version and commit, and checks for updates. |
+| About | Shows the server version, the app version and commit, and checks for updates. |
 | Administration | Only for administrators. Adds users, turns self-registration and the MCP server on or off, and backs up or restores the server. If the operator set `DINATOS_ALLOW_REGISTRATION` or `DINATOS_MCP_ENABLED`, that switch is locked. |

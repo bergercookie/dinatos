@@ -6,13 +6,14 @@ import '../../core/api_config.dart';
 import '../../core/app_info.dart';
 import '../../core/design_tokens.dart';
 import '../../core/external_link.dart';
+import '../../core/server_version_provider.dart';
 import '../../core/update_channel.dart';
 import '../../core/update_check.dart';
 import '../../core/widgets/responsive_body.dart';
 
-/// Software version, the client's own app version when it isn't served by the
-/// backend (installed app rather than the browser), build commit, GitHub project and documentation
-/// links, and copyright notice.
+/// The server's version, the client's own app version when it isn't served by
+/// the backend (installed app rather than the browser), build commit, GitHub
+/// project and documentation links, and copyright notice.
 class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({super.key});
 
@@ -83,9 +84,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               child: Column(
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: const Text('Software version'),
-                    subtitle: Text(appVersion),
+                    leading: const Icon(Icons.dns_outlined),
+                    title: const Text('Server version'),
+                    subtitle: Text(switch (ref.watch(serverVersionProvider)) {
+                      AsyncData(:final value?) => value,
+                      AsyncData() || AsyncError() => 'Unknown (server not reachable)',
+                      _ => 'Checking...',
+                    }),
                   ),
                   if (!ApiConfig.isFixedToServingOrigin)
                     ListTile(

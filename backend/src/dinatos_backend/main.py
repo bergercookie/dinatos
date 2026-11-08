@@ -112,7 +112,9 @@ for _mcp_path in ("/mcp", "/mcp/"):
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    # The version lets a client show which server it talks to (Settings ->
+    # About), which can differ from the client's own version.
+    return {"status": "ok", "version": __version__}
 
 
 # Swagger UI ships a light-only stylesheet, and the Flutter app embeds this page

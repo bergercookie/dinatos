@@ -1,5 +1,6 @@
 import 'package:dinatos_frontend/core/app_info.dart';
 import 'package:dinatos_frontend/core/external_link.dart';
+import 'package:dinatos_frontend/core/server_version_provider.dart';
 import 'package:dinatos_frontend/core/update_channel.dart';
 import 'package:dinatos_frontend/core/update_check.dart';
 import 'package:dinatos_frontend/features/profile/about_screen.dart';
@@ -7,12 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Keeps the screen from asking a real server for its version.
+final _noServer = serverVersionProvider.overrideWith((ref) async => null);
+
 void main() {
   testWidgets('the GitHub project row opens the repository in a new tab', (tester) async {
     final opened = <Uri>[];
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          _noServer,
           urlOpenerProvider.overrideWithValue((uri) async {
             opened.add(uri);
             return true;
@@ -22,7 +27,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Software version'), findsOneWidget);
+    expect(find.text('Server version'), findsOneWidget);
     // flutter test is not a browser served by the backend, so the client row shows.
     expect(find.text('App version'), findsOneWidget);
     expect(find.text(githubUrl), findsOneWidget);
@@ -33,11 +38,36 @@ void main() {
     expect(opened, [Uri.parse('https://github.com/bergercookie/dinatos')]);
   });
 
+  group('server version', () {
+    Future<void> pumpWith(WidgetTester tester, Future<String?> Function() version) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [serverVersionProvider.overrideWith((ref) => version())],
+          child: const MaterialApp(home: AboutScreen()),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('shows the version the server reports, not the app version', (tester) async {
+      await pumpWith(tester, () async => '9.8.7');
+      expect(find.text('9.8.7'), findsOneWidget);
+      // `appVersion` is 'dev' under flutter test; it shows only in the app row.
+      expect(find.text(appVersion), findsOneWidget);
+    });
+
+    testWidgets('says when the server is not reachable', (tester) async {
+      await pumpWith(tester, () async => null);
+      expect(find.text('Unknown (server not reachable)'), findsOneWidget);
+    });
+  });
+
   testWidgets('the Documentation row opens the docs in a new tab', (tester) async {
     final opened = <Uri>[];
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          _noServer,
           urlOpenerProvider.overrideWithValue((uri) async {
             opened.add(uri);
             return true;
@@ -65,6 +95,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            _noServer,
             updateCheckProvider.overrideWithValue(check),
             urlOpenerProvider.overrideWithValue((uri) async {
               opened?.add(uri);
@@ -128,6 +159,7 @@ void main() {
     test('updateCheckProvider turns a fetch failure into UpdateCheckFailed', () async {
       final container = ProviderContainer(
         overrides: [
+          _noServer,
           latestReleaseFetcherProvider.overrideWithValue((_) async => throw Exception('offline')),
         ],
       );
@@ -138,7 +170,10 @@ void main() {
 
   testWidgets('the nightly toggle switches the update channel', (tester) async {
     final container = ProviderContainer(
-      overrides: [updateChannelStorageProvider.overrideWithValue(const _NoopChannelStorage())],
+      overrides: [
+        _noServer,
+        updateChannelStorageProvider.overrideWithValue(const _NoopChannelStorage()),
+      ],
     );
     addTearDown(container.dispose);
     await tester.pumpWidget(
